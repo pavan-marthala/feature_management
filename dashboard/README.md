@@ -32,12 +32,15 @@ Ensure you have [Node.js](https://nodejs.org/) (v20.19.0+ or >=22.12.0) installe
 
 ### Project Setup
 
-1. Clone the repository and navigate into the project directory:
+1. Clone the repository and navigate into the project directory.
+
+2. **Environment Configuration**: 
+   For manual setup, copy `.env.example` to `.env` and configure your API base URL:
    ```sh
-   cd feature_management
+   cp .env.example .env
    ```
 
-2. Install the necessary dependencies:
+3. Install the necessary dependencies:
    ```sh
    npm install
    ```

@@ -33,8 +33,10 @@ services:
 
   ui:
     build:
-      context: ../../sdk/javascript
-      dockerfile: ../../infrastructure/docker/Dockerfile.ui
+      context: ../dashboard
+      dockerfile: ../infrastructure/docker/Dockerfile.ui
+      args:
+        VITE_API_BASE_URL: /api/
     container_name: feature-ui
     depends_on:
       - api

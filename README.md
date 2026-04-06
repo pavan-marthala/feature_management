@@ -30,17 +30,17 @@ A high-performance, reactive Feature Management platform designed for modern mic
 ## ⚡ Quick Start
 
 ### 1. Run via Docker Compose
-The easiest way to get everything running is using Docker Compose.
+The easiest way to get everything running is using Docker Compose. The environment configuration is automatically handled via build arguments.
 ```bash
 cd infrastructure
-docker-compose up -d
+docker-compose up -d --build
 ```
 - **API**: `http://localhost/api`
 - **Dashboard**: `http://localhost`
 - **Direct API**: `http://localhost:8080`
 
 ### 2. Manual Setup
-Refer to the [Getting Started Guide](docs/getting-started/setup.md) for manual installation steps for each component.
+Refer to the [Getting Started Guide](docs/getting-started/setup.md) or the individual module `README.md` files for manual installation. Note: For the Dashboard UI, you must copy `.env.example` to `.env` and set your `VITE_API_BASE_URL`.
 
 ## 📚 Documentation
 
