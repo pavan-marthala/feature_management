@@ -49,8 +49,7 @@ Explore the full documentation in the `/docs` directory:
 - [Architecture Overview](docs/architecture/overview.md)
 - [API Reference](docs/api/overview.md)
 - [Java SDK Guide](docs/sdk/java/usage.md)
-- [Vue SDK Guide](docs/sdk/vue/usage.md)
-- [Evaluation Strategies](docs/architecture/strategies/boolean.md)
+- [Dashboard Setup](docs/dashboard/setup.md)
 
 ---
 *Built with ❤️ for scalable software delivery.*

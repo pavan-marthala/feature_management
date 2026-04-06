@@ -9,7 +9,7 @@ The Feature Management platform provides officially supported SDKs to simplify i
 | **Simplicity** | Requires manual HTTP requests. | Native language interfaces (Aspects, Hooks). |
 | **Performance** | Network latency for every call. | Integrated caching and optimized evaluation. |
 | **Reliability** | Manual error handling. | Built-in fallbacks and retry logic. |
-| **Code Hygiene** | Clutters business logic. | Declarative toggles (Annotations, Components). |
+| **Code Hygiene** | Clutters business logic. | Declarative toggles (Annotations). |
 
 ## 📦 Supported SDKs
 
@@ -18,11 +18,10 @@ Optimized for Spring Boot and general Java applications. Uses **Aspect-Oriented 
 - **Key usage**: `@FeatureEnabled("FEATURE_KEY")`.
 - **Target**: Server-side microservices.
 
-### 🎨 Vue SDK (sdk/javascript/)
-Optimized for modern front-end applications built with Vue.js 3.
-- **Key usage**: `useFeature('FEATURE_KEY')` hook.
-- **Target**: SPAs and Dashboards.
+## 🖥 Management UI (Dashboard)
+To manage and configure features, environments, and strategies, check the [Management Dashboard Guide](file:///Users/pavankalyan/Feature%20Management/docs/dashboard/setup.md).
+The dashboard is a standalone Vue.js interface and is not intended to be integrated as a package into external applications.
 
 ## 🚀 Evaluation Architecture
 
-SDKs interact with the **Feature Management API** to fetch evaluation results. They are designed to minimize network traffic by supporting bulk evaluations and (optionally) local caching of results.
+SDKs interact with the **Feature Management API** to fetch evaluation results. They are designed to minimize network traffic by supporting bulk evaluations and integrated caching of results.
