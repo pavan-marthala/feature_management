@@ -31,6 +31,8 @@
         <maven.compiler.source>25</maven.compiler.source>
         <maven.compiler.target>25</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <openapi.spec.path>${project.basedir}/../docs/api/config/open-api.yml</openapi.spec.path>
+        <checkstyle.config>${project.basedir}/../docs/api/config/checkstyle.xml</checkstyle.config>
     </properties>
     <dependencies>
         <dependency>
@@ -117,7 +119,7 @@
 							<goal>generate</goal>
 						</goals>
 						<configuration>
-							<inputSpec>${project.basedir}/src/main/resources/config/open-api.yml</inputSpec>
+							<inputSpec>${openapi.spec.path}</inputSpec>
 							<generatorName>spring</generatorName>
 							<generateApis>false</generateApis>
 							<generateSupportingFiles>false</generateSupportingFiles>
@@ -170,7 +172,7 @@
 				<artifactId>maven-checkstyle-plugin</artifactId>
 				<version>3.6.0</version>
 				<configuration>
-					<configLocation>${project.basedir}/src/main/resources/config/checkstyle.xml</configLocation>
+					<configLocation>${checkstyle.config}</configLocation>
 					<consoleOutput>true</consoleOutput>
 					<failsOnError>true</failsOnError>
 					<linkXRef>false</linkXRef>
@@ -195,7 +197,7 @@
 				<artifactId>maven-checkstyle-plugin</artifactId>
 				<version>3.6.0</version>
 				<configuration>
-					<configLocation>${project.basedir}/src/main/resources/config/checkstyle.xml</configLocation>
+					<configLocation>${checkstyle.config}</configLocation>
 				</configuration>
 			</plugin>
 		</plugins>
