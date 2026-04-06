@@ -30,15 +30,3 @@ public FeatureConfig featureConfig() {
         .build();
 }
 ```
-
-## 🛡️ Authentication Configuration
-
-For secure environments, configure the SDK to use JWT tokens:
-
-```yaml
-feature:
-  management:
-    auth:
-      type: JWT
-      token: "your-jwt-token-here"
-```

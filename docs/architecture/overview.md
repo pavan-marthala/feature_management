@@ -20,4 +20,3 @@ The Feature Management platform is designed as a high-performance, non-blocking 
 
 - **Non-blocking I/O**: The entire stack uses Project Reactor for high concurrency with minimal resource footprint.
 - **R2DBC**: Reactive database connectivity ensures the database driver doesn't block evaluation threads.
-- **Caching**: Future-ready for distributed caching (e.g., Redis) to minimize database hits for hot features.

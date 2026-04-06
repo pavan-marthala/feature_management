@@ -24,7 +24,7 @@ A high-performance, reactive Feature Management platform designed for modern mic
 
 - **Backend**: Java 25, Spring Boot 4.0.5, Project Reactor (WebFlux).
 - **Database**: PostgreSQL with R2DBC.
-- **Frontend**: Vue.js 3, Vite, Tailwind CSS (Glassmorphism design).
+- **Frontend**: Vue.js 3, Vite, Tailwind CSS.
 - **Infrastructure**: Docker, Nginx.
 
 ## ⚡ Quick Start
@@ -35,9 +35,9 @@ The easiest way to get everything running is using Docker Compose.
 cd infrastructure
 docker-compose up -d
 ```
-- **API**: `http://localhost:8080`
-- **Dashboard**: `http://localhost:3000`
-- **Example App**: `http://localhost:8081`
+- **API**: `http://localhost/api`
+- **Dashboard**: `http://localhost`
+- **Direct API**: `http://localhost:8080`
 
 ### 2. Manual Setup
 Refer to the [Getting Started Guide](docs/getting-started/setup.md) for manual installation steps for each component.

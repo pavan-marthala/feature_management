@@ -24,15 +24,3 @@ Add the following dependency to your `pom.xml`:
 
 If you are using Spring Boot, the SDK's `FeatureAutoConfiguration` will automatically register the necessary beans for feature evaluation.
 
-### manual bean registration (Optional)
-If not using auto-configuration, register the `FeatureClient` manually:
-
-```java
-@Configuration
-public class FeatureConfig {
-    @Bean
-    public FeatureClient featureClient() {
-        return new FeatureClient("http://localhost:8080");
-    }
-}
-```

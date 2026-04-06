@@ -22,9 +22,9 @@ docker-compose up -d
 ```
 
 ### 🔗 Accessing the services
--   **Management Dashboard**: [http://localhost:3000](http://localhost:3000)
--   **Core API**: [http://localhost:8080](http://localhost:8080)
--   **Example App**: [http://localhost:8081](http://localhost:8081)
+-   **Management Dashboard**: [http://localhost](http://localhost)
+-   **Core API**: [http://localhost/api](http://localhost/api)
+-   **Direct API**: [http://localhost:8080](http://localhost:8080)
 
 ---
 

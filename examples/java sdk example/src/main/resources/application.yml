@@ -3,7 +3,7 @@ server:
 
 feature-management:
   api-url: http://localhost:8080
-#  retry:
-#    enabled: true
-#    max-attempts: 3
-#    backoff-interval-millis: 1000
+  retry:
+    enabled: true
+    max-attempts: 3
+    backoff-interval-millis: 1000
