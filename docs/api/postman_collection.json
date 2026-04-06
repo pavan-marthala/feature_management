@@ -1,0 +1,90 @@
+{
+  "info": {
+    "_postman_id": "765d70e8-0b5c-4b5c-87a8-123456789abc",
+    "name": "Feature Management API",
+    "description": "Collection for all Feature Management endpoints.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Environments",
+      "item": [
+        {
+          "name": "Create Environment",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Development\",\n  \"description\": \"Internal development environment\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/environments", "host": ["{{baseUrl}}"], "path": ["environments"] }
+          }
+        },
+        {
+          "name": "Get All Environments",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/environments", "host": ["{{baseUrl}}"], "path": ["environments"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Features",
+      "item": [
+        {
+          "name": "Create Feature",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"BetaHeader\",\n  \"description\": \"Enable beta header for power users\",\n  \"strategy\": \"BooleanFeatureStrategy\",\n  \"enabled\": true,\n  \"owners\": [\"admin-01\"]\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/features", "host": ["{{baseUrl}}"], "path": ["features"] }
+          }
+        },
+        {
+          "name": "Get Feature by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/features/:id", "host": ["{{baseUrl}}"], "path": ["features", ":id"] }
+          }
+        },
+        {
+          "name": "Toggle Feature Status",
+          "request": {
+            "method": "PATCH",
+            "url": { "raw": "{{baseUrl}}/features/:id/status?status=true", "host": ["{{baseUrl}}"], "path": ["features", ":id", "status"], "query": [{ "key": "status", "value": "true" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Get Dashboard Statistics",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/dashboard/stats", "host": ["{{baseUrl}}"], "path": ["dashboard", "stats"] }
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": { "type": "text/javascript", "exec": [""] }
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080", "type": "string" }
+  ]
+}

@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: feature_management_client
+  server:
+    port: 8081
+  feature-management:
+    api-url: http://localhost:8080

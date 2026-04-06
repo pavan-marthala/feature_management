@@ -1,0 +1,21 @@
+# IDE & General
+.DS_Store
+.vscode/
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Logs
+*.log
+
+# Docker
+.docker/
+infrastructure/postgres/data/
+
+# Repositories
+target/
+node_modules/
+dist/
+bin/
+out/
