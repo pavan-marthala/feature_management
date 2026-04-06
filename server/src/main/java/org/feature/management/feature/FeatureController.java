@@ -21,7 +21,7 @@ public class FeatureController {
     private final FeatureServiceInterface featureService;
 
     @PostMapping
-    public Mono<ResponseEntity<UUID>> createFeature(@Valid @RequestBody Feature featureRequest) {
+    public Mono<ResponseEntity<UUID>> createFeature(@Valid @RequestBody FeatureCreateRequest featureRequest) {
         log.debug("Creating feature: {}", featureRequest);
 
         return featureService.createFeature(featureRequest)

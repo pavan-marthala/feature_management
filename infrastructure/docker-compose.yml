@@ -17,7 +17,7 @@ services:
       - fm-network
   api:
     build:
-      context: ../../server
+      context: ../../
       dockerfile: ../../infrastructure/docker/Dockerfile.api
     container_name: feature-api
     environment:

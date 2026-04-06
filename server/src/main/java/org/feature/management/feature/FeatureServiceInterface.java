@@ -2,13 +2,13 @@ package org.feature.management.feature;
 
 import org.feature.management.models.Feature;
 import org.feature.management.models.FeatureConfiguration;
+import org.feature.management.models.FeatureCreateRequest;
 import org.feature.management.models.FeatureStrategyResponseInner;
 import org.feature.management.models.IdType;
 import org.springframework.data.domain.Page;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
 import java.util.UUID;
 
 public interface FeatureServiceInterface {
@@ -19,7 +19,7 @@ public interface FeatureServiceInterface {
 
     Mono<Page<Feature>> getAllFeatures(Integer page, Integer size, String sort);
 
-    Mono<UUID> createFeature(Feature featureRequest);
+    Mono<UUID> createFeature(FeatureCreateRequest featureRequest);
 
     Mono<Feature> getById(String id, IdType idType);
 

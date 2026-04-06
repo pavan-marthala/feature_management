@@ -3,8 +3,11 @@ package org.feature.management.feature;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.feature.management.config.FeatureStrategyConfig;
+import org.feature.management.environment.FeatureEnvironmentMappingEntity;
+import org.feature.management.environment.FeatureEnvironmentMappingRepository;
 import org.feature.management.models.Feature;
 import org.feature.management.models.FeatureConfiguration;
+import org.feature.management.models.FeatureCreateRequest;
 import org.feature.management.models.FeatureStrategyResponseInner;
 import org.feature.management.models.IdType;
 import org.feature.management.shared.exception.AccessDeniedException;
@@ -30,6 +33,7 @@ public class FeatureService implements FeatureServiceInterface {
 
     private final FeatureRepository featureRepo;
     private final FeatureStrategyConfig featureStrategyConfig;
+    private final FeatureEnvironmentMappingRepository mappingRepo;
 
     @Override
     public Mono<Void> assignOwnerToFeature(UUID featureId, String owner) {
@@ -75,14 +79,21 @@ public Mono<Void> removeOwnerFromFeature(UUID featureId, String owner) {
 
     @Override
     @Transactional
-    public Mono<UUID> createFeature(Feature featureRequest) {
+    public Mono<UUID> createFeature(FeatureCreateRequest featureRequest) {
         log.debug("Creating feature with request: {}", featureRequest);
         return featureRepo.existsByName(featureRequest.getName())
                 .filter(exists -> !exists)
                 .switchIfEmpty(Mono.error(new FeatureException("Feature with name " + featureRequest.getName() + " already exists")))
-                .then(Mono.fromCallable(() -> FeatureMapper.INSTANCE.toEntity(featureRequest)))
+                .then(Mono.defer(() -> Mono.just(FeatureMapper.INSTANCE.toEntity(featureRequest))))
                 .flatMap(featureRepo::save)
-                .map(FeatureEntity::getId);
+                .flatMap(featureEntity -> {
+                    var mapping = FeatureEnvironmentMappingEntity.builder()
+                            .featureId(featureEntity.getId())
+                            .environmentId(featureRequest.getEnvId())
+                            .build();
+                    return mappingRepo.save(mapping)
+                            .thenReturn(featureEntity.getId());
+                });
     }
 
     @Override

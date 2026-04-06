@@ -3,5 +3,7 @@ databaseChangeLog:
       file: db/changelog/changes/create-table-environment.yaml
   - include:
       file: db/changelog/changes/create-table-feature.yaml
+  - include:
+      file: db/changelog/changes/create-table-feature-environment-mapping.yaml
 
  

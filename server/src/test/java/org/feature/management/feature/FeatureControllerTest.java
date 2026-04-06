@@ -3,6 +3,7 @@ import org.feature.management.environment.EnvironmentRepository;
 import java.util.Collections;
 
 import org.feature.management.models.Feature;
+import org.feature.management.models.FeatureCreateRequest;
 import org.feature.management.models.BooleanFeatureStrategy;
 import org.feature.management.models.FeatureStrategy;
 import org.feature.management.models.FeatureStrategyResponseInner;
@@ -41,9 +42,12 @@ class FeatureControllerTest {
 
     @Test
     void shouldCreateFeature() {
-        Feature request = new Feature();
+        FeatureCreateRequest request = new FeatureCreateRequest();
         request.setName("feature1");
+        request.setEnvId(UUID.randomUUID());
         request.setOwners(Collections.singletonList("owner1"));
+        request.setConfiguration(new BooleanFeatureStrategy());
+        request.setEnabled(true);
         UUID id = UUID.randomUUID();
 
         when(featureService.createFeature(any())).thenReturn(Mono.just(id));

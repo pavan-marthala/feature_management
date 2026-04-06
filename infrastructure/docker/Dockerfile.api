@@ -1,9 +1,11 @@
 # Stage 1: Build
 FROM maven:3.9.6-eclipse-temurin-25 AS build
 WORKDIR /app
-COPY pom.xml .
+COPY server/pom.xml ./pom.xml
 RUN mvn dependency:go-offline
-COPY src ./src
+COPY docs/api/open-api.yml ./docs/api/open-api.yml
+COPY config/checkstyle/checkstyle.xml ./config/checkstyle/checkstyle.xml
+COPY server/src ./src
 RUN mvn clean package
 
 # Stage 2: Run

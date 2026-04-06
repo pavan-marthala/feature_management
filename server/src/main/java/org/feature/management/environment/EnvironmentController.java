@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.feature.management.models.Environment;
 import org.feature.management.models.EnvironmentRequest;
 import org.feature.management.models.EnvironmentResponse;
+import org.feature.management.models.FeatureResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -35,6 +36,22 @@ public class EnvironmentController {
     public Mono<Environment> getEnvironmentById(@PathVariable UUID id) {
         log.debug("Getting environment inside controller by id {}", id);
         return environmentService.getById(id);
+    }
+
+    @GetMapping("/{id}/features")
+    public Mono<FeatureResponse> getFeaturesByEnvironmentId(
+            @PathVariable UUID id,
+            @RequestParam(value = "page", defaultValue = "0") Integer page,
+            @RequestParam(value = "size", defaultValue = "25") Integer size) {
+        log.debug("Getting features for environment inside controller by id {}", id);
+        return environmentService.getFeaturesByEnvironmentId(id, page, size)
+                .map(featuresPage -> FeatureResponse.builder()
+                        .totalPages(featuresPage.getTotalPages())
+                        .totalItems((int) featuresPage.getTotalElements())
+                        .page(page)
+                        .size(size)
+                        .items(featuresPage.getContent())
+                        .build());
     }
 
     @GetMapping

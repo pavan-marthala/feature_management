@@ -2,8 +2,12 @@ package org.feature.management.environment;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.feature.management.feature.FeatureMapper;
+import org.feature.management.feature.FeatureRepository;
 import org.feature.management.models.Environment;
 import org.feature.management.models.EnvironmentRequest;
+import org.feature.management.models.Feature;
 import org.feature.management.shared.exception.AccessDeniedException;
 import org.feature.management.shared.exception.EnvironmentException;
 import org.feature.management.shared.exception.ResourceNotFoundException;
@@ -14,6 +18,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -25,6 +30,28 @@ import java.util.function.Consumer;
 public class EnvironmentService implements EnvironmentServiceInterface {
 
     private final EnvironmentRepository environmentRepository;
+    private final FeatureEnvironmentMappingRepository mappingRepository;
+    private final FeatureRepository featureRepository;
+
+    @Override
+    public Mono<Page<Feature>> getFeaturesByEnvironmentId(UUID environmentId, Integer page, Integer size) {
+        log.debug("Getting features for environment: {}, page: {}, size: {}", environmentId, page, size);
+        PageRequest pageRequest = PageRequest.of(page, size);
+
+        return mappingRepository.findByEnvironmentId(environmentId)
+                .map(FeatureEnvironmentMappingEntity::getFeatureId)
+                .collectList()
+                .flatMap(featureIds -> {
+                    if (featureIds.isEmpty()) {
+                        return Mono.just(new PageImpl<Feature>(Collections.emptyList(), pageRequest, 0));
+                    }
+                    return featureRepository.findAllById(featureIds)
+                            .map(FeatureMapper.INSTANCE::toModel)
+                            .collectList()
+                            .zipWith(Mono.just((long) featureIds.size()))
+                            .map(tuple -> new PageImpl<>(tuple.getT1(), pageRequest, tuple.getT2()));
+                });
+    }
 
     @Override
     public Mono<Void> assignOwnerToEnvironment(UUID envId, String owner) {
@@ -46,9 +73,11 @@ public class EnvironmentService implements EnvironmentServiceInterface {
                     Set<String> owners = entity.getOwners();
                     return Mono.just(entity)
                             .filter(_ -> owners != null && owners.contains(ownerId))
-                            .switchIfEmpty(Mono.error(new AccessDeniedException("Access denied. Only owner of the environment can remove the owner.")))
+                            .switchIfEmpty(Mono.error(new AccessDeniedException(
+                                    "Access denied. Only owner of the environment can remove the owner.")))
                             .filter(_ -> owners.size() > 1)
-                            .switchIfEmpty(Mono.error(new EnvironmentException("Cannot remove the last owner from environment. At least one owner is required.")))
+                            .switchIfEmpty(Mono.error(new EnvironmentException(
+                                    "Cannot remove the last owner from environment. At least one owner is required.")))
                             .flatMap(_ -> {
                                 owners.remove(ownerId);
                                 return environmentRepository.save(entity);
@@ -56,6 +85,7 @@ public class EnvironmentService implements EnvironmentServiceInterface {
                 })
                 .then();
     }
+
     private <T> void updateIfNotNull(Consumer<T> setter, T value) {
         Optional.ofNullable(value).ifPresent(setter);
     }

@@ -1,8 +1,10 @@
 package org.feature.management.feature;
 
 import org.feature.management.config.FeatureStrategyConfig;
+import org.feature.management.environment.FeatureEnvironmentMappingRepository;
 import org.feature.management.shared.exception.ResourceNotFoundException;
 import org.feature.management.models.Feature;
+import org.feature.management.models.FeatureCreateRequest;
 import org.feature.management.models.FeatureStrategyResponseInner;
 import org.feature.management.models.IdType;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,29 +32,36 @@ class FeatureServiceTest {
     @Mock
     private FeatureStrategyConfig strategyConfig;
 
+    @Mock
+    private FeatureEnvironmentMappingRepository mappingRepository;
+
     private FeatureService featureService;
 
     @BeforeEach
     void setUp() {
-        featureService = new FeatureService(featureRepository, strategyConfig);
+        featureService = new FeatureService(featureRepository, strategyConfig, mappingRepository);
     }
 
     @Test
     void shouldCreateFeature() {
-        Feature model = new Feature();
+        FeatureCreateRequest model = new FeatureCreateRequest();
         model.setName("feature-1");
+        model.setEnvId(UUID.randomUUID());
         FeatureEntity entity = new FeatureEntity();
         UUID generatedId = UUID.randomUUID();
         entity.setId(generatedId);
 
         when(featureRepository.existsByName("feature-1")).thenReturn(Mono.just(false));
         when(featureRepository.save(any(FeatureEntity.class))).thenReturn(Mono.just(entity));
+        when(mappingRepository.save(any()))
+                .thenReturn(Mono.just(new org.feature.management.environment.FeatureEnvironmentMappingEntity()));
 
         StepVerifier.create(featureService.createFeature(model))
                 .expectNext(generatedId)
                 .verifyComplete();
 
         verify(featureRepository).save(any(FeatureEntity.class));
+        verify(mappingRepository).save(any());
     }
 
     @Test
@@ -124,7 +133,7 @@ class FeatureServiceTest {
 
     @Test
     void shouldThrowExceptionWhenFeatureAlreadyExistsOnCreate() {
-        Feature model = new Feature();
+        org.feature.management.models.FeatureCreateRequest model = new org.feature.management.models.FeatureCreateRequest();
         model.setName("existing-feature");
 
         when(featureRepository.existsByName("existing-feature")).thenReturn(Mono.just(true));

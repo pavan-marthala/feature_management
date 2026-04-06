@@ -101,6 +101,7 @@ export interface Feature {
 export interface FeatureCreateRequest {
   name: string
   description?: string
+  envId: string
   configuration: FeatureConfiguration
   owners?: string[]
   enabled?: boolean

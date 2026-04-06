@@ -3,6 +3,8 @@ package org.feature.management.environment;
 import org.feature.management.shared.exception.AccessDeniedException;
 import org.feature.management.shared.exception.EnvironmentException;
 import org.feature.management.shared.exception.ResourceNotFoundException;
+import org.feature.management.feature.FeatureEntity;
+import org.feature.management.feature.FeatureRepository;
 import org.feature.management.models.EnvironmentRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,6 +22,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -28,11 +31,17 @@ class EnvironmentServiceTest {
     @Mock
     private EnvironmentRepository environmentRepository;
 
+    @Mock
+    private FeatureEnvironmentMappingRepository mappingRepository;
+
+    @Mock
+    private FeatureRepository featureRepository;
+
     private EnvironmentService environmentService;
 
     @BeforeEach
     void setUp() {
-        environmentService = new EnvironmentService(environmentRepository);
+        environmentService = new EnvironmentService(environmentRepository, mappingRepository, featureRepository);
     }
 
     @Test
@@ -220,5 +229,28 @@ class EnvironmentServiceTest {
                 .verifyComplete();
 
         verify(environmentRepository).delete(entity);
+    }
+
+    void shouldGetFeaturesByEnvironmentId() {
+        UUID envId = UUID.randomUUID();
+        UUID featureId = UUID.randomUUID();
+
+        FeatureEnvironmentMappingEntity mappingEntity = new FeatureEnvironmentMappingEntity();
+        mappingEntity.setEnvironmentId(envId);
+        mappingEntity.setFeatureId(featureId);
+
+        FeatureEntity featureEntity = new FeatureEntity();
+        featureEntity.setId(featureId);
+        featureEntity.setName("feature-1");
+
+        when(mappingRepository.findByEnvironmentId(envId)).thenReturn(Flux.just(mappingEntity));
+        when(featureRepository.findAllById(anyList())).thenReturn(Flux.just(featureEntity));
+
+        StepVerifier.create(environmentService.getFeaturesByEnvironmentId(envId, 0, 10))
+                .consumeNextWith(page -> {
+                    assertThat(page.getTotalElements()).isEqualTo(1);
+                    assertThat(page.getContent().get(0).getName()).isEqualTo("feature-1");
+                })
+                .verifyComplete();
     }
 }

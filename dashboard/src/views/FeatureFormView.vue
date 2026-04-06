@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useFeatureStore } from '@/stores/featureStore'
+import { useEnvironmentStore } from '@/stores/environmentStore'
 import { useUiStore } from '@/stores/uiStore'
 import GlassCard from '@/components/ui/GlassCard.vue'
 import ToggleSwitch from '@/components/ui/ToggleSwitch.vue'
@@ -11,6 +12,7 @@ import type { FeatureStrategyType, FeatureCreateRequest, FeatureConfiguration } 
 const route = useRoute()
 const router = useRouter()
 const featureStore = useFeatureStore()
+const environmentStore = useEnvironmentStore()
 const uiStore = useUiStore()
 
 const isEdit = computed(() => route.name === 'feature-edit')
@@ -21,6 +23,7 @@ const name = ref('')
 const description = ref('')
 const strategy = ref<FeatureStrategyType>('BooleanFeatureStrategy')
 const enabled = ref(true)
+const selectedEnvId = ref('')
 const owners = ref<string[]>([])
 const newOwner = ref('')
 
@@ -46,7 +49,10 @@ const submitting = ref(false)
 const errors = ref<Record<string, string>>({})
 
 onMounted(async () => {
-  await featureStore.fetchStrategies()
+  await Promise.all([
+    featureStore.fetchStrategies(),
+    environmentStore.fetchEnvironments(0, 100) // Get more to be safe for dropdown
+  ])
 
   if (isEdit.value && featureId.value) {
     const feature = await featureStore.fetchFeature(featureId.value, 'ID')
@@ -110,6 +116,9 @@ function validate(): boolean {
   if (!name.value || name.value.length < 2 || name.value.length > 36) {
     errors.value.name = 'Name must be 2-36 characters'
   }
+  if (!isEdit.value && !selectedEnvId.value) {
+    errors.value.envId = 'Environment is required'
+  }
   if (name.value && !/^[a-zA-Z0-9]+$/.test(name.value)) {
     errors.value.name = 'Name can only contain letters and numbers'
   }
@@ -172,7 +181,7 @@ async function handleSubmit() {
   try {
     if (isEdit.value) {
       // Send only the edited configuration, not the full object
-      const data: Record<string, unknown> = buildConfiguration()
+      const data = buildConfiguration() as any
       
       await featureStore.updateFeature(featureId.value, data, featureStore.selectedEtag)
       router.push(`/features/${featureId.value}`)
@@ -180,6 +189,7 @@ async function handleSubmit() {
       const payload: FeatureCreateRequest = {
         name: name.value,
         description: description.value || undefined,
+        envId: selectedEnvId.value,
         configuration: buildConfiguration(),
         owners: owners.value.length ? owners.value : undefined,
         enabled: enabled.value,
@@ -251,6 +261,26 @@ function removeJwtCustom(idx: number) { jwtCustomClaims.value.splice(idx, 1) }
           />
           <span v-if="errors.name" class="form-error">{{ errors.name }}</span>
           <span class="form-hint">Alphanumeric, 2-36 characters</span>
+        </div>
+
+        <div class="form-group" v-if="!isEdit">
+          <label class="form-label" for="env-select">Environment *</label>
+          <select 
+            id="env-select" 
+            v-model="selectedEnvId" 
+            class="form-input form-select"
+            :class="{ 'form-input--error': errors.envId }"
+          >
+            <option value="" disabled>Select an environment...</option>
+            <option 
+              v-for="env in environmentStore.environments" 
+              :key="env.id" 
+              :value="env.id"
+            >
+              {{ env.name }}
+            </option>
+          </select>
+          <span v-if="errors.envId" class="form-error">{{ errors.envId }}</span>
         </div>
 
         <div class="form-group" v-if="!isEdit">

@@ -202,6 +202,28 @@ paths:
           description: Environment or owner does not exist
         409:
           description: Conflict – the resource has been modified by others
+  /environments/{id}/features:
+    get:
+      tags:
+        - Environment
+      summary: Get all features for environment
+      description: |
+        Returns all features mapped to the specific environment.
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/size'
+      responses:
+        200:
+          description: List of features for the environment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeatureResponse'
+        401:
+          description: Unauthorized - Authentication required
+        404:
+          description: Environment does not exist
 
   /features:
     post:
@@ -214,7 +236,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Feature'
+              $ref: '#/components/schemas/FeatureCreateRequest'
       responses:
         200:
           description: Feature created sucessfully
@@ -760,8 +782,33 @@ components:
           description: Entity tag for optimistic concurrency control
           example: 1
       required:
-        - type
-        - strategy
+        - name
+        - configuration
+        - owners
+        - enabled
+    FeatureCreateRequest:
+      type: object
+      properties:
+        envId:
+          type: string
+          format: uuid
+          description: Environment ID to map the feature to
+        name:
+          $ref: '#/components/schemas/Feature/properties/name'
+        description:
+          $ref: '#/components/schemas/Feature/properties/description'
+        configuration:
+          $ref: '#/components/schemas/Feature/properties/configuration'
+        owners:
+          $ref: '#/components/schemas/Feature/properties/owners'
+        enabled:
+          $ref: '#/components/schemas/Feature/properties/enabled'
+      required:
+        - envId
+        - name
+        - configuration
+        - owners
+        - enabled
     DashboardStats:
       type: object
       description: Dashboard statistics

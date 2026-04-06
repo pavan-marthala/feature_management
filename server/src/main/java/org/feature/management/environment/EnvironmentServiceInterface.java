@@ -2,6 +2,7 @@ package org.feature.management.environment;
 
 import org.feature.management.models.Environment;
 import org.feature.management.models.EnvironmentRequest;
+import org.feature.management.models.Feature;
 import org.springframework.data.domain.Page;
 import reactor.core.publisher.Mono;
 
@@ -11,6 +12,8 @@ public interface EnvironmentServiceInterface {
     Mono<Void> assignOwnerToEnvironment(UUID envId, String owner);
 
     Mono<Void> removeOwnerFromEnvironment(UUID envId, String ownerId);
+
+    Mono<Page<Feature>> getFeaturesByEnvironmentId(UUID environmentId, Integer page, Integer size);
 
     Mono<UUID> createEnvironment(EnvironmentRequest env);
 
