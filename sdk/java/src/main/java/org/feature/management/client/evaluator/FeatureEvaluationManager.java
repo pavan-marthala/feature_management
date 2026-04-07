@@ -1,34 +1,42 @@
 package org.feature.management.client.evaluator;
 
 import org.feature.management.client.context.EvaluationContext;
-import org.feature.management.models.BooleanFeatureStrategy;
 import org.feature.management.models.Feature;
+import org.feature.management.models.FeatureConfiguration;
 
 public class FeatureEvaluationManager {
 
+    private final FeatureEvaluatorFactory evaluatorFactory;
+
+    public FeatureEvaluationManager(FeatureEvaluatorFactory evaluatorFactory) {
+        this.evaluatorFactory = evaluatorFactory;
+    }
+
     /**
      * Evaluates the given feature against the provided context.
-     * Currently supports BooleanFeatureStrategy as a baseline.
+     * Delegates evaluation to strategy-specific evaluators via the factory.
      */
+    @SuppressWarnings("unchecked")
     public boolean evaluate(Feature feature, EvaluationContext context) {
         if (feature == null || Boolean.FALSE.equals(feature.getEnabled())) {
             return false;
         }
 
-        Object config = feature.getConfiguration();
+        FeatureConfiguration config = feature.getConfiguration();
         if (config == null) {
             // Feature is enabled and no specific strategy condition applies
-            return true;
+            return false;
         }
 
-        if (config instanceof BooleanFeatureStrategy) {
-            Boolean value = ((BooleanFeatureStrategy) config).getValue();
-            return value != null && value;
+        FeatureEvaluator<FeatureConfiguration> evaluator = (FeatureEvaluator<FeatureConfiguration>) evaluatorFactory
+                .getEvaluator(config.getStrategy());
+
+        if (evaluator != null) {
+            return evaluator.evaluate(config, context);
         }
 
-        // For other strategies (JWTClaimFeatureStrategy, ScheduleFeatureStrategy, HTTPRequestFeatureStrategy),
-        // evaluation logic can be added here or delegated to specific evaluator components.
-        // Failing closed by default for unsupported strategies to prevent unintended access.
+        // Failing closed by default for unsupported strategies to prevent unintended
+        // access.
         return false;
     }
 }
