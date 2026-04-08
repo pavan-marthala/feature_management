@@ -33,6 +33,8 @@ tags:
     description: Feature management
   - name: Dashboard
     description: Dashboard statistics
+  - name: Workflow
+    description: Feature propagation workflows
 paths:
   /environments:
     post:
@@ -438,6 +440,113 @@ paths:
         404:
           description: Feature does not exist
 
+  /features/{id}/propagate:
+    post:
+      tags:
+        - Feature
+      summary: Propagate feature to next environment
+      description: |
+        Propagates the feature configuration to the next environment defined in the workflow. 
+        Creates a new feature record in the target environment.
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - in: query
+          name: workflowId
+          schema:
+            type: string
+            format: uuid
+          description: Optional workflow ID to use. If not provided, the default workflow for the feature's environment will be used.
+      responses:
+        200:
+          description: Feature propagated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    description: ID of the newly created feature in the target environment
+        400:
+          description: Bad request (e.g. no next stage defined)
+        404:
+          description: Feature or Workflow not found
+
+  /workflows:
+    get:
+      tags:
+        - Workflow
+      summary: Get all workflows
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/size'
+      responses:
+        200:
+          description: List of workflows
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowResponse'
+    post:
+      tags:
+        - Workflow
+      summary: Create a new workflow
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkflowRequest'
+      responses:
+        200:
+          description: Workflow created
+          content:
+            application/json:
+              schema:
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+
+  /workflows/{id}:
+    get:
+      tags:
+        - Workflow
+      summary: Get workflow details
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        200:
+          description: Workflow details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workflow'
+    patch:
+      tags:
+        - Workflow
+      summary: Update workflow
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkflowRequest'
+      responses:
+        204:
+          description: Workflow updated
+    delete:
+      tags:
+        - Workflow
+      summary: Delete workflow
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        204:
+          description: Workflow deleted
+
   /dashboard/stats:
     get:
       tags:
@@ -781,11 +890,16 @@ components:
           type: integer
           description: Entity tag for optimistic concurrency control
           example: 1
+        # environmentId:
+        #   type: string
+        #   format: uuid
+        #   description: ID of the environment this feature instance belongs to
       required:
         - name
         - configuration
         - owners
         - enabled
+        # - environmentId
     FeatureCreateRequest:
       type: object
       properties:
@@ -809,6 +923,89 @@ components:
         - configuration
         - owners
         - enabled
+
+    Workflow:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: "Production Pipeline"
+        stages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Stage'
+      required:
+        - name
+
+    WorkflowRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        stages:
+          type: array
+          items:
+            $ref: '#/components/schemas/StageRequest'
+      required:
+        - name
+
+    WorkflowResponse:
+      allOf:
+        - $ref: '#/components/schemas/Pagination'
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/Workflow'
+
+    Stage:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        environmentId:
+          type: string
+          format: uuid
+        environmentName:
+          type: string
+        orderIndex:
+          type: integer
+        type:
+          type: string
+          enum: [MANUAL, AUTOMATIC, SCHEDULED]
+        nextStageId:
+          type: string
+          format: uuid
+        scheduleExpression:
+          type: string
+          description: Cron expression or regex for scheduling
+      required:
+        - environmentId
+        - orderIndex
+        - type
+
+    StageRequest:
+      type: object
+      properties:
+        environmentId:
+          type: string
+          format: uuid
+        orderIndex:
+          type: integer
+        type:
+          type: string
+          enum: [MANUAL, AUTOMATIC, SCHEDULED]
+        scheduleExpression:
+          type: string
+      required:
+        - environmentId
+        - orderIndex
+        - type
     DashboardStats:
       type: object
       description: Dashboard statistics

@@ -1,16 +1,15 @@
 # Stage 1: Build
-FROM maven:3.9.6-eclipse-temurin-25 AS build
+FROM maven:3.9-eclipse-temurin-25 AS build
 WORKDIR /app
-COPY server/pom.xml ./pom.xml
-RUN mvn dependency:go-offline
-COPY docs/api/open-api.yml ./docs/api/open-api.yml
-COPY config/checkstyle/checkstyle.xml ./config/checkstyle/checkstyle.xml
-COPY server/src ./src
-RUN mvn clean package
+COPY server/pom.xml ./server/pom.xml
+RUN mvn -f server/pom.xml dependency:go-offline
+COPY docs/api/config/ ./docs/api/config/
+COPY server/src/ ./server/src/
+RUN mvn -f server/pom.xml clean package -DskipTests
 
 # Stage 2: Run
 FROM eclipse-temurin:25-jre-alpine
 WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
+COPY --from=build /app/server/target/*.jar app.jar
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]

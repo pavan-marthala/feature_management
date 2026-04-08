@@ -1,0 +1,28 @@
+# xdatabaseChangeLog:
+#   - changeSet:
+#       id: feature-workflow-update-1
+#       author: pavan
+#       changes:
+#         - addColumn:
+#             tableName: feature
+#             columns:
+#               - column:
+#                   name: environment_id
+#                   type: UUID
+#                   constraints:
+#                     nullable: true # For migration, will set to non-nullable after update
+#         - update:
+#             tableName: feature
+#             columns:
+#               - column:
+#                   name: environment_id
+#                   valueComputed: (SELECT environment_id FROM feature_environment_mapping WHERE feature_id = feature.id LIMIT 1)
+#         - dropUniqueConstraint:
+#             tableName: feature
+#             columnNames: name
+#         - addUniqueConstraint:
+#             tableName: feature
+#             columnNames: name, environment_id
+#             constraintName: uk_feature_name_env
+#         - dropTable:
+#             tableName: feature_environment_mapping

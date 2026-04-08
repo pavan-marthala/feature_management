@@ -1,0 +1,19 @@
+databaseChangeLog:
+  - changeSet:
+      id: workflow-1
+      author: pavan
+      changes:
+        - createTable:
+            tableName: workflow
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
