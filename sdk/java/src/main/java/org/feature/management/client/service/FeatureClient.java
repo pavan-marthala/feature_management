@@ -57,17 +57,21 @@ public class FeatureClient {
         });
     }
 
-    public Mono<Feature> fetchFeature(String identifier) {
-        return fetchFeature(identifier, IdType.NAME);
+    public Mono<Feature> fetchFeature(String identifier, String envId) {
+        return fetchFeature(identifier, IdType.NAME, envId);
     }
 
-    public Mono<Feature> fetchFeature(String identifier, IdType idType) {
+    public Mono<Feature> fetchFeature(String identifier, IdType idType, String envId) {
         return executeRequest(
                 webClient.get()
-                        .uri(uriBuilder -> uriBuilder
-                                .path(apiUrl + "/features/{id}")
-                                .queryParam("idType", idType.getValue())
-                                .build(identifier))
+                        .uri(uriBuilder -> {
+                            var builder = uriBuilder.path(apiUrl + "/features/{id}")
+                                    .queryParam("idType", idType.getValue());
+                            if (envId != null && !envId.isEmpty()) {
+                                builder.queryParam("envId", envId);
+                            }
+                            return builder.build(identifier);
+                        })
                         .retrieve(),
                 Feature.class,
                 "fetching feature details");

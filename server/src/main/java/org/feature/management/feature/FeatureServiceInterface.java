@@ -21,13 +21,13 @@ public interface FeatureServiceInterface {
 
     Mono<UUID> createFeature(FeatureCreateRequest featureRequest);
 
-    Mono<Feature> getById(String id, IdType idType);
+    Mono<Feature> getById(String id, IdType idType, UUID environmentId);
 
     Mono<Void> deleteById(UUID id);
 
     Flux<FeatureStrategyResponseInner> getAllFeatureStrategies();
 
-    Mono<Feature> getFeatureByName(String name);
+    Mono<Feature> getFeatureByNameAndEnvironmentId(String name, UUID environmentId);
 
     Mono<Void> updateFeature(UUID id, FeatureConfiguration configuration);
 

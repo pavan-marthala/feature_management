@@ -21,8 +21,10 @@ class FeatureMapperTest {
         UUID id = UUID.randomUUID();
         Instant now = Instant.now();
         BooleanFeatureStrategy config = new BooleanFeatureStrategy();
+        UUID envId = UUID.randomUUID();
         FeatureEntity entity = FeatureEntity.builder()
                 .id(id)
+                .environmentId(envId)
                 .name("test-feature")
                 .description("test description")
                 .enabled(true)
@@ -38,6 +40,7 @@ class FeatureMapperTest {
         assertThat(model).isNotNull();
         assertThat(model.getId()).isEqualTo(id);
         assertThat(model.getName()).isEqualTo("test-feature");
+        assertThat(model.getEnvironmentId()).isEqualTo(envId);
         assertThat(model.getEnabled()).isTrue();
         assertThat(model.getOwners()).containsExactly("admin");
         assertThat(model.getConfiguration()).isNotNull();
@@ -84,6 +87,7 @@ class FeatureMapperTest {
 
         assertThat(entity).isNotNull();
         assertThat(entity.getName()).isEqualTo("create-request");
+        assertThat(entity.getEnvironmentId()).isEqualTo(request.getEnvId());
         assertThat(entity.isEnabled()).isTrue();
         assertThat(entity.getOwners()).containsExactly("owner1");
     }

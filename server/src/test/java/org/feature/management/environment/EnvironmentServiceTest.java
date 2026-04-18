@@ -22,7 +22,6 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -32,16 +31,13 @@ class EnvironmentServiceTest {
     private EnvironmentRepository environmentRepository;
 
     @Mock
-    private FeatureEnvironmentMappingRepository mappingRepository;
-
-    @Mock
     private FeatureRepository featureRepository;
 
     private EnvironmentService environmentService;
 
     @BeforeEach
     void setUp() {
-        environmentService = new EnvironmentService(environmentRepository, mappingRepository, featureRepository);
+        environmentService = new EnvironmentService(environmentRepository, featureRepository);
     }
 
     @Test
@@ -231,20 +227,18 @@ class EnvironmentServiceTest {
         verify(environmentRepository).delete(entity);
     }
 
+    @Test
     void shouldGetFeaturesByEnvironmentId() {
         UUID envId = UUID.randomUUID();
         UUID featureId = UUID.randomUUID();
-
-        FeatureEnvironmentMappingEntity mappingEntity = new FeatureEnvironmentMappingEntity();
-        mappingEntity.setEnvironmentId(envId);
-        mappingEntity.setFeatureId(featureId);
 
         FeatureEntity featureEntity = new FeatureEntity();
         featureEntity.setId(featureId);
         featureEntity.setName("feature-1");
 
-        when(mappingRepository.findByEnvironmentId(envId)).thenReturn(Flux.just(mappingEntity));
-        when(featureRepository.findAllById(anyList())).thenReturn(Flux.just(featureEntity));
+        when(featureRepository.findByEnvironmentId(eq(envId), any(Pageable.class)))
+                .thenReturn(Flux.just(featureEntity));
+        when(featureRepository.countByEnvironmentId(envId)).thenReturn(Mono.just(1L));
 
         StepVerifier.create(environmentService.getFeaturesByEnvironmentId(envId, 0, 10))
                 .consumeNextWith(page -> {

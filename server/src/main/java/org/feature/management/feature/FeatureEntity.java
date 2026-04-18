@@ -27,6 +27,9 @@ public class FeatureEntity implements ETaggableEntity{
     @Id
     private UUID id;
 
+    @Column("environment_id")
+    private UUID environmentId;
+
     @Column("name")
     private String name;
 

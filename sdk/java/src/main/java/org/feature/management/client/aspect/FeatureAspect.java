@@ -4,7 +4,7 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
-import org.feature.management.client.annotation.FeatureEnabled;
+import org.feature.management.client.annotation.Feature;
 import org.feature.management.client.exception.FeatureManagementException;
 import org.feature.management.client.service.FeatureService;
 import reactor.core.publisher.Flux;
@@ -24,7 +24,7 @@ public class FeatureAspect {
     }
 
     @Around("@annotation(featureEnabled)")
-    public Object checkFeature(ProceedingJoinPoint joinPoint, FeatureEnabled featureEnabled) {
+    public Object checkFeature(ProceedingJoinPoint joinPoint, Feature featureEnabled) {
         if (!(joinPoint.getSignature() instanceof MethodSignature)) {
             throw new FeatureManagementException("FeatureEnabled annotation can only be used on methods", null);
         }
@@ -33,9 +33,10 @@ public class FeatureAspect {
         Class<?> returnType = signature.getReturnType();
 
         String featureName = featureEnabled.value();
+        String envId = featureEnabled.envId();
 
         if (Mono.class.isAssignableFrom(returnType)) {
-            return featureService.isEnabled(featureName)
+            return featureService.isEnabled(featureName, envId)
                     .flatMap(enabled -> {
                         if (enabled) {
                             try {
@@ -48,7 +49,7 @@ public class FeatureAspect {
                         }
                     });
         } else if (Flux.class.isAssignableFrom(returnType)) {
-            return featureService.isEnabled(featureName)
+            return featureService.isEnabled(featureName, envId)
                     .flatMapMany(enabled -> {
                         if (enabled) {
                             try {
@@ -65,11 +66,11 @@ public class FeatureAspect {
         // Only reactive types are supported.
         throw new FeatureManagementException(
                 "FeatureEnabled annotation is only supported on methods returning Mono or Flux. Method '" +
-                signature.getName() + "' returns " + returnType.getName(), null
-        );
+                        signature.getName() + "' returns " + returnType.getName(),
+                null);
     }
 
-    private Object executeDisabledLogic(ProceedingJoinPoint joinPoint, FeatureEnabled featureEnabled, Class<?> returnType) {
+    private Object executeDisabledLogic(ProceedingJoinPoint joinPoint, Feature featureEnabled, Class<?> returnType) {
         String fallbackMethodName = featureEnabled.fallbackMethod();
 
         if (!fallbackMethodName.isEmpty()) {
@@ -108,11 +109,14 @@ public class FeatureAspect {
         Object[] args = joinPoint.getArgs();
 
         try {
-            Method fallbackMethod = target.getClass().getDeclaredMethod(fallbackMethodName, signature.getParameterTypes());
+            Method fallbackMethod = target.getClass().getDeclaredMethod(fallbackMethodName,
+                    signature.getParameterTypes());
             fallbackMethod.setAccessible(true);
             return fallbackMethod.invoke(target, args);
         } catch (NoSuchMethodException e) {
-            throw new FeatureManagementException("Fallback method '" + fallbackMethodName + "' not found in class " + target.getClass().getName(), e);
+            throw new FeatureManagementException(
+                    "Fallback method '" + fallbackMethodName + "' not found in class " + target.getClass().getName(),
+                    e);
         } catch (Exception e) {
             throw new FeatureManagementException("Error invoking fallback method '" + fallbackMethodName + "'", e);
         }

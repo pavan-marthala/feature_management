@@ -18,9 +18,9 @@ public class FeatureService {
         this.contextExtractor = contextExtractor;
     }
 
-    public Mono<Boolean> isEnabled(String featureName) {
+    public Mono<Boolean> isEnabled(String featureName, String envId) {
         return Mono.zip(
-                featureFetcher.fetchFeature(featureName),
+                featureFetcher.fetchFeature(featureName, envId),
                 contextExtractor.extractContext()
         ).map(tuple -> evaluationManager.evaluate(tuple.getT1(), tuple.getT2()))
          // default to false if not found

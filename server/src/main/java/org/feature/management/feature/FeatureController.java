@@ -55,9 +55,11 @@ public class FeatureController {
     }
 
     @GetMapping("/{id}")
-    public Mono<Feature> getByFeatureId(@PathVariable("id") String id, @RequestParam(value = "idType", defaultValue = "ID") IdType idType) {
-        log.debug("Getting feature by ID: {}", id);
-        return featureService.getById(id, idType);
+    public Mono<Feature> getByFeatureId(@PathVariable("id") String id,
+            @RequestParam(value = "idType", defaultValue = "ID") IdType idType,
+            @RequestParam(value = "envId", required = false) UUID envId) {
+        log.debug("Getting feature by ID: {} with envId: {}", id, envId);
+        return featureService.getById(id, idType, envId);
     }
 
     @PostMapping("/{featureId}/owners/{owner}")
@@ -75,7 +77,8 @@ public class FeatureController {
     }
 
     @PatchMapping("/{id}")
-    public Mono<ResponseEntity<Void>> updateFeature(@PathVariable UUID id, @Valid @RequestBody FeatureConfiguration configuration) {
+    public Mono<ResponseEntity<Void>> updateFeature(@PathVariable UUID id,
+            @Valid @RequestBody FeatureConfiguration configuration) {
         log.debug("Updating feature by ID: {}", id);
         return featureService.updateFeature(id, configuration)
                 .thenReturn(ResponseEntity.status(HttpStatus.NO_CONTENT).build());

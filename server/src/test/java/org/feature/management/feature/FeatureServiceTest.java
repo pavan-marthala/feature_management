@@ -1,9 +1,7 @@
 package org.feature.management.feature;
 
 import org.feature.management.config.FeatureStrategyConfig;
-import org.feature.management.environment.FeatureEnvironmentMappingRepository;
 import org.feature.management.shared.exception.ResourceNotFoundException;
-import org.feature.management.models.Feature;
 import org.feature.management.models.FeatureCreateRequest;
 import org.feature.management.models.FeatureStrategyResponseInner;
 import org.feature.management.models.IdType;
@@ -32,14 +30,11 @@ class FeatureServiceTest {
     @Mock
     private FeatureStrategyConfig strategyConfig;
 
-    @Mock
-    private FeatureEnvironmentMappingRepository mappingRepository;
-
     private FeatureService featureService;
 
     @BeforeEach
     void setUp() {
-        featureService = new FeatureService(featureRepository, strategyConfig, mappingRepository);
+        featureService = new FeatureService(featureRepository, strategyConfig);
     }
 
     @Test
@@ -51,17 +46,15 @@ class FeatureServiceTest {
         UUID generatedId = UUID.randomUUID();
         entity.setId(generatedId);
 
-        when(featureRepository.existsByName("feature-1")).thenReturn(Mono.just(false));
+        when(featureRepository.existsByNameAndEnvironmentId("feature-1", model.getEnvId()))
+                .thenReturn(Mono.just(false));
         when(featureRepository.save(any(FeatureEntity.class))).thenReturn(Mono.just(entity));
-        when(mappingRepository.save(any()))
-                .thenReturn(Mono.just(new org.feature.management.environment.FeatureEnvironmentMappingEntity()));
 
         StepVerifier.create(featureService.createFeature(model))
                 .expectNext(generatedId)
                 .verifyComplete();
 
         verify(featureRepository).save(any(FeatureEntity.class));
-        verify(mappingRepository).save(any());
     }
 
     @Test
@@ -73,7 +66,7 @@ class FeatureServiceTest {
 
         when(featureRepository.findById(id)).thenReturn(Mono.just(entity));
 
-        StepVerifier.create(featureService.getById(id.toString(), IdType.ID))
+        StepVerifier.create(featureService.getById(id.toString(), IdType.ID, null))
                 .consumeNextWith(model -> {
                     assertThat(model.getName()).isEqualTo("feature-1");
                 })
@@ -86,9 +79,10 @@ class FeatureServiceTest {
         FeatureEntity entity = new FeatureEntity();
         entity.setName(name);
 
-        when(featureRepository.getByName(name)).thenReturn(Mono.just(entity));
+        UUID envId = UUID.randomUUID();
+        when(featureRepository.getByNameAndEnvironmentId(name, envId)).thenReturn(Mono.just(entity));
 
-        StepVerifier.create(featureService.getById(name, IdType.NAME))
+        StepVerifier.create(featureService.getById(name, IdType.NAME, envId))
                 .consumeNextWith(model -> {
                     assertThat(model.getName()).isEqualTo(name);
                 })
@@ -100,7 +94,7 @@ class FeatureServiceTest {
         UUID id = UUID.randomUUID();
         when(featureRepository.findById(id)).thenReturn(Mono.empty());
 
-        StepVerifier.create(featureService.getById(id.toString(), IdType.ID))
+        StepVerifier.create(featureService.getById(id.toString(), IdType.ID, null))
                 .expectError(ResourceNotFoundException.class)
                 .verify();
     }
@@ -136,7 +130,9 @@ class FeatureServiceTest {
         org.feature.management.models.FeatureCreateRequest model = new org.feature.management.models.FeatureCreateRequest();
         model.setName("existing-feature");
 
-        when(featureRepository.existsByName("existing-feature")).thenReturn(Mono.just(true));
+        model.setEnvId(UUID.randomUUID());
+        when(featureRepository.existsByNameAndEnvironmentId("existing-feature", model.getEnvId()))
+                .thenReturn(Mono.just(true));
 
         StepVerifier.create(featureService.createFeature(model))
                 .expectError(org.feature.management.shared.exception.FeatureException.class)
@@ -146,9 +142,10 @@ class FeatureServiceTest {
     @Test
     void shouldThrowExceptionWhenFeatureByNameNotFound() {
         String name = "non-existent";
-        when(featureRepository.getByName(name)).thenReturn(Mono.empty());
+        UUID envId = UUID.randomUUID();
+        when(featureRepository.getByNameAndEnvironmentId(name, envId)).thenReturn(Mono.empty());
 
-        StepVerifier.create(featureService.getById(name, IdType.NAME))
+        StepVerifier.create(featureService.getById(name, IdType.NAME, envId))
                 .expectError(ResourceNotFoundException.class)
                 .verify();
     }
@@ -224,9 +221,10 @@ class FeatureServiceTest {
         FeatureEntity entity = new FeatureEntity();
         entity.setName(name);
 
-        when(featureRepository.getByName(name)).thenReturn(Mono.just(entity));
+        UUID envId = UUID.randomUUID();
+        when(featureRepository.getByNameAndEnvironmentId(name, envId)).thenReturn(Mono.just(entity));
 
-        StepVerifier.create(featureService.getFeatureByName(name))
+        StepVerifier.create(featureService.getFeatureByNameAndEnvironmentId(name, envId))
                 .consumeNextWith(model -> {
                     assertThat(model.getName()).isEqualTo(name);
                 })

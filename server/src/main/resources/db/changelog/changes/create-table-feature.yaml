@@ -15,8 +15,6 @@ databaseChangeLog:
               - column:
                   name: name
                   type: VARCHAR(255)
-                  constraints:
-                    unique: true
               - column:
                   name: description
                   type: VARCHAR(255)
@@ -29,9 +27,11 @@ databaseChangeLog:
               - column:
                   name: owners
                   type: JSONB
-              #              - column:
-              #                  name: environment_id
-              #                  type: UUID
+              - column:
+                  name: environment_id
+                  type: UUID
+                  constraints:
+                    nullable: false
               - column:
                   name: configuration
                   type: JSONB
@@ -52,9 +52,13 @@ databaseChangeLog:
                   constraints:
                     nullable: false
 
-#        - addForeignKeyConstraint:
-#            baseTableName: feature
-#            baseColumnNames: environment_id
-#            referencedTableName: environment
-#            referencedColumnNames: id
-#            constraintName: fk_feature_environment
+        - addForeignKeyConstraint:
+            baseTableName: feature
+            baseColumnNames: environment_id
+            referencedTableName: environment
+            referencedColumnNames: id
+            constraintName: fk_feature_environment
+        - addUniqueConstraint:
+            tableName: feature
+            columnNames: name, environment_id
+            constraintName: uk_feature_name_env

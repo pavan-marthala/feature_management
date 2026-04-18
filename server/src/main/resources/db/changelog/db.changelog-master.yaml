@@ -4,12 +4,6 @@ databaseChangeLog:
   - include:
       file: db/changelog/changes/create-table-feature.yaml
   - include:
-      file: db/changelog/changes/create-table-feature-environment-mapping.yaml
-  - include:
       file: db/changelog/changes/create-table-workflow.yaml
   - include:
       file: db/changelog/changes/create-table-stage.yaml
-#   - include:
-#       file: db/changelog/changes/update-table-feature-for-workflow.yaml
-
- 

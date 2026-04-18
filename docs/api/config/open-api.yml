@@ -450,28 +450,77 @@ paths:
         Creates a new feature record in the target environment.
       parameters:
         - $ref: '#/components/parameters/Id'
-        - in: query
-          name: workflowId
-          schema:
-            type: string
-            format: uuid
-          description: Optional workflow ID to use. If not provided, the default workflow for the feature's environment will be used.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeaturePromotionRequest'
       responses:
         200:
           description: Feature propagated successfully
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    format: uuid
-                    description: ID of the newly created feature in the target environment
+                $ref: '#/components/schemas/FeaturePromotionResponse'
         400:
           description: Bad request (e.g. no next stage defined)
+        401:
+          description: Unauthorized - Authentication required
         404:
           description: Feature or Workflow not found
+
+  /features/{id}/propagate/preview:
+    post:
+      tags:
+        - Feature
+      summary: Preview feature propagation
+      description: |
+        Simulate the propagation to preview the configuration of the feature in the target environment.
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeaturePromotionRequest'
+      responses:
+        200:
+          description: Preview of propagated feature
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Feature'
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Feature or Workflow not found
+
+  /features/{id}/propagations:
+    get:
+      tags:
+        - Feature
+      summary: Get propagation history
+      description: |
+        Get the history/audit log of propagations for a feature.
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/size'
+      responses:
+        200:
+          description: List of propagation history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PropagationHistory'
+        401:
+          description: Unauthorized
+        404:
+          description: Feature not found
 
   /workflows:
     get:
@@ -529,6 +578,7 @@ paths:
       summary: Update workflow
       parameters:
         - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/IfMatch'
       requestBody:
         content:
           application/json:
@@ -537,15 +587,164 @@ paths:
       responses:
         204:
           description: Workflow updated
+        400:
+          description: Bad request
+        404:
+          description: Workflow not found
+        409:
+          description: Conflict
     delete:
       tags:
         - Workflow
       summary: Delete workflow
       parameters:
         - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/IfMatch'
       responses:
         204:
           description: Workflow deleted
+        404:
+          description: Workflow not found
+        409:
+          description: Conflict
+
+  /workflows/{id}/status:
+    patch:
+      tags:
+        - Workflow
+      summary: Activate or deactivate a workflow
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - $ref: '#/components/parameters/IfMatch'
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [DRAFT, ACTIVE, ARCHIVED]
+          required: true
+      responses:
+        204:
+          description: Workflow status updated
+        400:
+          description: Bad request
+        404:
+          description: Workflow not found
+
+  /workflows/{id}/stages:
+    get:
+      tags:
+        - Workflow
+      summary: List all stages in a workflow
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        200:
+          description: List of stages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Stage'
+        404:
+          description: Workflow not found
+    post:
+      tags:
+        - Workflow
+      summary: Add a new stage to a workflow
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StageRequest'
+      responses:
+        200:
+          description: Stage added
+          content:
+            application/json:
+              schema:
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+        400:
+          description: Bad request
+        404:
+          description: Workflow not found
+
+  /workflows/{id}/stages/{stageId}:
+    get:
+      tags:
+        - Workflow
+      summary: Get specific stage details
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - in: path
+          name: stageId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: Stage details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Stage'
+        404:
+          description: Stage not found
+    patch:
+      tags:
+        - Workflow
+      summary: Update a stage
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - in: path
+          name: stageId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StageRequest'
+      responses:
+        204:
+          description: Stage updated
+        400:
+          description: Bad request
+        404:
+          description: Stage not found
+        409:
+          description: Conflict
+    delete:
+      tags:
+        - Workflow
+      summary: Remove a stage from a workflow
+      parameters:
+        - $ref: '#/components/parameters/Id'
+        - in: path
+          name: stageId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/IfMatch'
+      responses:
+        204:
+          description: Stage deleted
+        404:
+          description: Stage not found
+        409:
+          description: Conflict
 
   /dashboard/stats:
     get:
@@ -890,16 +1089,16 @@ components:
           type: integer
           description: Entity tag for optimistic concurrency control
           example: 1
-        # environmentId:
-        #   type: string
-        #   format: uuid
-        #   description: ID of the environment this feature instance belongs to
+        environmentId:
+          type: string
+          format: uuid
+          description: ID of the environment this feature instance belongs to
       required:
         - name
         - configuration
         - owners
         - enabled
-        # - environmentId
+        - environmentId
     FeatureCreateRequest:
       type: object
       properties:
@@ -933,6 +1132,14 @@ components:
         name:
           type: string
           example: "Production Pipeline"
+        status:
+          type: string
+          enum: [DRAFT, ACTIVE, ARCHIVED]
+          default: DRAFT
+        etag:
+          type: integer
+          format: int64
+          description: Entity tag for optimistic concurrency control
         stages:
           type: array
           items:
@@ -984,6 +1191,10 @@ components:
         scheduleExpression:
           type: string
           description: Cron expression or regex for scheduling
+        etag:
+          type: integer
+          format: int64
+          description: Entity tag for optimistic concurrency control
       required:
         - environmentId
         - orderIndex
@@ -1006,6 +1217,63 @@ components:
         - environmentId
         - orderIndex
         - type
+
+    FeaturePromotionRequest:
+      type: object
+      properties:
+        workflowId:
+          type: string
+          format: uuid
+          description: Workflow to use for propagation. If omitted, uses the default workflow for the feature's environment.
+        targetEnvironmentId:
+          type: string
+          format: uuid
+          description: Optional target environment if skipping stages.
+        scheduledAt:
+          type: string
+          format: date-time
+          description: Optional schedule time for the promotion.
+
+    FeaturePromotionResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID of the newly created feature in the target environment
+        status:
+          type: string
+          enum: [SUCCESS, PENDING, FAILED]
+          description: The status of the promotion request
+
+    PropagationHistory:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        featureId:
+          type: string
+          format: uuid
+        sourceEnvironmentId:
+          type: string
+          format: uuid
+        targetEnvironmentId:
+          type: string
+          format: uuid
+        promotedBy:
+          type: string
+          description: User ID or system that triggered the promotion
+        status:
+          type: string
+          enum: [SUCCESS, PENDING, FAILED]
+        createdAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+
     DashboardStats:
       type: object
       description: Dashboard statistics

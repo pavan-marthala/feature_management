@@ -68,7 +68,7 @@ class FeatureControllerTest {
         feature.setId(id);
         feature.setName("feature-1");
 
-        when(featureService.getById(id.toString(), IdType.ID)).thenReturn(Mono.just(feature));
+        when(featureService.getById(id.toString(), IdType.ID, null)).thenReturn(Mono.just(feature));
 
         webTestClient.get()
                 .uri("/features/{id}?idType=ID", id)

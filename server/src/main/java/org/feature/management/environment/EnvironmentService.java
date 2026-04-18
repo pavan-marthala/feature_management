@@ -17,8 +17,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-
-import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -30,7 +28,6 @@ import java.util.function.Consumer;
 public class EnvironmentService implements EnvironmentServiceInterface {
 
     private final EnvironmentRepository environmentRepository;
-    private final FeatureEnvironmentMappingRepository mappingRepository;
     private final FeatureRepository featureRepository;
 
     @Override
@@ -38,19 +35,11 @@ public class EnvironmentService implements EnvironmentServiceInterface {
         log.debug("Getting features for environment: {}, page: {}, size: {}", environmentId, page, size);
         PageRequest pageRequest = PageRequest.of(page, size);
 
-        return mappingRepository.findByEnvironmentId(environmentId)
-                .map(FeatureEnvironmentMappingEntity::getFeatureId)
+        return featureRepository.findByEnvironmentId(environmentId, pageRequest)
+                .map(FeatureMapper.INSTANCE::toModel)
                 .collectList()
-                .flatMap(featureIds -> {
-                    if (featureIds.isEmpty()) {
-                        return Mono.just(new PageImpl<Feature>(Collections.emptyList(), pageRequest, 0));
-                    }
-                    return featureRepository.findAllById(featureIds)
-                            .map(FeatureMapper.INSTANCE::toModel)
-                            .collectList()
-                            .zipWith(Mono.just((long) featureIds.size()))
-                            .map(tuple -> new PageImpl<>(tuple.getT1(), pageRequest, tuple.getT2()));
-                });
+                .zipWith(featureRepository.countByEnvironmentId(environmentId))
+                .map(tuple -> new PageImpl<>(tuple.getT1(), pageRequest, tuple.getT2()));
     }
 
     @Override

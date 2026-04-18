@@ -3,8 +3,7 @@ package org.feature.management.feature;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.feature.management.config.FeatureStrategyConfig;
-import org.feature.management.environment.FeatureEnvironmentMappingEntity;
-import org.feature.management.environment.FeatureEnvironmentMappingRepository;
+
 import org.feature.management.models.Feature;
 import org.feature.management.models.FeatureConfiguration;
 import org.feature.management.models.FeatureCreateRequest;
@@ -33,7 +32,6 @@ public class FeatureService implements FeatureServiceInterface {
 
     private final FeatureRepository featureRepo;
     private final FeatureStrategyConfig featureStrategyConfig;
-    private final FeatureEnvironmentMappingRepository mappingRepo;
 
     @Override
     public Mono<Void> assignOwnerToFeature(UUID featureId, String owner) {
@@ -48,23 +46,25 @@ public class FeatureService implements FeatureServiceInterface {
     }
 
     @Override
-public Mono<Void> removeOwnerFromFeature(UUID featureId, String owner) {
-    log.debug("Removing owner {} from feature {}", owner, featureId);
-    return getFeatureEntity(featureId)
-            .flatMap(feature -> {
-                Set<String> owners = feature.getOwners();
-                return Mono.just(feature)
-                        .filter(_ -> owners != null && owners.contains(owner))
-                        .switchIfEmpty(Mono.error(new AccessDeniedException("Access denied. Only owner of the feature can remove the owner.")))
-                        .filter(_ -> owners.size() > 1)
-                        .switchIfEmpty(Mono.error(new EnvironmentException("Cannot remove the last owner from feature. At least one owner is required.")))
-                        .flatMap(_ -> {
-                            owners.remove(owner);
-                            return featureRepo.save(feature);
-                        });
-            })
-            .then();
-}
+    public Mono<Void> removeOwnerFromFeature(UUID featureId, String owner) {
+        log.debug("Removing owner {} from feature {}", owner, featureId);
+        return getFeatureEntity(featureId)
+                .flatMap(feature -> {
+                    Set<String> owners = feature.getOwners();
+                    return Mono.just(feature)
+                            .filter(_ -> owners != null && owners.contains(owner))
+                            .switchIfEmpty(Mono.error(new AccessDeniedException(
+                                    "Access denied. Only owner of the feature can remove the owner.")))
+                            .filter(_ -> owners.size() > 1)
+                            .switchIfEmpty(Mono.error(new EnvironmentException(
+                                    "Cannot remove the last owner from feature. At least one owner is required.")))
+                            .flatMap(_ -> {
+                                owners.remove(owner);
+                                return featureRepo.save(feature);
+                            });
+                })
+                .then();
+    }
 
     @Override
     public Mono<Page<Feature>> getAllFeatures(Integer page, Integer size, String sort) {
@@ -81,31 +81,29 @@ public Mono<Void> removeOwnerFromFeature(UUID featureId, String owner) {
     @Transactional
     public Mono<UUID> createFeature(FeatureCreateRequest featureRequest) {
         log.debug("Creating feature with request: {}", featureRequest);
-        return featureRepo.existsByName(featureRequest.getName())
+        return featureRepo.existsByNameAndEnvironmentId(featureRequest.getName(), featureRequest.getEnvId())
                 .filter(exists -> !exists)
-                .switchIfEmpty(Mono.error(new FeatureException("Feature with name " + featureRequest.getName() + " already exists")))
+                .switchIfEmpty(Mono.error(new FeatureException(
+                        "Feature with name " + featureRequest.getName() + " already exists in this environment")))
                 .then(Mono.defer(() -> Mono.just(FeatureMapper.INSTANCE.toEntity(featureRequest))))
                 .flatMap(featureRepo::save)
-                .flatMap(featureEntity -> {
-                    var mapping = FeatureEnvironmentMappingEntity.builder()
-                            .featureId(featureEntity.getId())
-                            .environmentId(featureRequest.getEnvId())
-                            .build();
-                    return mappingRepo.save(mapping)
-                            .thenReturn(featureEntity.getId());
-                });
+                .map(FeatureEntity::getId);
     }
 
     @Override
-    public Mono<Feature> getById(String id, IdType idType) {
+    public Mono<Feature> getById(String id, IdType idType, UUID environmentId) {
         log.debug("Fetching feature by id: {} with type: {}", id, idType);
         if (idType == IdType.ID) {
             return getFeatureEntity(UUID.fromString(id))
                     .map(FeatureMapper.INSTANCE::toModel);
         } else {
-            return featureRepo.getByName(id)
+            if (environmentId == null) {
+                return Mono.error(new IllegalArgumentException("environmentId is required when fetching by NAME"));
+            }
+            return featureRepo.getByNameAndEnvironmentId(id, environmentId)
                     .map(FeatureMapper.INSTANCE::toModel)
-                    .switchIfEmpty(Mono.error(new ResourceNotFoundException("Feature not found with name: " + id)));
+                    .switchIfEmpty(Mono.error(new ResourceNotFoundException(
+                            "Feature not found with name: " + id + " in environment: " + environmentId)));
         }
     }
 
@@ -124,9 +122,9 @@ public Mono<Void> removeOwnerFromFeature(UUID featureId, String owner) {
     }
 
     @Override
-    public Mono<Feature> getFeatureByName(String name) {
-        log.debug("Fetching feature by name: {}", name);
-        return featureRepo.getByName(name)
+    public Mono<Feature> getFeatureByNameAndEnvironmentId(String name, UUID environmentId) {
+        log.debug("Fetching feature by name: {} in environment: {}", name, environmentId);
+        return featureRepo.getByNameAndEnvironmentId(name, environmentId)
                 .map(FeatureMapper.INSTANCE::toModel);
     }
 

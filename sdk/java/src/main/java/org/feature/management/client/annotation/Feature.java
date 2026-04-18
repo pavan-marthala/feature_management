@@ -11,7 +11,7 @@ import java.lang.annotation.Target;
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface FeatureEnabled {
+public @interface Feature {
     /**
      * The name of the feature to check.
      */
@@ -23,4 +23,10 @@ public @interface FeatureEnabled {
      * the annotated method.
      */
     String fallbackMethod() default "";
+
+    /**
+     * The environment ID for the feature. If provided, the feature lookup
+     * will be scoped to this environment.
+     */
+    String envId() default "";
 }

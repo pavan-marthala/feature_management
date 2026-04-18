@@ -1,7 +1,6 @@
 package org.feature.management.shared.filters;
 
 import lombok.extern.slf4j.Slf4j;
-import org.feature.management.shared.exception.ResourceNotFoundException;
 import org.feature.management.shared.record.ETagRoute;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -33,7 +32,8 @@ public abstract class AbstractETagValidationFilter implements WebFilter {
 
         String ifMatchHeader = exchange.getRequest().getHeaders().getFirst("If-Match");
         if (ifMatchHeader == null) {
-            return writeError(exchange, HttpStatus.PRECONDITION_REQUIRED, "{\"error\": \"If-Match header is required\"}");
+            return writeError(exchange, HttpStatus.PRECONDITION_REQUIRED,
+                    "{\"error\": \"If-Match header is required\"}");
         }
 
         for (ETagRoute route : routes) {
@@ -45,7 +45,8 @@ public abstract class AbstractETagValidationFilter implements WebFilter {
         return chain.filter(exchange);
     }
 
-    private Mono<Void> validateETag(ETagRoute route, String path, String ifMatchHeader, ServerWebExchange exchange, WebFilterChain chain) {
+    private Mono<Void> validateETag(ETagRoute route, String path, String ifMatchHeader, ServerWebExchange exchange,
+            WebFilterChain chain) {
         try {
             Matcher matcher = route.pattern().matcher(path);
             if (!matcher.matches()) {
@@ -61,7 +62,8 @@ public abstract class AbstractETagValidationFilter implements WebFilter {
                         if (Objects.equals(actualEtag, ifMatch)) {
                             return chain.filter(exchange).then(Mono.just(entity));
                         }
-                        return writeError(exchange, HttpStatus.PRECONDITION_FAILED, "{\"error\": \"ETag does not match\"}")
+                        return writeError(exchange, HttpStatus.PRECONDITION_FAILED,
+                                "{\"error\": \"ETag does not match\"}")
                                 .then(Mono.just(entity));
                     })
                     .switchIfEmpty(Mono.defer(() -> chain.filter(exchange).then(Mono.empty())))
@@ -81,6 +83,7 @@ public abstract class AbstractETagValidationFilter implements WebFilter {
         exchange.getResponse().setStatusCode(status);
         exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
 
-        return exchange.getResponse().writeWith(Mono.just(exchange.getResponse().bufferFactory().wrap(body.getBytes())));
+        return exchange.getResponse()
+                .writeWith(Mono.just(exchange.getResponse().bufferFactory().wrap(body.getBytes())));
     }
 }
