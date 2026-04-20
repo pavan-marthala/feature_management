@@ -546,7 +546,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WorkflowRequest'
+              $ref: '#/components/schemas/WorkflowBase'
       responses:
         200:
           description: Workflow created
@@ -571,7 +571,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Workflow'
+                $ref: '#/components/schemas/WorkflowBase'
     patch:
       tags:
         - Workflow
@@ -645,7 +645,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Stage'
+                  $ref: '#/components/schemas/Workflow'
         404:
           description: Workflow not found
     post:
@@ -659,7 +659,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/StageRequest'
+              $ref: '#/components/schemas/Stage'
       responses:
         200:
           description: Stage added
@@ -1123,7 +1123,7 @@ components:
         - owners
         - enabled
 
-    Workflow:
+    WorkflowBase:
       type: object
       properties:
         id:
@@ -1136,16 +1136,21 @@ components:
           type: string
           enum: [DRAFT, ACTIVE, ARCHIVED]
           default: DRAFT
-        etag:
+        version:
           type: integer
           format: int64
-          description: Entity tag for optimistic concurrency control
-        stages:
-          type: array
-          items:
-            $ref: '#/components/schemas/Stage'
       required:
         - name
+
+    Workflow:
+      allOf:
+        - $ref: '#/components/schemas/WorkflowBase'
+        - type: object
+          properties:
+            stages:
+              type: array
+              items:
+                $ref: '#/components/schemas/Stage'
 
     WorkflowRequest:
       type: object
@@ -1155,7 +1160,7 @@ components:
         stages:
           type: array
           items:
-            $ref: '#/components/schemas/StageRequest'
+            $ref: '#/components/schemas/WorkflowBase'
       required:
         - name
 
@@ -1167,7 +1172,9 @@ components:
             items:
               type: array
               items:
-                $ref: '#/components/schemas/Workflow'
+                # Use the Base schema here to exclude 'stages'
+                $ref: '#/components/schemas/WorkflowBase'
+
 
     Stage:
       type: object
@@ -1191,10 +1198,13 @@ components:
         scheduleExpression:
           type: string
           description: Cron expression or regex for scheduling
-        etag:
+        version:
           type: integer
           format: int64
-          description: Entity tag for optimistic concurrency control
+          description: Entity version for optimistic concurrency control
+        approvalNeeded:
+          type: boolean
+          description: Indicates if manual approval is needed at this stage
       required:
         - environmentId
         - orderIndex
