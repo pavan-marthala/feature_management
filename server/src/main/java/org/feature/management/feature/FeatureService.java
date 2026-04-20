@@ -9,11 +9,15 @@ import org.feature.management.models.FeatureConfiguration;
 import org.feature.management.models.FeatureCreateRequest;
 import org.feature.management.models.FeatureStrategyResponseInner;
 import org.feature.management.models.IdType;
+import org.feature.management.models.PromotionStatus;
+import org.feature.management.models.PropagationHistory;
+import org.feature.management.propagation.*;
 import org.feature.management.shared.exception.AccessDeniedException;
 import org.feature.management.shared.exception.EnvironmentException;
 import org.feature.management.shared.exception.FeatureException;
 import org.feature.management.shared.exception.ResourceNotFoundException;
 import org.feature.management.shared.utils.SortHelper;
+import org.feature.management.workflow.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -22,8 +26,12 @@ import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Instant;
 import java.util.Set;
 import java.util.UUID;
+
+import org.feature.management.models.FeaturePromotionRequest;
+import org.feature.management.models.FeaturePromotionResponse;
 
 @Service
 @Slf4j
@@ -32,6 +40,9 @@ public class FeatureService implements FeatureServiceInterface {
 
     private final FeatureRepository featureRepo;
     private final FeatureStrategyConfig featureStrategyConfig;
+    private final WorkflowRepository workflowRepository;
+    private final StageRepository stageRepository;
+    private final PropagationHistoryRepository propagationHistoryRepo;
 
     @Override
     public Mono<Void> assignOwnerToFeature(UUID featureId, String owner) {
@@ -156,4 +167,99 @@ public class FeatureService implements FeatureServiceInterface {
         return featureRepo.findById(featureId)
                 .switchIfEmpty(Mono.error(new ResourceNotFoundException("Feature not found with id: " + featureId)));
     }
+
+    @Override
+    @Transactional
+    public Mono<FeaturePromotionResponse> propagateFeature(UUID id, FeaturePromotionRequest request) {
+        log.info("Propagating feature {} with request {}", id, request);
+        return getFeatureEntity(id)
+                .flatMap(sourceFeature -> resolveTargetEnvironment(sourceFeature, request)
+                        .flatMap(targetEnvId -> featureRepo
+                                .getByNameAndEnvironmentId(sourceFeature.getName(), targetEnvId)
+                                .flatMap(existingFeature -> {
+                                    existingFeature.setConfiguration(sourceFeature.getConfiguration());
+                                    existingFeature.setEnabled(sourceFeature.isEnabled());
+                                    return featureRepo.save(existingFeature);
+                                })
+                                .switchIfEmpty(Mono.defer(() -> {
+                                    FeatureEntity newFeature = FeatureEntity.builder()
+                                            .id(UUID.randomUUID())
+                                            .name(sourceFeature.getName())
+                                            .description(sourceFeature.getDescription())
+                                            .environmentId(targetEnvId)
+                                            .configuration(sourceFeature.getConfiguration())
+                                            .enabled(sourceFeature.isEnabled())
+                                            .owners(sourceFeature.getOwners())
+                                            .build();
+                                    return featureRepo.save(newFeature);
+                                }))
+                                .flatMap(savedFeature -> recordPropagationHistory(id, sourceFeature.getEnvironmentId(),
+                                        targetEnvId, PromotionStatus.SUCCESS)
+                                        .thenReturn(FeaturePromotionResponse.builder()
+                                                .id(savedFeature.getId())
+                                                .status(PromotionStatus.SUCCESS)
+                                                .build()))));
+    }
+
+    @Override
+    public Flux<PropagationHistory> getPropagationHistory(UUID id) {
+        return propagationHistoryRepo.findAllByFeatureIdOrderByCreatedAtDesc(id)
+                .map(entity -> PropagationHistory.builder()
+                        .id(entity.getId())
+                        .featureId(entity.getFeatureId())
+                        .sourceEnvironmentId(entity.getSourceEnvironmentId())
+                        .targetEnvironmentId(entity.getTargetEnvironmentId())
+                        .promotedBy(entity.getPromotedBy())
+                        .status(entity.getStatus())
+                        .build());
+    }
+
+    private Mono<UUID> resolveTargetEnvironment(FeatureEntity sourceFeature, FeaturePromotionRequest request) {
+        if (request.getTargetEnvironmentId() != null) {
+            return Mono.just(request.getTargetEnvironmentId());
+        }
+
+        UUID workflowId = request.getWorkflowId();
+
+        if (workflowId != null) {
+            return findNextStageEnvironment(workflowId, sourceFeature.getEnvironmentId());
+        }
+
+        return workflowRepository.findAll()
+                .filter(w -> "ACTIVE".equals(w.getStatus()))
+                .flatMap(w -> findNextStageEnvironment(w.getId(), sourceFeature.getEnvironmentId()))
+                .next()
+                .switchIfEmpty(Mono.error(new FeatureException(
+                        "No target environment specified and no active workflow found for propagation")));
+    }
+
+    private Mono<UUID> findNextStageEnvironment(UUID workflowId, UUID currentEnvId) {
+        return stageRepository.findAllByWorkflowIdOrderByOrderIndexAsc(workflowId)
+                .collectList()
+                .flatMap(stages -> {
+                    for (int i = 0; i < stages.size(); i++) {
+                        if (stages.get(i).getEnvironmentId().equals(currentEnvId)) {
+                            if (i + 1 < stages.size()) {
+                                return Mono.just(stages.get(i + 1).getEnvironmentId());
+                            }
+                        }
+                    }
+                    return Mono.error(new FeatureException(
+                            "Current environment is not in the specified workflow or is the last stage"));
+                });
+    }
+
+    private Mono<Void> recordPropagationHistory(UUID featureId, UUID sourceEnvId, UUID targetEnvId,
+            PromotionStatus status) {
+        PropagationHistoryEntity history = PropagationHistoryEntity.builder()
+                .id(UUID.randomUUID())
+                .featureId(featureId)
+                .sourceEnvironmentId(sourceEnvId)
+                .targetEnvironmentId(targetEnvId)
+                .status(status)
+                .completedAt(Instant.now())
+                .build();
+        return propagationHistoryRepo.save(history).then();
+    }
+
 }

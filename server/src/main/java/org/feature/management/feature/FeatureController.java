@@ -97,4 +97,16 @@ public class FeatureController {
         return featureService.deleteById(id)
                 .thenReturn(ResponseEntity.status(HttpStatus.NO_CONTENT).build());
     }
+
+    @PostMapping("/{id}/propagate")
+    public Mono<FeaturePromotionResponse> propagateFeature(
+            @PathVariable UUID id,
+            @Valid @RequestBody FeaturePromotionRequest request) {
+        return featureService.propagateFeature(id, request);
+    }
+
+    @GetMapping("/{id}/propagations")
+    public Flux<PropagationHistory> getPropagationHistory(@PathVariable UUID id) {
+        return featureService.getPropagationHistory(id);
+    }
 }

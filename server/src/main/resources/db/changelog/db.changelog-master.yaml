@@ -1,9 +1,11 @@
 databaseChangeLog:
-  - include:
-      file: db/changelog/changes/create-table-environment.yaml
-  - include:
-      file: db/changelog/changes/create-table-feature.yaml
-  - include:
-      file: db/changelog/changes/create-table-workflow.yaml
-  - include:
-      file: db/changelog/changes/create-table-stage.yaml
+    - include:
+          file: db/changelog/changes/create-table-environment.yaml
+    - include:
+          file: db/changelog/changes/create-table-feature.yaml
+    - include:
+          file: db/changelog/changes/create-table-workflow.yaml
+    - include:
+          file: db/changelog/changes/create-table-stage.yaml
+    - include:
+          file: db/changelog/changes/create-table-propagation-history.yaml

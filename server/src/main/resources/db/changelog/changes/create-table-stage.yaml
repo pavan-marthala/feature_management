@@ -44,6 +44,18 @@ databaseChangeLog:
               - column:
                   name: schedule_expression
                   type: VARCHAR(255)
+              - column:
+                  name: version
+                  type: BIGINT
+                  defaultValue: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: approval_needed
+                  type: BOOLEAN
+                  defaultValue: false
+                  constraints:
+                    nullable: false
         - addForeignKeyConstraint:
             baseTableName: stage
             baseColumnNames: next_stage_id

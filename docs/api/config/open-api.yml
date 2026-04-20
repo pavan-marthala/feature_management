@@ -1,9 +1,9 @@
 openapi: 3.0.3
 info:
-  title: 'Feature Management API specification'
+  title: "Feature Management API specification"
   description: |
     API for managing the feature flags, allowing controlled release and availability of features to users, allowing for more flexible and controlled deployment strategies.
-    
+
     Features can be enabled or disabled based on different strategies like,
     <ul>
     <li>Boolean flags (toggles)</li>
@@ -14,7 +14,7 @@ info:
     <li>HTTP header based</li>
     <li>HTTP request based</li>
     </ul>
-    
+
     This specification supports most of the strategies mentioned above and provides flexibility to define custom strategies for specific use cases.
 
   version: 1.0.0
@@ -48,7 +48,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EnvironmentRequest'
+              $ref: "#/components/schemas/EnvironmentRequest"
       responses:
         200:
           description: Environment created sucessfully
@@ -58,13 +58,13 @@ paths:
                 type: object
                 properties:
                   id:
-                    $ref: '#/components/schemas/Environment/properties/id'
+                    $ref: "#/components/schemas/Environment/properties/id"
         400:
           description: Bad request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
         401:
           description: Unauthorized - Authentication required
         403:
@@ -76,15 +76,15 @@ paths:
       description: |
         Returns all the environments supported by the system.
       parameters:
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/size'
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/size"
       responses:
         200:
           description: List of all environments
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EnvironmentResponse'
+                $ref: "#/components/schemas/EnvironmentResponse"
         401:
           description: Unauthorized - Authentication required
   /environments/{id}:
@@ -95,7 +95,7 @@ paths:
       description: |
         Returns environment details for environment
       parameters:
-        - $ref: '#/components/parameters/Id'
+        - $ref: "#/components/parameters/Id"
       responses:
         200:
           description: List of all environments
@@ -104,11 +104,11 @@ paths:
               description: Entity tag for resource version
               schema:
                 type: string
-                example: '1'
+                example: "1"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Environment'
+                $ref: "#/components/schemas/Environment"
         404:
           description: Environment does not exist
         401:
@@ -120,8 +120,8 @@ paths:
       description: |
         Update the existing environment name and description
       parameters:
-        - $ref: '#/components/parameters/Id'
-        - $ref: '#/components/parameters/IfMatch'
+        - $ref: "#/components/parameters/Id"
+        - $ref: "#/components/parameters/IfMatch"
       requestBody:
         description: |
           updates the environment name, description or both. Throws an error if the environment name already existing
@@ -129,7 +129,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EnvironmentRequest'
+              $ref: "#/components/schemas/EnvironmentRequest"
 
       responses:
         204:
@@ -151,8 +151,8 @@ paths:
       description: |
         Removes the environment.
       parameters:
-        - $ref: '#/components/parameters/Id'
-        - $ref: '#/components/parameters/IfMatch'
+        - $ref: "#/components/parameters/Id"
+        - $ref: "#/components/parameters/IfMatch"
       responses:
         204:
           description: Environment deleted successfully
@@ -172,7 +172,7 @@ paths:
       description: |
         Add a new owner to environment
       parameters:
-        - $ref: '#/components/parameters/Id'
+        - $ref: "#/components/parameters/Id"
       responses:
         204:
           description: Environment updated successfully
@@ -190,9 +190,9 @@ paths:
       description: |
         Remove owner to environment to manage the environment
       parameters:
-        - $ref: '#/components/parameters/Id'
-        - $ref: '#/components/parameters/OwnerId'
-        - $ref: '#/components/parameters/IfMatch'
+        - $ref: "#/components/parameters/Id"
+        - $ref: "#/components/parameters/OwnerId"
+        - $ref: "#/components/parameters/IfMatch"
       responses:
         204:
           description: Owner deleted successfully
@@ -212,16 +212,16 @@ paths:
       description: |
         Returns all features mapped to the specific environment.
       parameters:
-        - $ref: '#/components/parameters/Id'
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/size'
+        - $ref: "#/components/parameters/Id"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/size"
       responses:
         200:
           description: List of features for the environment
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FeatureResponse'
+                $ref: "#/components/schemas/FeatureResponse"
         401:
           description: Unauthorized - Authentication required
         404:
@@ -238,7 +238,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/FeatureCreateRequest'
+              $ref: "#/components/schemas/FeatureCreateRequest"
       responses:
         200:
           description: Feature created sucessfully
@@ -248,13 +248,13 @@ paths:
                 type: object
                 properties:
                   id:
-                    $ref: '#/components/schemas/Feature/properties/id'
+                    $ref: "#/components/schemas/Feature/properties/id"
         400:
           description: Bad request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
         401:
           description: Unauthorized - Authentication required
         403:
@@ -266,15 +266,15 @@ paths:
       description: |
         Returns all available features.
       parameters:
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/size'
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/size"
       responses:
         200:
           description: List of all features
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FeatureResponse'
+                $ref: "#/components/schemas/FeatureResponse"
         401:
           description: Unauthorized - Authentication required
   /features/strategies:
@@ -289,7 +289,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FeatureStrategyResponse'
+                $ref: "#/components/schemas/FeatureStrategyResponse"
 
         401:
           description: Unauthorized - Authentication required
@@ -301,8 +301,8 @@ paths:
       description: |
         Returns tje featire details.
       parameters:
-        - $ref: '#/components/parameters/Id'
-        - $ref: '#/components/parameters/IdType'
+        - $ref: "#/components/parameters/Id"
+        - $ref: "#/components/parameters/IdType"
       responses:
         200:
           description: Feature details
@@ -311,11 +311,11 @@ paths:
               description: Entity tag for resource version
               schema:
                 type: string
-                example: '1'
+                example: "1"
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Feature'
+                $ref: "#/components/schemas/Feature"
         401:
           description: Unauthorized - Authentication required
         404:
@@ -327,14 +327,14 @@ paths:
       description: |
         Updates the feature configuration
       parameters:
-        - $ref: '#/components/parameters/Id'
-        - $ref: '#/components/parameters/IfMatch'
+        - $ref: "#/components/parameters/Id"
+        - $ref: "#/components/parameters/IfMatch"
       requestBody:
         content:
           application/json:
             schema:
               oneOf:
-                - $ref: '#/components/schemas/BooleanFeatureStrategy'
+                - $ref: "#/components/schemas/BooleanFeatureStrategy"
             examples:
               BooleanFeature:
                 summary: Feature toggle with boolean
@@ -349,7 +349,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
         401:
           description: Unauthorized - Authentication required
         403:
@@ -365,8 +365,8 @@ paths:
       description: |
         Remove feature
       parameters:
-        - $ref: '#/components/parameters/Id'
-        - $ref: '#/components/parameters/IfMatch'
+        - $ref: "#/components/parameters/Id"
+        - $ref: "#/components/parameters/IfMatch"
       responses:
         204:
           description: Feature deleted successfully
@@ -386,7 +386,7 @@ paths:
       description: |
         Add a new owner to feature
       parameters:
-        - $ref: '#/components/parameters/Id'
+        - $ref: "#/components/parameters/Id"
       responses:
         204:
           description: Owner added successfully
@@ -404,8 +404,8 @@ paths:
       description: |
         Remove owner to manage the feature
       parameters:
-        - $ref: '#/components/parameters/Id'
-        - $ref: '#/components/parameters/OwnerId'
+        - $ref: "#/components/parameters/Id"
+        - $ref: "#/components/parameters/OwnerId"
       responses:
         204:
           description: Owner deleted successfully
@@ -423,7 +423,7 @@ paths:
       description: |
         Updates the feature status to enabled or disabled
       parameters:
-        - $ref: '#/components/parameters/Id'
+        - $ref: "#/components/parameters/Id"
         - in: query
           name: status
           schema:
@@ -449,51 +449,23 @@ paths:
         Propagates the feature configuration to the next environment defined in the workflow. 
         Creates a new feature record in the target environment.
       parameters:
-        - $ref: '#/components/parameters/Id'
+        - $ref: "#/components/parameters/Id"
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/FeaturePromotionRequest'
+              $ref: "#/components/schemas/FeaturePromotionRequest"
       responses:
         200:
           description: Feature propagated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FeaturePromotionResponse'
+                $ref: "#/components/schemas/FeaturePromotionResponse"
         400:
           description: Bad request (e.g. no next stage defined)
         401:
           description: Unauthorized - Authentication required
-        404:
-          description: Feature or Workflow not found
-
-  /features/{id}/propagate/preview:
-    post:
-      tags:
-        - Feature
-      summary: Preview feature propagation
-      description: |
-        Simulate the propagation to preview the configuration of the feature in the target environment.
-      parameters:
-        - $ref: '#/components/parameters/Id'
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/FeaturePromotionRequest'
-      responses:
-        200:
-          description: Preview of propagated feature
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Feature'
-        400:
-          description: Bad request
-        401:
-          description: Unauthorized
         404:
           description: Feature or Workflow not found
 
@@ -505,9 +477,9 @@ paths:
       description: |
         Get the history/audit log of propagations for a feature.
       parameters:
-        - $ref: '#/components/parameters/Id'
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/size'
+        - $ref: "#/components/parameters/Id"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/size"
       responses:
         200:
           description: List of propagation history
@@ -516,7 +488,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/PropagationHistory'
+                  $ref: "#/components/schemas/PropagationHistory"
         401:
           description: Unauthorized
         404:
@@ -528,15 +500,15 @@ paths:
         - Workflow
       summary: Get all workflows
       parameters:
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/size'
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/size"
       responses:
         200:
           description: List of workflows
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WorkflowResponse'
+                $ref: "#/components/schemas/WorkflowResponse"
     post:
       tags:
         - Workflow
@@ -546,7 +518,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WorkflowBase'
+              $ref: "#/components/schemas/WorkflowBase"
       responses:
         200:
           description: Workflow created
@@ -564,26 +536,26 @@ paths:
         - Workflow
       summary: Get workflow details
       parameters:
-        - $ref: '#/components/parameters/Id'
+        - $ref: "#/components/parameters/Id"
       responses:
         200:
           description: Workflow details
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WorkflowBase'
+                $ref: "#/components/schemas/WorkflowBase"
     patch:
       tags:
         - Workflow
       summary: Update workflow
       parameters:
-        - $ref: '#/components/parameters/Id'
-        - $ref: '#/components/parameters/IfMatch'
+        - $ref: "#/components/parameters/Id"
+        - $ref: "#/components/parameters/IfMatch"
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WorkflowRequest'
+              $ref: "#/components/schemas/WorkflowRequest"
       responses:
         204:
           description: Workflow updated
@@ -598,8 +570,8 @@ paths:
         - Workflow
       summary: Delete workflow
       parameters:
-        - $ref: '#/components/parameters/Id'
-        - $ref: '#/components/parameters/IfMatch'
+        - $ref: "#/components/parameters/Id"
+        - $ref: "#/components/parameters/IfMatch"
       responses:
         204:
           description: Workflow deleted
@@ -614,13 +586,12 @@ paths:
         - Workflow
       summary: Activate or deactivate a workflow
       parameters:
-        - $ref: '#/components/parameters/Id'
-        - $ref: '#/components/parameters/IfMatch'
+        - $ref: "#/components/parameters/Id"
+        - $ref: "#/components/parameters/IfMatch"
         - in: query
           name: status
           schema:
-            type: string
-            enum: [DRAFT, ACTIVE, ARCHIVED]
+            $ref: "#/components/schemas/WorkflowStatus"
           required: true
       responses:
         204:
@@ -636,7 +607,7 @@ paths:
         - Workflow
       summary: List all stages in a workflow
       parameters:
-        - $ref: '#/components/parameters/Id'
+        - $ref: "#/components/parameters/Id"
       responses:
         200:
           description: List of stages
@@ -645,7 +616,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Workflow'
+                  $ref: "#/components/schemas/Workflow"
         404:
           description: Workflow not found
     post:
@@ -653,13 +624,13 @@ paths:
         - Workflow
       summary: Add a new stage to a workflow
       parameters:
-        - $ref: '#/components/parameters/Id'
+        - $ref: "#/components/parameters/Id"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Stage'
+              $ref: "#/components/schemas/Stage"
       responses:
         200:
           description: Stage added
@@ -681,7 +652,7 @@ paths:
         - Workflow
       summary: Get specific stage details
       parameters:
-        - $ref: '#/components/parameters/Id'
+        - $ref: "#/components/parameters/Id"
         - in: path
           name: stageId
           required: true
@@ -694,7 +665,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Stage'
+                $ref: "#/components/schemas/Stage"
         404:
           description: Stage not found
     patch:
@@ -702,20 +673,20 @@ paths:
         - Workflow
       summary: Update a stage
       parameters:
-        - $ref: '#/components/parameters/Id'
+        - $ref: "#/components/parameters/Id"
         - in: path
           name: stageId
           required: true
           schema:
             type: string
             format: uuid
-        - $ref: '#/components/parameters/IfMatch'
+        - $ref: "#/components/parameters/IfMatch"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/StageRequest'
+              $ref: "#/components/schemas/StageRequest"
       responses:
         204:
           description: Stage updated
@@ -730,14 +701,14 @@ paths:
         - Workflow
       summary: Remove a stage from a workflow
       parameters:
-        - $ref: '#/components/parameters/Id'
+        - $ref: "#/components/parameters/Id"
         - in: path
           name: stageId
           required: true
           schema:
             type: string
             format: uuid
-        - $ref: '#/components/parameters/IfMatch'
+        - $ref: "#/components/parameters/IfMatch"
       responses:
         204:
           description: Stage deleted
@@ -759,7 +730,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DashboardStats'
+                $ref: "#/components/schemas/DashboardStats"
         401:
           description: Unauthorized - Authentication required
 
@@ -830,7 +801,7 @@ components:
         detailedErrors:
           type: array
           items:
-            $ref: '#/components/schemas/ErrorDetails'
+            $ref: "#/components/schemas/ErrorDetails"
 
       required:
         - httpMethod
@@ -861,11 +832,11 @@ components:
       type: object
       properties:
         name:
-          $ref: '#/components/schemas/Environment/properties/name'
+          $ref: "#/components/schemas/Environment/properties/name"
         description:
-          $ref: '#/components/schemas/Environment/properties/description'
+          $ref: "#/components/schemas/Environment/properties/description"
         owners:
-          $ref: '#/components/schemas/Environment/properties/owners'
+          $ref: "#/components/schemas/Environment/properties/owners"
       anyOf:
         - required: [ name ]
         - required: [ description ]
@@ -873,29 +844,29 @@ components:
 
     EnvironmentResponse:
       allOf:
-        - $ref: '#/components/schemas/Pagination'
+        - $ref: "#/components/schemas/Pagination"
         - type: object
           properties:
             items:
               type: array
               items:
-                $ref: '#/components/schemas/Environment'
+                $ref: "#/components/schemas/Environment"
     FeatureResponse:
       allOf:
-        - $ref: '#/components/schemas/Pagination'
+        - $ref: "#/components/schemas/Pagination"
         - type: object
           properties:
             items:
               type: array
               items:
-                $ref: '#/components/schemas/Feature'
+                $ref: "#/components/schemas/Feature"
     FeatureStrategyResponse:
       type: array
       items:
         type: object
         properties:
           name:
-            $ref: '#/components/schemas/FeatureStrategy'
+            $ref: "#/components/schemas/FeatureStrategy"
           description:
             type: string
             description: Strategy description
@@ -918,7 +889,7 @@ components:
           example: Development
           minLength: 2
           maxLength: 36
-          pattern: '^[a-zA-Z0-9]+$'
+          pattern: "^[a-zA-Z0-9]+$"
         description:
           type: string
           description: Environment description
@@ -927,7 +898,7 @@ components:
           type: array
           description: Owners who can control the environment
           items:
-            $ref: '#/components/schemas/Owner'
+            $ref: "#/components/schemas/Owner"
           minItems: 1
         etag:
           type: integer
@@ -1062,24 +1033,24 @@ components:
           example: NewFeature
           minLength: 2
           maxLength: 36
-          pattern: '^[a-zA-Z0-9]+$'
+          pattern: "^[a-zA-Z0-9]+$"
         description:
           type: string
           description: Feature description
           maxLength: 255
         configuration:
           oneOf:
-            - $ref: '#/components/schemas/BooleanFeatureStrategy'
-            - $ref: '#/components/schemas/JWTClaimFeatureStrategy'
-            - $ref: '#/components/schemas/HTTPRequestFeatureStrategy'
-            - $ref: '#/components/schemas/ScheduleFeatureStrategy'
+            - $ref: "#/components/schemas/BooleanFeatureStrategy"
+            - $ref: "#/components/schemas/JWTClaimFeatureStrategy"
+            - $ref: "#/components/schemas/HTTPRequestFeatureStrategy"
+            - $ref: "#/components/schemas/ScheduleFeatureStrategy"
           discriminator:
             propertyName: strategy
         owners:
           type: array
           description: Owners who can manage the feature
           items:
-            $ref: '#/components/schemas/Owner'
+            $ref: "#/components/schemas/Owner"
           minItems: 1
         enabled:
           type: boolean
@@ -1107,15 +1078,15 @@ components:
           format: uuid
           description: Environment ID to map the feature to
         name:
-          $ref: '#/components/schemas/Feature/properties/name'
+          $ref: "#/components/schemas/Feature/properties/name"
         description:
-          $ref: '#/components/schemas/Feature/properties/description'
+          $ref: "#/components/schemas/Feature/properties/description"
         configuration:
-          $ref: '#/components/schemas/Feature/properties/configuration'
+          $ref: "#/components/schemas/Feature/properties/configuration"
         owners:
-          $ref: '#/components/schemas/Feature/properties/owners'
+          $ref: "#/components/schemas/Feature/properties/owners"
         enabled:
-          $ref: '#/components/schemas/Feature/properties/enabled'
+          $ref: "#/components/schemas/Feature/properties/enabled"
       required:
         - envId
         - name
@@ -1123,6 +1094,14 @@ components:
         - owners
         - enabled
 
+    WorkflowStatus:
+      type: string
+      enum:
+        - DRAFT
+        - ACTIVE
+        - ARCHIVED
+      description: Workflow status
+      example: DRAFT
     WorkflowBase:
       type: object
       properties:
@@ -1133,9 +1112,7 @@ components:
           type: string
           example: "Production Pipeline"
         status:
-          type: string
-          enum: [DRAFT, ACTIVE, ARCHIVED]
-          default: DRAFT
+          $ref: "#/components/schemas/WorkflowStatus"
         version:
           type: integer
           format: int64
@@ -1144,13 +1121,13 @@ components:
 
     Workflow:
       allOf:
-        - $ref: '#/components/schemas/WorkflowBase'
+        - $ref: "#/components/schemas/WorkflowBase"
         - type: object
           properties:
             stages:
               type: array
               items:
-                $ref: '#/components/schemas/Stage'
+                $ref: "#/components/schemas/Stage"
 
     WorkflowRequest:
       type: object
@@ -1160,22 +1137,28 @@ components:
         stages:
           type: array
           items:
-            $ref: '#/components/schemas/WorkflowBase'
+            $ref: "#/components/schemas/WorkflowBase"
       required:
         - name
 
     WorkflowResponse:
       allOf:
-        - $ref: '#/components/schemas/Pagination'
+        - $ref: "#/components/schemas/Pagination"
         - type: object
           properties:
             items:
               type: array
               items:
                 # Use the Base schema here to exclude 'stages'
-                $ref: '#/components/schemas/WorkflowBase'
-
-
+                $ref: "#/components/schemas/WorkflowBase"
+    StageType:
+      type: string
+      enum:
+        - MANUAL
+        - AUTOMATIC
+        - SCHEDULED
+      description: Stage type
+      example: MANUAL
     Stage:
       type: object
       properties:
@@ -1190,8 +1173,7 @@ components:
         orderIndex:
           type: integer
         type:
-          type: string
-          enum: [MANUAL, AUTOMATIC, SCHEDULED]
+          $ref: "#/components/schemas/StageType"
         nextStageId:
           type: string
           format: uuid
@@ -1219,8 +1201,7 @@ components:
         orderIndex:
           type: integer
         type:
-          type: string
-          enum: [MANUAL, AUTOMATIC, SCHEDULED]
+          $ref: "#/components/schemas/StageType"
         scheduleExpression:
           type: string
       required:
@@ -1234,7 +1215,8 @@ components:
         workflowId:
           type: string
           format: uuid
-          description: Workflow to use for propagation. If omitted, uses the default workflow for the feature's environment.
+          description: Workflow to use for propagation. If omitted, uses the default
+            workflow for the feature's environment.
         targetEnvironmentId:
           type: string
           format: uuid
@@ -1243,7 +1225,14 @@ components:
           type: string
           format: date-time
           description: Optional schedule time for the promotion.
-
+    PromotionStatus:
+      type: string
+      enum:
+        - SUCCESS
+        - PENDING
+        - FAILED
+      description: The status of the promotion request
+      example: PENDING
     FeaturePromotionResponse:
       type: object
       properties:
@@ -1252,10 +1241,7 @@ components:
           format: uuid
           description: ID of the newly created feature in the target environment
         status:
-          type: string
-          enum: [SUCCESS, PENDING, FAILED]
-          description: The status of the promotion request
-
+          $ref: "#/components/schemas/PromotionStatus"
     PropagationHistory:
       type: object
       properties:
@@ -1275,8 +1261,7 @@ components:
           type: string
           description: User ID or system that triggered the promotion
         status:
-          type: string
-          enum: [SUCCESS, PENDING, FAILED]
+          $ref: "#/components/schemas/PromotionStatus"
         createdAt:
           type: string
           format: date-time
@@ -1368,4 +1353,4 @@ components:
       scheme: bearer
       bearerFormat: JWT
 security:
-  - BearerAuth: [ ]
+  - BearerAuth: []
