@@ -16,7 +16,6 @@ public interface WorkflowMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "version", ignore = true)
-    @Mapping(target = "status", ignore = true)
     WorkflowEntity toEntity(WorkflowRequest request);
 
     @Mapping(target = "version", source = "version")

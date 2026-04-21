@@ -5,9 +5,12 @@ A high-performance, reactive Feature Management platform designed for modern mic
 ## 🚀 Key Features
 
 - **Multi-Strategy Evaluation**: Support for Boolean, User-based, Role-based, Scheduled, and Request-based toggles.
+- **Workflow Management**: Define multi-stage propagation pipelines (Dev → Stage → Prod).
+- **Feature Propagation**: Promote features across environments with a single click.
 - **Reactive Architecture**: Built with Spring Boot WebFlux and R2DBC for non-blocking I/O.
-- **AOP-Powered Java SDK**: Seamlessly toggle features using annotations without cluttering business logic.
-- **Modern Dashboard**: Vue.js 3 dashboard for real-time feature control.
+- **AOP-Powered Java SDK**: Seamlessly toggle features using annotations with environment-aware resolution.
+- **Modern Dashboard**: Premium glassmorphism UI built with Vue.js 3 and Vite.
+- **Audit History**: Full visibility into promotion timelines and status changes.
 - **Optimistic Concurrency**: ETag-based versioning for safe updates.
 
 ## 📁 Monorepo Structure

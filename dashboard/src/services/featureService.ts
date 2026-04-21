@@ -5,6 +5,9 @@ import type {
   FeatureCreateRequest,
   StrategyInfo,
   IdType,
+  FeaturePromotionRequest,
+  FeaturePromotionResponse,
+  PropagationHistory,
 } from '@/types'
 
 export const featureService = {
@@ -64,5 +67,17 @@ export const featureService = {
     await api.delete(`/features/${id}/owners/${ownerId}`, {
       headers: { 'If-Match': etag },
     })
+  },
+
+  async propagateFeature(id: string, data: FeaturePromotionRequest): Promise<FeaturePromotionResponse> {
+    const response = await api.post<FeaturePromotionResponse>(`/features/${id}/propagate`, data)
+    return response.data
+  },
+
+  async getPropagationHistory(id: string, page = 0, size = 25): Promise<PropagationHistory[]> {
+    const { data } = await api.get<PropagationHistory[]>(`/features/${id}/propagations`, {
+      params: { page, size },
+    })
+    return data
   },
 }

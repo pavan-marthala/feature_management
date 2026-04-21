@@ -56,6 +56,21 @@ databaseChangeLog:
                   defaultValue: false
                   constraints:
                     nullable: false
+              - column:
+                  name: environment_name
+                  type: VARCHAR(255)
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  defaultValueComputed: NOW()
+                  constraints:
+                    nullable: false
         - addForeignKeyConstraint:
             baseTableName: stage
             baseColumnNames: next_stage_id

@@ -21,9 +21,17 @@ public class WorkflowController {
 
     @GetMapping
     public Mono<WorkflowResponse> getAllWorkflows(
-            @RequestParam(value = "page", defaultValue = "1") Integer page,
-            @RequestParam(value = "size", defaultValue = "25") Integer size) {
-        return workflowService.getAllWorkflows(page, size);
+            @RequestParam(value = "page", defaultValue = "0") Integer page,
+            @RequestParam(value = "size", defaultValue = "25") Integer size,
+            @RequestParam(value = "sort", required = false) String sort) {
+        return workflowService.getAllWorkflows(page, size,sort)
+                .map(workflowsPage -> WorkflowResponse.builder()
+                        .totalPages(workflowsPage.getTotalPages())
+                        .totalItems((int) workflowsPage.getTotalElements())
+                        .page(page)
+                        .size(size)
+                        .items(workflowsPage.getContent())
+                        .build());
     }
 
     @PostMapping
@@ -42,7 +50,7 @@ public class WorkflowController {
     public Mono<Void> updateWorkflow(
             @PathVariable UUID id,
             @RequestHeader("If-Match") Long version,
-            @Valid @RequestBody WorkflowRequest request) {
+            @Valid @RequestBody WorkflowBase request) {
         return workflowService.updateWorkflow(id, request, version);
     }
 
@@ -61,7 +69,7 @@ public class WorkflowController {
     }
 
     @GetMapping("/{id}/stages")
-    public Flux<Stage> getStagesForWorkflow(@PathVariable UUID id) {
+    public Mono<Workflow> getStagesForWorkflow(@PathVariable UUID id) {
         return workflowService.getStagesForWorkflow(id);
     }
 

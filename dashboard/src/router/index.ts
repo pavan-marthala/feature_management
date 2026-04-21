@@ -61,6 +61,30 @@ const router = createRouter({
       component: () => import('@/views/EnvironmentFormView.vue'),
       meta: { title: 'Edit Environment' },
     },
+    {
+      path: '/workflows',
+      name: 'workflows',
+      component: () => import('@/views/WorkflowsListView.vue'),
+      meta: { title: 'Workflows' },
+    },
+    {
+      path: '/workflows/create',
+      name: 'workflow-create',
+      component: () => import('@/views/WorkflowFormView.vue'),
+      meta: { title: 'Create Workflow' },
+    },
+    {
+      path: '/workflows/:id',
+      name: 'workflow-detail',
+      component: () => import('@/views/WorkflowDetailView.vue'),
+      meta: { title: 'Workflow Detail' },
+    },
+    {
+      path: '/workflows/:id/edit',
+      name: 'workflow-edit',
+      component: () => import('@/views/WorkflowFormView.vue'),
+      meta: { title: 'Edit Workflow' },
+    },
   ],
 })
 

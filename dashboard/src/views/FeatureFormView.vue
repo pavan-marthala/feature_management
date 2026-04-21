@@ -45,6 +45,11 @@ const httpPath = ref('')
 // Schedule strategy
 const cronExpression = ref('')
 
+// Inline Environment Creation
+const showInlineEnvForm = ref(false)
+const inlineEnvName = ref('')
+const inlineEnvDesc = ref('')
+
 const submitting = ref(false)
 const errors = ref<Record<string, string>>({})
 
@@ -140,6 +145,12 @@ function validate(): boolean {
     }
   }
 
+  if (showInlineEnvForm.value) {
+    if (!inlineEnvName.value || inlineEnvName.value.length < 2) {
+      errors.value.inlineEnvName = 'Environment name must be at least 2 characters'
+    }
+  }
+
   return Object.keys(errors.value).length === 0
 }
 
@@ -179,6 +190,20 @@ async function handleSubmit() {
   submitting.value = true
 
   try {
+    let envId = selectedEnvId.value
+
+    if (!isEdit.value && showInlineEnvForm.value) {
+      const envResult = await environmentStore.createEnvironment({
+        name: inlineEnvName.value,
+        description: inlineEnvDesc.value || undefined
+      })
+      if (envResult?.id) {
+        envId = envResult.id
+      } else {
+        throw new Error('Failed to create environment inline')
+      }
+    }
+
     if (isEdit.value) {
       // Send only the edited configuration, not the full object
       const data = buildConfiguration() as any
@@ -189,7 +214,7 @@ async function handleSubmit() {
       const payload: FeatureCreateRequest = {
         name: name.value,
         description: description.value || undefined,
-        envId: selectedEnvId.value,
+        envId: envId,
         configuration: buildConfiguration(),
         owners: owners.value.length ? owners.value : undefined,
         enabled: enabled.value,
@@ -202,8 +227,8 @@ async function handleSubmit() {
         router.push('/features')
       }
     }
-  } catch {
-    // Error toast already handled in store
+  } catch (err) {
+    console.error('Submit failed', err)
   } finally {
     submitting.value = false
   }
@@ -265,22 +290,71 @@ function removeJwtCustom(idx: number) { jwtCustomClaims.value.splice(idx, 1) }
 
         <div class="form-group" v-if="!isEdit">
           <label class="form-label" for="env-select">Environment *</label>
-          <select 
-            id="env-select" 
-            v-model="selectedEnvId" 
-            class="form-input form-select"
-            :class="{ 'form-input--error': errors.envId }"
-          >
-            <option value="" disabled>Select an environment...</option>
-            <option 
-              v-for="env in environmentStore.environments" 
-              :key="env.id" 
-              :value="env.id"
-            >
-              {{ env.name }}
-            </option>
-          </select>
-          <span v-if="errors.envId" class="form-error">{{ errors.envId }}</span>
+          
+          <!-- Empty State -->
+          <div v-if="!environmentStore.loading && environmentStore.environments.length === 0 && !showInlineEnvForm" class="empty-env-state">
+            <div class="empty-env-msg">
+              <span>No environments found</span>
+              <p>You need at least one environment to create a feature.</p>
+            </div>
+            <button type="button" class="btn btn--primary btn--sm" @click="showInlineEnvForm = true">
+              <Plus :size="16" /> Create Environment
+            </button>
+          </div>
+
+          <!-- Inline Creation Form -->
+          <div v-else-if="showInlineEnvForm" class="inline-form animate-fadeIn">
+            <div class="inline-form__header">
+              <span class="inline-form__title">New Environment</span>
+              <button type="button" class="inline-toggle" @click="showInlineEnvForm = false" v-if="environmentStore.environments.length > 0">
+                Cancel
+              </button>
+            </div>
+            <div class="form-group">
+              <input
+                v-model="inlineEnvName"
+                type="text"
+                class="form-input"
+                :class="{ 'form-input--error': errors.inlineEnvName }"
+                placeholder="Environment name (e.g. Production)"
+              />
+              <span v-if="errors.inlineEnvName" class="form-error">{{ errors.inlineEnvName }}</span>
+            </div>
+            <div class="form-group">
+              <input
+                v-model="inlineEnvDesc"
+                type="text"
+                class="form-input"
+                placeholder="Description (optional)"
+              />
+            </div>
+            <p class="inline-form__hint">This environment will be created along with your feature.</p>
+          </div>
+
+          <!-- Selection Dropdown -->
+          <template v-else>
+            <div class="selection-row">
+              <select 
+                id="env-select" 
+                v-model="selectedEnvId" 
+                class="form-input form-select"
+                :class="{ 'form-input--error': errors.envId }"
+              >
+                <option value="" disabled>Select an environment...</option>
+                <option 
+                  v-for="env in environmentStore.environments" 
+                  :key="env.id" 
+                  :value="env.id"
+                >
+                  {{ env.name }}
+                </option>
+              </select>
+              <button type="button" class="btn btn--ghost btn--icon" title="Create New Environment" @click="showInlineEnvForm = true">
+                <Plus :size="18" />
+              </button>
+            </div>
+            <span v-if="errors.envId" class="form-error">{{ errors.envId }}</span>
+          </template>
         </div>
 
         <div class="form-group" v-if="!isEdit">
@@ -543,6 +617,98 @@ function removeJwtCustom(idx: number) { jwtCustomClaims.value.splice(idx, 1) }
   flex-direction: row;
   align-items: center;
   gap: 12px;
+}
+
+.label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.inline-toggle {
+  background: none;
+  border: none;
+  color: var(--accent-cyan);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.inline-toggle:hover {
+  text-decoration: underline;
+}
+
+.inline-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: var(--radius-lg);
+  border: 1px dashed var(--glass-border);
+  margin-top: 4px;
+}
+
+.inline-form__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.inline-form__title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent-cyan);
+}
+
+.inline-form__hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.empty-env-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-lg);
+  border: 1px dashed var(--glass-border);
+  text-align: center;
+}
+
+.empty-env-msg span {
+  display: block;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.empty-env-msg p {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.selection-row {
+  display: flex;
+  gap: 8px;
+}
+
+.selection-row select {
+  flex: 1;
+}
+
+.btn--icon {
+  padding: 0;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .form-label {

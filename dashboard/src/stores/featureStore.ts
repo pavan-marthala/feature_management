@@ -1,6 +1,15 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { Feature, FeatureResponse, StrategyInfo, FeatureCreateRequest, FeatureStrategyType, Pagination } from '@/types'
+import type { 
+  Feature, 
+  FeatureResponse, 
+  StrategyInfo, 
+  FeatureCreateRequest, 
+  FeatureStrategyType, 
+  Pagination,
+  PropagationHistory,
+  FeaturePromotionRequest,
+} from '@/types'
 import { featureService } from '@/services/featureService'
 import { useUiStore } from './uiStore'
 
@@ -10,6 +19,7 @@ export const useFeatureStore = defineStore('feature', () => {
   const selectedFeature = ref<Feature | null>(null)
   const selectedEtag = ref<number>(0)
   const strategies = ref<StrategyInfo[]>([])
+  const propagationHistory = ref<PropagationHistory[]>([])
   const pagination = ref<Pagination>({ page: 0, size: 25, totalItems: 0, totalPages: 0 })
   const loading = ref(false)
   const error = ref<string | null>(null)
@@ -201,9 +211,40 @@ export const useFeatureStore = defineStore('feature', () => {
     }
   }
 
+  async function fetchPropagationHistory(id: string) {
+    try {
+      const history = await featureService.getPropagationHistory(id)
+      propagationHistory.value = history || []
+    } catch (err: unknown) {
+      console.error('Failed to fetch propagation history', err)
+    }
+  }
+
+  async function propagateFeature(id: string, data: FeaturePromotionRequest) {
+    loading.value = true
+    try {
+      const result = await featureService.propagateFeature(id, data)
+      const ui = useUiStore()
+      ui.addToast('Feature promotion triggered successfully', 'success')
+      await fetchFeature(id) // Refresh feature status
+      await fetchPropagationHistory(id) // Refresh history
+      return result
+    } catch (err: unknown) {
+      const msg = (err && typeof err === 'object' && 'errorMessage' in err) 
+        ? String((err as Record<string, unknown>).errorMessage) 
+        : 'Failed to promote feature'
+      const ui = useUiStore()
+      ui.addToast(msg, 'error')
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   function clearSelectedFeature() {
     selectedFeature.value = null
     selectedEtag.value = 0
+    propagationHistory.value = []
   }
 
   return {
@@ -212,6 +253,7 @@ export const useFeatureStore = defineStore('feature', () => {
     selectedFeature,
     selectedEtag,
     strategies,
+    propagationHistory,
     pagination,
     loading,
     error,
@@ -230,6 +272,8 @@ export const useFeatureStore = defineStore('feature', () => {
     addOwnerToFeature,
     removeOwnerFromFeature,
     fetchStrategies,
+    fetchPropagationHistory,
+    propagateFeature,
     clearSelectedFeature,
   }
 })

@@ -7,11 +7,14 @@ import lombok.NoArgsConstructor;
 
 import org.feature.management.models.WorkflowStatus;
 import org.feature.management.shared.utils.ETaggableEntity;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.annotation.Version;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Data
@@ -33,6 +36,14 @@ public class WorkflowEntity implements ETaggableEntity {
     @Version
     @Column("version")
     private Long version;
+
+    @Column("created_at")
+    @CreatedDate
+    private Instant createdAt;
+
+    @Column("updated_at")
+    @LastModifiedDate
+    private Instant updatedAt;
 
     @Override
     public Long getEtag() {

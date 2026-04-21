@@ -11,6 +11,7 @@ import {
   PanelLeftOpen,
   ToggleLeft,
   Menu,
+  GitBranch,
 } from 'lucide-vue-next'
 
 const uiStore = useUiStore()
@@ -25,6 +26,7 @@ const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/features', label: 'Features', icon: Flag },
   { to: '/environments', label: 'Environments', icon: Layers },
+  { to: '/workflows', label: 'Workflows', icon: GitBranch },
 ]
 
 function isActive(path: string) {

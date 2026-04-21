@@ -7,11 +7,14 @@ import lombok.NoArgsConstructor;
 
 import org.feature.management.models.StageType;
 import org.feature.management.shared.utils.ETaggableEntity;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.annotation.Version;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Data
@@ -30,6 +33,9 @@ public class StageEntity implements ETaggableEntity {
     @Column("environment_id")
     private UUID environmentId;
 
+    @Column("environment_name")
+    private String environmentName;
+
     @Column("order_index")
     private Integer orderIndex;
 
@@ -44,6 +50,14 @@ public class StageEntity implements ETaggableEntity {
 
     @Column("approval_needed")
     private Boolean approvalNeeded;
+
+    @Column("created_at")
+    @CreatedDate
+    private Instant createdAt;
+
+    @Column("updated_at")
+    @LastModifiedDate
+    private Instant updatedAt;
 
     @Version
     @Column("version")

@@ -555,7 +555,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/WorkflowRequest"
+              $ref: "#/components/schemas/WorkflowBase"
       responses:
         204:
           description: Workflow updated

@@ -95,6 +95,7 @@ export interface Feature {
   configuration: FeatureConfiguration
   owners?: string[]
   enabled: boolean
+  envId: string
   etag: number
 }
 
@@ -160,3 +161,78 @@ export interface Toast {
 }
 
 export type IdType = 'ID' | 'NAME'
+
+
+/* ===== Workflow Types ===== */
+export type WorkflowStatus = 'DRAFT' | 'ACTIVE' | 'ARCHIVED'
+
+export interface WorkflowBase {
+  id?: string
+  name: string
+  status?: WorkflowStatus
+  version?: number
+}
+
+export interface Stage {
+  id?: string
+  environmentId: string
+  environmentName?: string
+  orderIndex: number
+  type: StageType
+  nextStageId?: string
+  scheduleExpression?: string
+  version?: number
+  approvalNeeded?: boolean
+}
+
+export type StageType = 'MANUAL' | 'AUTOMATIC' | 'SCHEDULED'
+
+export interface Workflow extends WorkflowBase {
+  stages: Stage[]
+}
+
+export interface WorkflowResponse extends Pagination {
+  items: WorkflowBase[]
+}
+
+export interface WorkflowCreateRequest {
+  name: string
+  status: WorkflowStatus
+}
+
+export interface WorkflowUpdateRequest {
+  name: string
+  status: WorkflowStatus
+}
+
+export interface StageRequest {
+  environmentId: string
+  orderIndex: number
+  type: StageType
+  scheduleExpression?: string
+}
+
+/* ===== Propagation & Promotion ===== */
+export type PromotionStatus = 'SUCCESS' | 'PENDING' | 'FAILED'
+
+export interface FeaturePromotionRequest {
+  workflowId?: string
+  targetEnvironmentId?: string
+  scheduledAt?: string
+}
+
+export interface FeaturePromotionResponse {
+  id: string
+  status: PromotionStatus
+}
+
+export interface PropagationHistory {
+  id: string
+  featureId: string
+  sourceEnvironmentId: string
+  targetEnvironmentId: string
+  promotedBy: string
+  status: PromotionStatus
+  createdAt: string
+  completedAt?: string
+}
