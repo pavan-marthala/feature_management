@@ -25,7 +25,8 @@ const route = useRoute()
 const router = useRouter()
 const workflowStore = useWorkflowStore()
 const environmentStore = useEnvironmentStore()
-const workflowId = computed(() => route.params.id as string)
+const workspaceId = computed(() => route.params.workspaceId as string)
+const workflowId = ref<string>('')
 
 // Stage Modal State
 const showStageModal = ref(false)
@@ -43,14 +44,20 @@ const draggingIndex = ref<number | null>(null)
 const localStages = ref<Stage[]>([])
 
 onMounted(async () => {
-  await fetchWorkflowData()
   await environmentStore.fetchEnvironments(0, 100)
+  await fetchWorkflowData()
 })
 
 async function fetchWorkflowData() {
-  const data = await workflowStore.fetchWorkflow(workflowId.value)
-  if (data) {
-    localStages.value = [...data.stages]
+  // Fetch all workflows and find the one for this workspace
+  await workflowStore.fetchWorkflows(0, 100)
+  const wsWorkflow = workflowStore.workflows.find((w: any) => w.workspaceId === workspaceId.value)
+  if (wsWorkflow?.id) {
+    workflowId.value = wsWorkflow.id
+    const data = await workflowStore.fetchWorkflow(wsWorkflow.id)
+    if (data) {
+      localStages.value = [...data.stages]
+    }
   }
 }
 
@@ -99,7 +106,7 @@ function openEditStage(stage: Stage) {
 }
 
 async function handleStageSubmit() {
-  if (!stageForm.value.environmentId) return
+  if (!stageForm.value.environmentId || !workflowId.value) return
   submittingStage.value = true
   try {
     if (editingStage.value) {
@@ -120,6 +127,7 @@ async function handleStageSubmit() {
 }
 
 async function deleteStage(stage: Stage) {
+  if (!workflowId.value) return
   if (confirm('Are you sure you want to remove this stage?')) {
     await workflowStore.deleteStage(workflowId.value, stage.id!, stage.version || 0)
     await fetchWorkflowData()
@@ -146,7 +154,7 @@ function onDragOver(event: DragEvent, index: number) {
 }
 
 async function onDrop() {
-  if (draggingIndex.value === null) return
+  if (draggingIndex.value === null || !workflowId.value) return
   
   // Persistence
   await workflowStore.reorderStages(workflowId.value, localStages.value)
@@ -158,9 +166,9 @@ async function onDrop() {
   <div class="workflow-detail-page">
     <!-- Header -->
     <div class="header-section">
-      <button class="back-btn" @click="router.push('/workflows')">
+      <button class="back-btn" @click="router.push(`/workspaces/${workspaceId}`)">
         <ArrowLeft :size="18" />
-        Back to Workflows
+        Back to Dashboard
       </button>
       
       <div v-if="workflow" class="header-content animate-fadeInUp">
@@ -178,10 +186,7 @@ async function onDrop() {
             </div>
           </div>
           <div class="header-actions">
-            <button class="btn btn--secondary" @click="router.push(`/workflows/${workflow.id}/edit`)">
-              <Pencil :size="18" />
-              Edit Metadata
-            </button>
+            <!-- Workflow editing is inline in workspace context -->
           </div>
         </div>
       </div>

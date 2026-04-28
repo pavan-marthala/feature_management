@@ -5,12 +5,9 @@ import org.feature.management.models.FeatureCreateRequest;
 import org.feature.management.shared.utils.DateMapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.factory.Mappers;
 
 @Mapper(componentModel = "spring", uses = DateMapper.class)
 public interface FeatureMapper {
-
-    FeatureMapper INSTANCE = Mappers.getMapper(FeatureMapper.class);
 
     @Mapping(target = "configuration", source = "configuration")
     @Mapping(target = "createdAt", ignore = true)

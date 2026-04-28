@@ -1,16 +1,16 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { 
-  Feature, 
-  FeatureResponse, 
-  StrategyInfo, 
-  FeatureCreateRequest, 
-  FeatureStrategyType, 
+import type {
+  Feature,
+  FeatureResponse,
+  StrategyInfo,
+  FeatureCreateRequest,
+  FeatureStrategyType,
   Pagination,
   PropagationHistory,
-  FeaturePromotionRequest,
 } from '@/types'
 import { featureService } from '@/services/featureService'
+import { workspaceService } from '@/services/workspaceService'
 import { useUiStore } from './uiStore'
 
 export const useFeatureStore = defineStore('feature', () => {
@@ -220,18 +220,42 @@ export const useFeatureStore = defineStore('feature', () => {
     }
   }
 
-  async function propagateFeature(id: string, data: FeaturePromotionRequest) {
+  async function fetchWorkspaceFeatures(workspaceId: string, page = 0, size = 25) {
+    loading.value = true
+    error.value = null
+    try {
+      const response: FeatureResponse = await workspaceService.getWorkspaceFeatures(workspaceId, page, size)
+      features.value = response.items || []
+      pagination.value = {
+        page: response.page,
+        size: response.size,
+        totalItems: response.totalItems,
+        totalPages: response.totalPages,
+      }
+    } catch (err: unknown) {
+      const msg = (err && typeof err === 'object' && 'errorMessage' in err)
+        ? String((err as Record<string, unknown>).errorMessage)
+        : 'Failed to fetch workspace features'
+      error.value = msg
+      const ui = useUiStore()
+      ui.addToast(msg, 'error')
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function propagateFeature(id: string) {
     loading.value = true
     try {
-      const result = await featureService.propagateFeature(id, data)
+      const result = await featureService.propagateFeature(id)
       const ui = useUiStore()
       ui.addToast('Feature promotion triggered successfully', 'success')
-      await fetchFeature(id) // Refresh feature status
-      await fetchPropagationHistory(id) // Refresh history
+      await fetchFeature(id)
+      await fetchPropagationHistory(id)
       return result
     } catch (err: unknown) {
-      const msg = (err && typeof err === 'object' && 'errorMessage' in err) 
-        ? String((err as Record<string, unknown>).errorMessage) 
+      const msg = (err && typeof err === 'object' && 'errorMessage' in err)
+        ? String((err as Record<string, unknown>).errorMessage)
         : 'Failed to promote feature'
       const ui = useUiStore()
       ui.addToast(msg, 'error')
@@ -264,6 +288,7 @@ export const useFeatureStore = defineStore('feature', () => {
     filteredFeatures,
     // Actions
     fetchFeatures,
+    fetchWorkspaceFeatures,
     fetchFeature,
     createFeature,
     updateFeature,

@@ -3,6 +3,7 @@ package org.feature.management.shared.exception;
 import lombok.extern.slf4j.Slf4j;
 import org.feature.management.models.ErrorDetails;
 import org.feature.management.models.Error;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -56,6 +57,19 @@ public class CustomExceptionHandler {
         error.setDetailedErrors(null);
 
         return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Error> handleDataIntegrityViolationException(DataIntegrityViolationException ex,
+            ServerWebExchange exchange) {
+        log.error("Data integrity violation exception occurred for request {} {}: {}",
+                exchange.getRequest().getMethod().name(), exchange.getRequest().getURI().getPath(), ex.getMessage());
+
+        Error error = createBaseError(exchange, HttpStatus.CONFLICT);
+        error.setErrorMessage(ex.getMessage());
+        error.setDetailedErrors(null);
+
+        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(EnvironmentException.class)

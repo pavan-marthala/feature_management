@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useFeatureStore } from '@/stores/featureStore'
 import SearchInput from '@/components/ui/SearchInput.vue'
 import ToggleSwitch from '@/components/ui/ToggleSwitch.vue'
@@ -20,11 +20,11 @@ import type { FeatureStrategyType } from '@/types'
 
 const featureStore = useFeatureStore()
 const router = useRouter()
+const route = useRoute()
+const workspaceId = route.params.workspaceId as string
 
 onMounted(async () => {
-  if (featureStore.features.length === 0 && !featureStore.loading) {
-    await featureStore.fetchFeatures(0, 25)
-  }
+  await featureStore.fetchWorkspaceFeatures(workspaceId, 0, 25)
   if (featureStore.strategies.length === 0) {
     await featureStore.fetchStrategies()
   }
@@ -47,7 +47,7 @@ function getStatusBadge(enabled: boolean) {
 }
 
 function onPageChange(page: number) {
-  featureStore.fetchFeatures(page, featureStore.pagination.size)
+  featureStore.fetchWorkspaceFeatures(workspaceId, page, featureStore.pagination.size)
 }
 
 // Watch is needed to handle the filtered list in the client
@@ -64,7 +64,7 @@ watch(() => featureStore.searchQuery, () => {
         <h1 class="features-page__title">Features</h1>
         <p class="features-page__subtitle">Manage your feature flags and rollout strategies</p>
       </div>
-      <button class="btn btn--primary" @click="router.push('/features/create')" id="create-feature-btn">
+      <button class="btn btn--primary" @click="router.push(`/workspaces/${workspaceId}/features/create`)" id="create-feature-btn">
         <Plus :size="18" />
         Create Feature
       </button>
@@ -129,7 +129,7 @@ watch(() => featureStore.searchQuery, () => {
         <button
           v-if="!featureStore.searchQuery && featureStore.statusFilter === 'all' && featureStore.strategyFilter === 'all'"
           class="btn btn--primary"
-          @click="router.push('/features/create')"
+          @click="router.push(`/workspaces/${workspaceId}/features/create`)"
         >
           <Plus :size="18" /> Create Feature
         </button>
@@ -155,7 +155,7 @@ watch(() => featureStore.searchQuery, () => {
               v-for="feature in featureStore.filteredFeatures"
               :key="feature.id"
               class="features-table__row"
-              @click="router.push(`/features/${feature.id}`)"
+              @click="router.push(`/workspaces/${workspaceId}/features/${feature.id}`)"
             >
               <td>
                 <span class="feature-name">
@@ -183,7 +183,7 @@ watch(() => featureStore.searchQuery, () => {
                   <button
                     class="action-btn"
                     title="Edit"
-                    @click="router.push(`/features/${feature.id}/edit`)"
+                    @click="router.push(`/workspaces/${workspaceId}/features/${feature.id}/edit`)"
                   >
                     <Pencil :size="16" />
                   </button>
@@ -208,7 +208,7 @@ watch(() => featureStore.searchQuery, () => {
           :key="feature.id"
           class="feature-card"
           hover
-          @click="router.push(`/features/${feature.id}`)"
+          @click="router.push(`/workspaces/${workspaceId}/features/${feature.id}`)"
         >
           <div class="feature-card__header">
             <h3 class="feature-card__name">{{ feature.name }}</h3>
@@ -232,7 +232,7 @@ watch(() => featureStore.searchQuery, () => {
             <div class="feature-card__actions">
               <button
                 class="btn btn--ghost btn--sm"
-                @click="router.push(`/features/${feature.id}/edit`)"
+                @click="router.push(`/workspaces/${workspaceId}/features/${feature.id}/edit`)"
               >
                 <Pencil :size="14" /> Edit
               </button>

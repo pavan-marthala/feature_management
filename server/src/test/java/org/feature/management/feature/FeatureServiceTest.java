@@ -44,10 +44,13 @@ class FeatureServiceTest {
 
     private FeatureService featureService;
 
+    @Mock
+    private FeatureMapper featureMapper;
+
     @BeforeEach
     void setUp() {
         featureService = new FeatureService(featureRepository, strategyConfig,
-                workflowRepository, stageRepository, propagationHistoryRepo);
+                workflowRepository, stageRepository, propagationHistoryRepo, featureMapper);
     }
 
     @Test

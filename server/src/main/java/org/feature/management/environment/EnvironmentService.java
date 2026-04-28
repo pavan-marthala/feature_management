@@ -29,6 +29,8 @@ public class EnvironmentService implements EnvironmentServiceInterface {
 
     private final EnvironmentRepository environmentRepository;
     private final FeatureRepository featureRepository;
+    private final FeatureMapper featureMapper;
+    private final EnvironmentMapper environmentMapper;
 
     @Override
     public Mono<Page<Feature>> getFeaturesByEnvironmentId(UUID environmentId, Integer page, Integer size) {
@@ -36,7 +38,7 @@ public class EnvironmentService implements EnvironmentServiceInterface {
         PageRequest pageRequest = PageRequest.of(page, size);
 
         return featureRepository.findByEnvironmentId(environmentId, pageRequest)
-                .map(FeatureMapper.INSTANCE::toModel)
+                .map(featureMapper::toModel)
                 .collectList()
                 .zipWith(featureRepository.countByEnvironmentId(environmentId))
                 .map(tuple -> new PageImpl<>(tuple.getT1(), pageRequest, tuple.getT2()));
@@ -82,7 +84,7 @@ public class EnvironmentService implements EnvironmentServiceInterface {
     @Override
     public Mono<UUID> createEnvironment(EnvironmentRequest env) {
         log.debug("Creating environment with name: {}", env.getName());
-        EnvironmentEntity entity = EnvironmentMapper.INSTANCE.toEntity(env);
+        EnvironmentEntity entity = environmentMapper.toEntity(env);
         return environmentRepository.save(entity)
                 .map(EnvironmentEntity::getId);
     }
@@ -112,7 +114,7 @@ public class EnvironmentService implements EnvironmentServiceInterface {
     public Mono<Environment> getById(UUID id) {
         log.debug("Getting environment with id: {}", id);
         return getEnvironmentEntity(id)
-                .map(EnvironmentMapper.INSTANCE::toModel);
+                .map(environmentMapper::toModel);
     }
 
     @Override
@@ -120,7 +122,7 @@ public class EnvironmentService implements EnvironmentServiceInterface {
         log.debug("Getting all environments with page: {} and size: {}", page, size);
         PageRequest pageRequest = PageRequest.of(page, size, SortHelper.buildSort(sort));
         return environmentRepository.findBy(pageRequest)
-                .map(EnvironmentMapper.INSTANCE::toModel)
+                .map(environmentMapper::toModel)
                 .collectList()
                 .zipWith(environmentRepository.count())
                 .map(tuple -> new PageImpl<>(tuple.getT1(), pageRequest, tuple.getT2()));

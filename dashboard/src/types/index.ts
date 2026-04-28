@@ -198,6 +198,7 @@ export interface WorkflowResponse extends Pagination {
 export interface WorkflowCreateRequest {
   name: string
   status: WorkflowStatus
+  workspaceId: string
 }
 
 export interface WorkflowUpdateRequest {
@@ -212,14 +213,31 @@ export interface StageRequest {
   scheduleExpression?: string
 }
 
+/* ===== Workspace ===== */
+export interface Workspace {
+  id: string
+  name: string
+  description?: string
+  etag: number
+}
+
+export interface WorkspaceRequest {
+  name: string
+  description?: string
+}
+
+export interface WorkspaceResponse extends Pagination {
+  items: Workspace[]
+}
+
+export interface WorkspaceSummary {
+  featureCount: number
+  environments: number
+  workflowStages: number
+}
+
 /* ===== Propagation & Promotion ===== */
 export type PromotionStatus = 'SUCCESS' | 'PENDING' | 'FAILED'
-
-export interface FeaturePromotionRequest {
-  workflowId?: string
-  targetEnvironmentId?: string
-  scheduledAt?: string
-}
 
 export interface FeaturePromotionResponse {
   id: string
@@ -228,7 +246,8 @@ export interface FeaturePromotionResponse {
 
 export interface PropagationHistory {
   id: string
-  featureId: string
+  sourceFeatureId: string
+  targetFeatureId?: string
   sourceEnvironmentId: string
   targetEnvironmentId: string
   promotedBy: string

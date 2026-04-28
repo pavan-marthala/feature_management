@@ -15,8 +15,9 @@ const featureStore = useFeatureStore()
 const environmentStore = useEnvironmentStore()
 const uiStore = useUiStore()
 
-const isEdit = computed(() => route.name === 'feature-edit')
+const isEdit = computed(() => route.name === 'workspace-feature-edit')
 const featureId = computed(() => route.params.id as string)
+const workspaceId = computed(() => route.params.workspaceId as string)
 
 // Form state
 const name = ref('')
@@ -209,7 +210,7 @@ async function handleSubmit() {
       const data = buildConfiguration() as any
       
       await featureStore.updateFeature(featureId.value, data, featureStore.selectedEtag)
-      router.push(`/features/${featureId.value}`)
+      router.push(`/workspaces/${workspaceId.value}/features/${featureId.value}`)
     } else {
       const payload: FeatureCreateRequest = {
         name: name.value,
@@ -222,9 +223,9 @@ async function handleSubmit() {
       const result = await featureStore.createFeature(payload)
       // Navigate using the returned id if available, otherwise fall back to list
       if (result?.id) {
-        router.push(`/features/${result.id}`)
+        router.push(`/workspaces/${workspaceId.value}/features/${result.id}`)
       } else {
-        router.push('/features')
+        router.push(`/workspaces/${workspaceId.value}/features`)
       }
     }
   } catch (err) {

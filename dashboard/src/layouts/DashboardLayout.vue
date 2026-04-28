@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
+import { ref, computed } from 'vue'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useUiStore } from '@/stores/uiStore'
+import { useWorkspaceStore } from '@/stores/workspaceStore'
 import ThemeSelector from '@/components/ui/ThemeSelector.vue'
 import {
   LayoutDashboard,
@@ -9,28 +10,52 @@ import {
   Layers,
   PanelLeftClose,
   PanelLeftOpen,
-  ToggleLeft,
   Menu,
   GitBranch,
+  FolderKanban,
+  ArrowLeft,
 } from 'lucide-vue-next'
 
 const uiStore = useUiStore()
+const workspaceStore = useWorkspaceStore()
 const route = useRoute()
+const router = useRouter()
 const mobileDrawerOpen = ref(false)
 
 function closeMobileDrawer() {
   mobileDrawerOpen.value = false
 }
 
-const navItems = [
-  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/features', label: 'Features', icon: Flag },
-  { to: '/environments', label: 'Environments', icon: Layers },
-  { to: '/workflows', label: 'Workflows', icon: GitBranch },
-]
+const workspaceId = computed(() => route.params.workspaceId as string | undefined)
 
-function isActive(path: string) {
-  return route.path.startsWith(path)
+const isInsideWorkspace = computed(() => !!workspaceId.value)
+
+const navItems = computed(() => {
+  if (isInsideWorkspace.value) {
+    const wsId = workspaceId.value
+    return [
+      { to: `/workspaces/${wsId}`, label: 'Dashboard', icon: LayoutDashboard, exact: true },
+      { to: `/workspaces/${wsId}/features`, label: 'Features', icon: Flag },
+      { to: `/workspaces/${wsId}/workflow`, label: 'Workflow', icon: GitBranch },
+      { to: '/environments', label: 'Environments', icon: Layers },
+    ]
+  }
+  return [
+    { to: '/workspaces', label: 'Workspaces', icon: FolderKanban },
+    { to: '/environments', label: 'Environments', icon: Layers },
+  ]
+})
+
+function isActive(item: { to: string; exact?: boolean }) {
+  if (item.exact) {
+    return route.path === item.to
+  }
+  return route.path.startsWith(item.to)
+}
+
+function goBackToWorkspaces() {
+  workspaceStore.clearSelection()
+  router.push('/workspaces')
 }
 </script>
 
@@ -77,9 +102,23 @@ function isActive(path: string) {
         </div>
       </div>
 
+      <!-- Workspace context indicator -->
+      <div v-if="isInsideWorkspace && !uiStore.sidebarCollapsed" class="sidebar__workspace-ctx">
+        <button class="sidebar__workspace-back" @click="goBackToWorkspaces" title="Back to workspaces">
+          <ArrowLeft :size="16" />
+          <span class="sidebar__workspace-name">{{ workspaceStore.selectedWorkspace?.name || 'Workspace' }}</span>
+        </button>
+      </div>
+      <div v-else-if="isInsideWorkspace && uiStore.sidebarCollapsed" class="sidebar__workspace-ctx">
+        <button class="sidebar__workspace-back sidebar__workspace-back--icon" @click="goBackToWorkspaces"
+          title="Back to workspaces">
+          <ArrowLeft :size="16" />
+        </button>
+      </div>
+
       <nav class="sidebar__nav">
         <RouterLink v-for="item in navItems" :key="item.to" :to="item.to" class="sidebar__link"
-          :class="{ 'sidebar__link--active': isActive(item.to) }"
+          :class="{ 'sidebar__link--active': isActive(item) }"
           :title="uiStore.sidebarCollapsed ? item.label : undefined" @click="closeMobileDrawer">
           <component :is="item.icon" :size="20" class="sidebar__link-icon" />
           <Transition name="fade">
@@ -87,7 +126,7 @@ function isActive(path: string) {
               {{ item.label }}
             </span>
           </Transition>
-          <div v-if="isActive(item.to)" class="sidebar__link-indicator"></div>
+          <div v-if="isActive(item)" class="sidebar__link-indicator"></div>
         </RouterLink>
       </nav>
 
@@ -218,6 +257,46 @@ function isActive(path: string) {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+/* Workspace context */
+.sidebar__workspace-ctx {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.sidebar__workspace-back {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  background: rgba(34, 211, 238, 0.06);
+  border: 1px solid rgba(34, 211, 238, 0.12);
+  color: var(--accent-cyan);
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: inherit;
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  transition: all var(--transition-fast);
+}
+
+.sidebar__workspace-back:hover {
+  background: rgba(34, 211, 238, 0.12);
+}
+
+.sidebar__workspace-back--icon {
+  justify-content: center;
+  padding: 8px;
+}
+
+.sidebar__workspace-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Nav */
@@ -366,6 +445,10 @@ function isActive(path: string) {
   .sidebar__toggle {
     display: none;
   }
+
+  .sidebar__workspace-name {
+    display: none;
+  }
 }
 
 @media (max-width: 640px) {
@@ -389,6 +472,10 @@ function isActive(path: string) {
 
   .sidebar__logo-text,
   .sidebar__link-label {
+    display: inline;
+  }
+
+  .sidebar__workspace-name {
     display: inline;
   }
 

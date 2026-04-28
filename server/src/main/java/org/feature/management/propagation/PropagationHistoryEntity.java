@@ -24,8 +24,11 @@ public class PropagationHistoryEntity {
     @Id
     private UUID id;
 
-    @Column("feature_id")
-    private UUID featureId;
+    @Column("source_feature_id")
+    private UUID sourceFeatureId;
+
+    @Column("target_feature_id")
+    private UUID targetFeatureId;
 
     @Column("source_environment_id")
     private UUID sourceEnvironmentId;

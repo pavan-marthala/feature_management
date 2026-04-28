@@ -7,5 +7,5 @@ import java.util.UUID;
 
 @Repository
 public interface PropagationHistoryRepository extends ReactiveCrudRepository<PropagationHistoryEntity, UUID> {
-    Flux<PropagationHistoryEntity> findAllByFeatureIdOrderByCreatedAtDesc(UUID featureId);
+    Flux<PropagationHistoryEntity> findAllBySourceFeatureIdOrderByCreatedAtDesc(UUID featureId);
 }

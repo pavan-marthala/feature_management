@@ -453,11 +453,7 @@ paths:
         Creates a new feature record in the target environment.
       parameters:
         - $ref: "#/components/parameters/Id"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/FeaturePromotionRequest"
+        - $ref: "#/components/parameters/scheduledAt"
       responses:
         200:
           description: Feature propagated successfully
@@ -1539,6 +1535,15 @@ components:
       description: Unique identifier
       schema:
         $ref: "#/components/schemas/IdType"
+    scheduledAt:
+      name: scheduledAt
+      in: query
+      required: false
+      description: Optional schedule time for the promotion.
+      schema:
+        type: string
+        format: date-time
+        example: "2023-10-27T10:00:00Z"
     OwnerId:
       name: ownerId
       in: path

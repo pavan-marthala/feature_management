@@ -5,7 +5,6 @@ import type {
   FeatureCreateRequest,
   StrategyInfo,
   IdType,
-  FeaturePromotionRequest,
   FeaturePromotionResponse,
   PropagationHistory,
 } from '@/types'
@@ -69,15 +68,14 @@ export const featureService = {
     })
   },
 
-  async propagateFeature(id: string, data: FeaturePromotionRequest): Promise<FeaturePromotionResponse> {
-    const response = await api.post<FeaturePromotionResponse>(`/features/${id}/propagate`, data)
+  async propagateFeature(id: string): Promise<FeaturePromotionResponse> {
+    const response = await api.post<FeaturePromotionResponse>(`/features/${id}/propagate`)
     return response.data
   },
 
-  async getPropagationHistory(id: string, page = 0, size = 25): Promise<PropagationHistory[]> {
-    const { data } = await api.get<PropagationHistory[]>(`/features/${id}/propagations`, {
-      params: { page, size },
-    })
+  async getPropagationHistory(id: string): Promise<PropagationHistory[]> {
+    const { data } = await api.get<PropagationHistory[]>(`/features/${id}/propagations`)
     return data
   },
 }
+

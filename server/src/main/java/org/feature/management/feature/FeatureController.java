@@ -34,9 +34,9 @@ public class FeatureController {
 
     @GetMapping
     public Mono<FeatureResponse> getAllFeatures(
-            @RequestParam(value = "page", defaultValue = "0") Integer page,
-            @RequestParam(value = "size", defaultValue = "25") Integer size,
-            @RequestParam(value = "sort", required = false) String sort) {
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "25") Integer size,
+            @RequestParam(required = false) String sort) {
         log.debug("Getting all features with pagination, page: {}, size: {}", page, size);
         return featureService.getAllFeatures(page, size, sort)
                 .map(featuresPage -> FeatureResponse.builder()
@@ -55,9 +55,9 @@ public class FeatureController {
     }
 
     @GetMapping("/{id}")
-    public Mono<Feature> getByFeatureId(@PathVariable("id") String id,
-            @RequestParam(value = "idType", defaultValue = "ID") IdType idType,
-            @RequestParam(value = "envId", required = false) UUID envId) {
+    public Mono<Feature> getByFeatureId(@PathVariable String id,
+            @RequestParam(defaultValue = "ID") IdType idType,
+            @RequestParam(required = false) UUID envId) {
         log.debug("Getting feature by ID: {} with envId: {}", id, envId);
         return featureService.getById(id, idType, envId);
     }
@@ -92,7 +92,7 @@ public class FeatureController {
     }
 
     @DeleteMapping("/{id}")
-    public Mono<ResponseEntity<Void>> deleteFeatureById(@PathVariable("id") UUID id) {
+    public Mono<ResponseEntity<Void>> deleteFeatureById(@PathVariable UUID id) {
         log.debug("Deleting feature by ID: {}", id);
         return featureService.deleteById(id)
                 .thenReturn(ResponseEntity.status(HttpStatus.NO_CONTENT).build());
@@ -100,9 +100,8 @@ public class FeatureController {
 
     @PostMapping("/{id}/propagate")
     public Mono<FeaturePromotionResponse> propagateFeature(
-            @PathVariable UUID id,
-            @Valid @RequestBody FeaturePromotionRequest request) {
-        return featureService.propagateFeature(id, request);
+            @PathVariable UUID id) {
+        return featureService.propagateFeature(id);
     }
 
     @GetMapping("/{id}/propagations")

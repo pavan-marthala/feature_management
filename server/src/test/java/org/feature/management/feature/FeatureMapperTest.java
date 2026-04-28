@@ -4,6 +4,7 @@ import org.feature.management.models.Feature;
 import org.feature.management.models.FeatureCreateRequest;
 import org.feature.management.models.BooleanFeatureStrategy;
 import org.junit.jupiter.api.Test;
+import org.mapstruct.factory.Mappers;
 
 import java.time.Instant;
 import java.util.List;
@@ -14,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class FeatureMapperTest {
 
-    private final FeatureMapper mapper = FeatureMapper.INSTANCE;
+    private final FeatureMapper mapper = Mappers.getMapper(FeatureMapper.class);
 
     @Test
     void shouldMapEntityToModel() {

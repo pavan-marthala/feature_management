@@ -3,6 +3,7 @@ package org.feature.management.environment;
 import org.feature.management.models.Environment;
 import org.feature.management.models.EnvironmentRequest;
 import org.junit.jupiter.api.Test;
+import org.mapstruct.factory.Mappers;
 
 import java.time.Instant;
 import java.util.List;
@@ -13,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class EnvironmentMapperTest {
 
-    private final EnvironmentMapper mapper = EnvironmentMapper.INSTANCE;
+    private final EnvironmentMapper mapper = Mappers.getMapper(EnvironmentMapper.class);
 
     @Test
     void shouldMapEntityToModel() {

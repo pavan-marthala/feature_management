@@ -51,6 +51,7 @@ const newOwnerName = ref('')
 const copied = ref(false)
 
 const featureId = computed(() => route.params.id as string)
+const workspaceId = computed(() => route.params.workspaceId as string)
 
 onMounted(async () => {
   await featureStore.fetchFeature(featureId.value, 'ID')
@@ -79,7 +80,7 @@ async function handleDelete() {
   if (!feature.value) return
   try {
     await featureStore.deleteFeature(feature.value.id, feature.value.etag)
-    router.push('/features')
+    router.push(`/workspaces/${workspaceId.value}/features`)
   } catch {
     // Toast already shown
   }
@@ -115,9 +116,7 @@ function copyId() {
 async function handlePromote() {
   if (!feature.value) return
   try {
-    // For now, we use a default workflow if available
-    const workflowId = workflowStore.workflows[0]?.id
-    await featureStore.propagateFeature(feature.value.id, { workflowId })
+    await featureStore.propagateFeature(feature.value.id)
   } catch (err) {
     console.error('Promotion failed', err)
   }
@@ -137,7 +136,7 @@ async function openHistory() {
 <template>
   <div class="detail-page">
     <!-- Back -->
-    <button class="back-btn" @click="router.push('/features')">
+    <button class="back-btn" @click="router.push(`/workspaces/${workspaceId}/features`)">
       <ArrowLeft :size="18" />
       Back to Features
     </button>
@@ -167,7 +166,7 @@ async function openHistory() {
           <button class="btn btn--ghost" @click="openHistory">
             <History :size="16" /> History
           </button>
-          <button class="btn btn--ghost" @click="router.push(`/features/${feature.id}/edit`)">
+          <button class="btn btn--ghost" @click="router.push(`/workspaces/${workspaceId}/features/${feature.id}/edit`)">
             <Pencil :size="16" /> Edit
           </button>
           <button class="btn btn--danger" @click="showDeleteModal = true">
@@ -197,7 +196,7 @@ async function openHistory() {
         />
         <div v-else class="no-workflow glass">
           <p>No propagation workflow assigned to this feature.</p>
-          <button class="btn btn--primary btn--sm" @click="router.push('/workflows')">Configure Workflows</button>
+          <button class="btn btn--primary btn--sm" @click="router.push(`/workspaces/${workspaceId}/workflow`)">Configure Workflow</button>
         </div>
       </GlassCard>
 

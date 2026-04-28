@@ -4,6 +4,7 @@ import org.feature.management.shared.exception.AccessDeniedException;
 import org.feature.management.shared.exception.EnvironmentException;
 import org.feature.management.shared.exception.ResourceNotFoundException;
 import org.feature.management.feature.FeatureEntity;
+import org.feature.management.feature.FeatureMapper;
 import org.feature.management.feature.FeatureRepository;
 import org.feature.management.models.EnvironmentRequest;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,6 +23,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -33,11 +35,18 @@ class EnvironmentServiceTest {
     @Mock
     private FeatureRepository featureRepository;
 
+    @Mock
+    private EnvironmentMapper environmentMapper;
+
+    @Mock
+    private FeatureMapper featureMapper;
+
     private EnvironmentService environmentService;
 
     @BeforeEach
     void setUp() {
-        environmentService = new EnvironmentService(environmentRepository, featureRepository);
+        environmentService = new EnvironmentService(environmentRepository, featureRepository, featureMapper,
+                environmentMapper);
     }
 
     @Test

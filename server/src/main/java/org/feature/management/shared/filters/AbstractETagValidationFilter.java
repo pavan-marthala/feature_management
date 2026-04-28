@@ -2,10 +2,10 @@ package org.feature.management.shared.filters;
 
 import lombok.extern.slf4j.Slf4j;
 import org.feature.management.shared.record.ETagRoute;
+import org.jspecify.annotations.NonNull;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.lang.NonNull;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
