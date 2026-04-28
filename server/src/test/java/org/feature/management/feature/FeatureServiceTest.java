@@ -2,9 +2,12 @@ package org.feature.management.feature;
 
 import org.feature.management.config.FeatureStrategyConfig;
 import org.feature.management.shared.exception.ResourceNotFoundException;
+import org.feature.management.workflow.StageRepository;
+import org.feature.management.workflow.WorkflowRepository;
 import org.feature.management.models.FeatureCreateRequest;
 import org.feature.management.models.FeatureStrategyResponseInner;
 import org.feature.management.models.IdType;
+import org.feature.management.propagation.PropagationHistoryRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,11 +33,21 @@ class FeatureServiceTest {
     @Mock
     private FeatureStrategyConfig strategyConfig;
 
+    @Mock
+    private WorkflowRepository workflowRepository;
+
+    @Mock
+    private StageRepository stageRepository;
+
+    @Mock
+    private PropagationHistoryRepository propagationHistoryRepo;
+
     private FeatureService featureService;
 
     @BeforeEach
     void setUp() {
-        featureService = new FeatureService(featureRepository, strategyConfig);
+        featureService = new FeatureService(featureRepository, strategyConfig,
+                workflowRepository, stageRepository, propagationHistoryRepo);
     }
 
     @Test

@@ -41,3 +41,19 @@ databaseChangeLog:
                   defaultValueComputed: NOW()
                   constraints:
                     nullable: false
+              - column:
+                  name: workspace_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            baseTableName: workflow
+            baseColumnNames: workspace_id
+            referencedTableName: workspace
+            referencedColumnNames: id
+            constraintName: fk_workflow_workspace_id
+        - addUniqueConstraint:
+            tableName: workflow
+            columnNames: workspace_id
+            constraintName: uk_workflow_workspace_id

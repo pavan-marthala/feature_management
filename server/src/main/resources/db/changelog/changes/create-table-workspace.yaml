@@ -1,0 +1,37 @@
+databaseChangeLog:
+  - changeSet:
+      id: workspace-1
+      author: pavan
+      changes:
+        - createTable:
+            tableName: workspace
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: VARCHAR(255)
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: modified_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+
+        - addUniqueConstraint:
+            tableName: workspace
+            columnNames: name
+            constraintName: uk_workspace_name

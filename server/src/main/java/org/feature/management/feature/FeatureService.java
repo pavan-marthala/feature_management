@@ -206,7 +206,7 @@ public class FeatureService implements FeatureServiceInterface {
         return propagationHistoryRepo.findAllByFeatureIdOrderByCreatedAtDesc(id)
                 .map(entity -> PropagationHistory.builder()
                         .id(entity.getId())
-                        .featureId(entity.getFeatureId())
+                        .sourceFeatureId(entity.getFeatureId())
                         .sourceEnvironmentId(entity.getSourceEnvironmentId())
                         .targetEnvironmentId(entity.getTargetEnvironmentId())
                         .promotedBy(entity.getPromotedBy())

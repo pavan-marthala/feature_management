@@ -12,34 +12,60 @@ databaseChangeLog:
                   constraints:
                     primaryKey: true
                     nullable: false
+
               - column:
-                  name: feature_id
+                  name: source_feature_id
                   type: UUID
                   constraints:
                     nullable: false
+
+              - column:
+                  name: target_feature_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+
               - column:
                   name: source_environment_id
                   type: UUID
                   constraints:
                     nullable: false
+
               - column:
                   name: target_environment_id
                   type: UUID
                   constraints:
                     nullable: false
+
               - column:
                   name: promoted_by
                   type: VARCHAR(255)
+
               - column:
                   name: status
                   type: VARCHAR(50)
                   constraints:
                     nullable: false
+
               - column:
                   name: created_at
                   type: TIMESTAMP
                   constraints:
                     nullable: false
+
               - column:
                   name: completed_at
                   type: TIMESTAMP
+        - addForeignKeyConstraint:
+            baseTableName: propagation_history
+            baseColumnNames: source_feature_id
+            referencedTableName: feature
+            referencedColumnNames: id
+            constraintName: fk_prop_source_feature
+
+        - addForeignKeyConstraint:
+            baseTableName: propagation_history
+            baseColumnNames: target_feature_id
+            referencedTableName: feature
+            referencedColumnNames: id
+            constraintName: fk_prop_target_feature

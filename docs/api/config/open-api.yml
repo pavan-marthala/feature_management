@@ -35,6 +35,9 @@ tags:
     description: Dashboard statistics
   - name: Workflow
     description: Feature propagation workflows
+  - name: Workspace
+    description: Workspace (project) management APIs
+
 paths:
   /environments:
     post:
@@ -544,7 +547,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WorkflowBase"
-    patch:
+    put:
       tags:
         - Workflow
       summary: Update workflow
@@ -600,8 +603,6 @@ paths:
           description: Bad request
         404:
           description: Workflow not found
-
-  /workflows/{id}/stages:
     get:
       tags:
         - Workflow
@@ -668,7 +669,7 @@ paths:
                 $ref: "#/components/schemas/Stage"
         404:
           description: Stage not found
-    patch:
+    put:
       tags:
         - Workflow
       summary: Update a stage
@@ -716,6 +717,154 @@ paths:
           description: Stage not found
         409:
           description: Conflict
+
+  /workspaces:
+    post:
+      tags:
+        - Workspace
+      summary: Create a new workspace
+      operationId: createWorkspace
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WorkspaceRequest"
+      responses:
+        "201":
+          description: Workspace created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workspace/properties/id"
+        "409":
+          description: Workspace with same name already exists
+    get:
+      tags:
+        - Workspace
+      summary: Get all workspaces
+      operationId: getWorkspaces
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 25
+      responses:
+        "200":
+          description: List of workspaces
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkspaceResponse"
+
+  /workspaces/{id}:
+    delete:
+      tags:
+        - Workspace
+      summary: Delete a workspace
+      operationId: deleteWorkspace
+      parameters:
+        - $ref: "#/components/parameters/Id"
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        204:
+          description: Workspace deleted successfully
+        403:
+          description: Cannot delete workspace with features or environments
+        404:
+          description: Workspace not found
+        409:
+          description: Concurrency conflict
+    get:
+      tags:
+        - Workspace
+      summary: Get a workspace by ID
+      operationId: getWorkspaceById
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Workspace details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workspace"
+        "404":
+          description: Workspace not found
+    put:
+      tags:
+        - Workspace
+      summary: Update workspace
+      operationId: updateWorkspace
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WorkspaceRequest"
+      responses:
+        "200":
+          description: Workspace updated
+        "404":
+          description: Workspace not found
+  /workspaces/{workspaceId}/summary:
+    get:
+      tags:
+        - Workspace
+      summary: Get workspace summary
+      operationId: getWorkspaceSummary
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Workspace summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  featureCount:
+                    type: integer
+                  environments:
+                    type: integer
+                  workflowStages:
+                    type: integer
+
+  /workspaces/{workspaceId}/features:
+    get:
+      tags:
+        - Workspace
+      summary: Get features under workspace
+      operationId: getWorkspaceFeatures
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Workspace features list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeatureResponse"
+        "404":
+          description: Workspace not found
 
   /dashboard/stats:
     get:
@@ -1064,12 +1213,17 @@ components:
           type: string
           format: uuid
           description: ID of the environment this feature instance belongs to
+        workspaceId:
+          type: string
+          format: uuid
+          description: ID of the workspace this feature instance belongs to
       required:
         - name
         - configuration
         - owners
         - enabled
         - environmentId
+        - workspaceId
     FeatureCreateRequest:
       type: object
       properties:
@@ -1094,6 +1248,46 @@ components:
         - owners
         - enabled
 
+    Workspace:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: "Checkout Service"
+        description:
+          type: string
+          example: "Workspace for checkout related features"
+        createdAt:
+          type: string
+          format: date-time
+        modifiedAt:
+          type: string
+          format: date-time
+    WorkspaceRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          example: "Checkout Service"
+        description:
+          type: string
+          example: "Workspace for checkout features"
+
+    WorkspaceResponse:
+      allOf:
+        - $ref: "#/components/schemas/Pagination"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/Workspace"
+
     WorkflowStatus:
       type: string
       enum:
@@ -1116,8 +1310,13 @@ components:
         version:
           type: integer
           format: int64
+        workspaceId:
+          type: string
+          format: uuid
+          description: ID of the workspace this workflow belongs to
       required:
         - name
+        - workspaceId
 
     Workflow:
       allOf:
@@ -1151,6 +1350,7 @@ components:
               items:
                 # Use the Base schema here to exclude 'stages'
                 $ref: "#/components/schemas/WorkflowBase"
+
     StageType:
       type: string
       enum:
@@ -1248,7 +1448,10 @@ components:
         id:
           type: string
           format: uuid
-        featureId:
+        sourceFeatureId:
+          type: string
+          format: uuid
+        targetFeatureId:
           type: string
           format: uuid
         sourceEnvironmentId:

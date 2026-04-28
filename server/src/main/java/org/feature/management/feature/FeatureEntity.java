@@ -22,13 +22,16 @@ import java.util.UUID;
 @NoArgsConstructor
 @Table("feature")
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class FeatureEntity implements ETaggableEntity{
+public class FeatureEntity implements ETaggableEntity {
 
     @Id
     private UUID id;
 
     @Column("environment_id")
     private UUID environmentId;
+
+    @Column("workspace_id")
+    private UUID workspaceId;
 
     @Column("name")
     private String name;
