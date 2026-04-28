@@ -1,5 +1,5 @@
 # Architecture
-Date: 2026-04-18
+Date: 2026-04-28
 
 ## System Design
 The system follows a classic decoupled client-server architecture using a reactive, non-blocking paradigm.
@@ -12,5 +12,5 @@ The system follows a classic decoupled client-server architecture using a reacti
 2. **Evaluation**: Applications integrating the SDKs fetch the feature rules via the API. The SDK handles context resolution (e.g., user identity, role) and evaluates feature visibility locally or via the server.
 
 ## Database Design
-- **Core Entities**: `feature`, `environment`, `feature_environment_mapping`, `workflow`, `stage`.
+- **Core Entities**: `feature`, `environment`, `feature_environment_mapping`, `workflow`, `stage`, `workspace`.
 - Features are mapped to environments, allowing different toggle states across DEV, STAGE, and PROD.

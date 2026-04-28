@@ -1,10 +1,10 @@
 # Concerns & Areas for Improvement
-Date: 2026-04-18
+Date: 2026-04-28
 
 ## Technical Debt & Ongoing Work
-- **Feature vs Environment Relationship**: The database changelog has a pending migration (`update-table-feature-for-workflow.yaml`) that is currently commented out. This migration attempts to drop the `feature_environment_mapping` table and instead bind a `feature` strictly to one `environment_id`. This implies a transition in how feature rollouts and environments are isolated.
+- **Feature vs Environment Relationship**: There are indications of schema changes to handle relationships between features, environments, and workflows more effectively.
 - **Frontend Testing**: There is currently no configured frontend testing framework (like Vitest) or end-to-end framework. All checking is strictly typed/linted (`oxlint`, `eslint`, `vue-tsc`).
-- **Feature Evaluation Endpoint**: The `FeatureController` handles CRUD well, but dedicated client SDK evaluation endpoints (e.g. bulk evaluate via SSE or robust GET payload) are either missing or mixed in with management endpoints.
+- **Feature Evaluation Endpoint**: Dedicated client SDK evaluation endpoints (e.g., bulk evaluate via SSE or robust GET payload) are mixed in with management endpoints or need further separation.
 
 ## Scalability Risks
 - As the number of connected clients scales, polling for feature configurations may become expensive. Implementing WebSockets or Server-Sent Events (SSE) (which WebFlux excels at) should be prioritized for real-time feature toggling if not already used heavily.

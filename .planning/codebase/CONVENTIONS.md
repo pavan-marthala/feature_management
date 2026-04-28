@@ -1,11 +1,11 @@
 # Conventions
-Date: 2026-04-18
+Date: 2026-04-28
 
 ## Backend Conventions
 - **Reactive Types**: Services and controllers consistently return `Mono<T>` or `Flux<T>`.
 - **Validation**: JSR-303 annotations (e.g., `@Valid`) are used on REST controller inputs.
 - **DTOs**: OpenAPI generator is used to build standardized request/response models (`org.feature.management.models`).
-- **Lombok**: Heavily used to reduce boilerplate (`@Slf4j`, `@RequiredArgsConstructor`, `@Builder`).
+- **Lombok & MapStruct**: Heavily used to reduce boilerplate (`@Slf4j`, `@RequiredArgsConstructor`, `@Builder`) and for mapping between entities and DTOs.
 - **Code Style**: Checkstyle validation is integrated into the Maven build phase via `checkstyle.xml`.
 
 ## Frontend Conventions
