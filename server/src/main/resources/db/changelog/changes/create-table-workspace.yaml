@@ -30,7 +30,12 @@ databaseChangeLog:
                   type: TIMESTAMP
                   constraints:
                     nullable: false
-
+              - column:
+                  name: version
+                  type: BIGINT
+                  defaultValue: 0
+                  constraints:
+                    nullable: false
         - addUniqueConstraint:
             tableName: workspace
             columnNames: name

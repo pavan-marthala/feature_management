@@ -1,10 +1,11 @@
 package org.feature.management.workflow;
 
 import org.feature.management.models.*;
+import org.feature.management.shared.utils.DateMapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = DateMapper.class)
 public interface WorkflowMapper {
 
     @Mapping(target = "version", source = "version")

@@ -20,7 +20,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class EnvironmentEntity implements ETaggableEntity{
+public class EnvironmentEntity implements ETaggableEntity {
 
     @Id
     private UUID id;
@@ -30,6 +30,7 @@ public class EnvironmentEntity implements ETaggableEntity{
     private String description;
 
     @Column("owners")
+    @Builder.Default
     private Set<String> owners = new HashSet<>();
 
     @Version

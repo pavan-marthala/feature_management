@@ -1054,7 +1054,12 @@ components:
           format: int64
           description: Entity tag for optimistic concurrency control
           example: 1
-
+        createdAt:
+          type: string
+          format: date-time
+        modifiedAt:
+          type: string
+          format: date-time
     FeatureStrategy:
       description: |
         List of supported feature strategies.
@@ -1217,6 +1222,12 @@ components:
           type: string
           format: uuid
           description: ID of the workspace this feature instance belongs to
+        createdAt:
+          type: string
+          format: date-time
+        modifiedAt:
+          type: string
+          format: date-time
       required:
         - name
         - configuration
@@ -1241,6 +1252,8 @@ components:
           $ref: "#/components/schemas/Feature/properties/owners"
         enabled:
           $ref: "#/components/schemas/Feature/properties/enabled"
+        workspaceId:
+          $ref: "#/components/schemas/Feature/properties/workspaceId"
       required:
         - envId
         - name
@@ -1266,6 +1279,9 @@ components:
         modifiedAt:
           type: string
           format: date-time
+        version:
+          type: integer
+          format: int64
     WorkspaceRequest:
       type: object
       required:
@@ -1387,6 +1403,12 @@ components:
         approvalNeeded:
           type: boolean
           description: Indicates if manual approval is needed at this stage
+        createdAt:
+          type: string
+          format: date-time
+        modifiedAt:
+          type: string
+          format: date-time
       required:
         - environmentId
         - orderIndex

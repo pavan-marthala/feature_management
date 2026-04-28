@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.feature.management.models.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.UUID;
@@ -24,7 +23,7 @@ public class WorkflowController {
             @RequestParam(value = "page", defaultValue = "0") Integer page,
             @RequestParam(value = "size", defaultValue = "25") Integer size,
             @RequestParam(value = "sort", required = false) String sort) {
-        return workflowService.getAllWorkflows(page, size,sort)
+        return workflowService.getAllWorkflows(page, size, sort)
                 .map(workflowsPage -> WorkflowResponse.builder()
                         .totalPages(workflowsPage.getTotalPages())
                         .totalItems((int) workflowsPage.getTotalElements())

@@ -2,11 +2,12 @@ package org.feature.management.environment;
 
 import org.feature.management.models.Environment;
 import org.feature.management.models.EnvironmentRequest;
+import org.feature.management.shared.utils.DateMapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = DateMapper.class)
 public interface EnvironmentMapper {
 
     EnvironmentMapper INSTANCE = Mappers.getMapper(EnvironmentMapper.class);
