@@ -36,8 +36,6 @@ public interface FeatureServiceInterface {
 
     Mono<Void> updateFeatureStatus(UUID id, boolean enabled);
 
-    Mono<FeaturePromotionResponse> propagateFeature(UUID id, FeaturePromotionRequest request);
-
     Mono<FeaturePromotionResponse> propagateFeature(UUID featureId);
 
     Flux<PropagationHistory> getPropagationHistory(UUID id);

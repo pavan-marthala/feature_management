@@ -57,6 +57,10 @@ onMounted(async () => {
   await featureStore.fetchFeature(featureId.value, 'ID')
   await featureStore.fetchPropagationHistory(featureId.value)
   await workflowStore.fetchWorkflows()
+  const firstWorkflow = workflowStore.workflows[0]
+  if (firstWorkflow?.id) {
+    await workflowStore.fetchWorkflow(firstWorkflow.id)
+  }
 })
 
 const feature = computed(() => featureStore.selectedFeature)
@@ -190,7 +194,7 @@ async function openHistory() {
         <PipelineBoard
           v-if="currentWorkflow && 'stages' in currentWorkflow"
           :stages="(currentWorkflow as any).stages"
-          :current-environment-id="feature.envId"
+          :current-environment-id="feature.environmentId"
           :loading="featureStore.loading"
           @promote="handlePromote"
         />

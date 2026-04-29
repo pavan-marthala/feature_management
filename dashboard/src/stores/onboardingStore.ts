@@ -128,6 +128,10 @@ export const useOnboardingStore = defineStore('onboarding', () => {
     }
 
     // 2. Check workflows
+    if (createdWorkflowId.value) {
+      return // DO NOT override existing workflow
+    }
+
     try {
       const wfResponse = await workflowService.getWorkflows(0, 1)
       const hasWorkflows = (wfResponse.totalItems ?? 0) > 0
@@ -143,8 +147,8 @@ export const useOnboardingStore = defineStore('onboarding', () => {
         }
 
         const firstWorkflow = wfResponse.items?.[0]
-        if (!createdWorkflowId.value && firstWorkflow) {
-          createdWorkflowId.value = firstWorkflow.id || null
+        if (!createdWorkflowId.value && firstWorkflow?.id) {
+          createdWorkflowId.value = firstWorkflow.id
           persistState()
         }
       }
@@ -217,6 +221,7 @@ export const useOnboardingStore = defineStore('onboarding', () => {
   }
 
   function setWorkflowId(id: string) {
+    if (!id) return // prevent null overwrite
     createdWorkflowId.value = id
     persistState()
   }

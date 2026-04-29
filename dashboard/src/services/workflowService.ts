@@ -23,8 +23,8 @@ export const workflowService = {
     return data
   },
 
-  async createWorkflow(data: WorkflowCreateRequest): Promise<{ id: string }> {
-    const response = await api.post<{ id: string }>('/workflows', data)
+  async createWorkflow(data: WorkflowCreateRequest): Promise<string> {
+    const response = await api.post<string>('/workflows', data)
     return response.data
   },
 

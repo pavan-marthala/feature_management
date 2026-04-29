@@ -13,6 +13,7 @@ import org.springframework.web.server.ServerWebExchange;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -126,7 +127,7 @@ public class CustomExceptionHandler {
     private Error createBaseError(ServerWebExchange exchange, HttpStatus status) {
         Error error = new Error();
         error.setCorrelationIdentifier(UUID.randomUUID());
-        error.setErrorTimestamp(OffsetDateTime.now());
+        error.setErrorTimestamp(Instant.now());
         error.statusCode(BigDecimal.valueOf(status.value()));
         error.setHttpMethod(Error.HttpMethodEnum.valueOf(exchange.getRequest().getMethod().name()));
         error.setRequestUri(exchange.getRequest().getURI().getPath());

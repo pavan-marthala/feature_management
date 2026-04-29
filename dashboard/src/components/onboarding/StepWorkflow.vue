@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
 import { useOnboardingStore } from '@/stores/onboardingStore'
 import { workflowService } from '@/services/workflowService'
 import GlassCard from '@/components/ui/GlassCard.vue'
@@ -32,13 +32,14 @@ async function handleCreate() {
       throw new Error('No active workspace found. Please go back and create a workspace.')
     }
 
-    const wfResult = await workflowService.createWorkflow({
+    const wfResultId = await workflowService.createWorkflow({
       name: name.value.trim(),
       status: 'DRAFT',
       workspaceId: onboarding.createdWorkspaceId
     })
     
-    onboarding.setWorkflowId(wfResult.id)
+    onboarding.setWorkflowId(wfResultId)
+    await nextTick()
     onboarding.setOnboardingStatus('WORKFLOW_CREATED')
 
     emit('next')

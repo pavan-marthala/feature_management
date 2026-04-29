@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Pageable;
+import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -41,6 +42,9 @@ class FeatureServiceTest {
 
     @Mock
     private PropagationHistoryRepository propagationHistoryRepo;
+    @Mock
+    private TransactionalOperator transactionalOperator;
+
 
     private FeatureService featureService;
 
@@ -50,7 +54,7 @@ class FeatureServiceTest {
     @BeforeEach
     void setUp() {
         featureService = new FeatureService(featureRepository, strategyConfig,
-                workflowRepository, stageRepository, propagationHistoryRepo, featureMapper);
+                workflowRepository, stageRepository, propagationHistoryRepo, featureMapper,transactionalOperator);
     }
 
     @Test
@@ -58,11 +62,12 @@ class FeatureServiceTest {
         FeatureCreateRequest model = new FeatureCreateRequest();
         model.setName("feature-1");
         model.setEnvId(UUID.randomUUID());
+        model.setWorkspaceId(UUID.randomUUID());
         FeatureEntity entity = new FeatureEntity();
         UUID generatedId = UUID.randomUUID();
         entity.setId(generatedId);
 
-        when(featureRepository.existsByNameAndEnvironmentId("feature-1", model.getEnvId()))
+        when(featureRepository.existsByNameAndEnvironmentIdAndWorkspaceId("feature-1", model.getEnvId(), model.getWorkspaceId()))
                 .thenReturn(Mono.just(false));
         when(featureRepository.save(any(FeatureEntity.class))).thenReturn(Mono.just(entity));
 
@@ -143,11 +148,11 @@ class FeatureServiceTest {
 
     @Test
     void shouldThrowExceptionWhenFeatureAlreadyExistsOnCreate() {
-        org.feature.management.models.FeatureCreateRequest model = new org.feature.management.models.FeatureCreateRequest();
+        FeatureCreateRequest model = new FeatureCreateRequest();
         model.setName("existing-feature");
-
+        model.setWorkspaceId(UUID.randomUUID());
         model.setEnvId(UUID.randomUUID());
-        when(featureRepository.existsByNameAndEnvironmentId("existing-feature", model.getEnvId()))
+        when(featureRepository.existsByNameAndEnvironmentIdAndWorkspaceId("existing-feature", model.getEnvId(), model.getWorkspaceId()))
                 .thenReturn(Mono.just(true));
 
         StepVerifier.create(featureService.createFeature(model))

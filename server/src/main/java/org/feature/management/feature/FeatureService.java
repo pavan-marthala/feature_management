@@ -23,6 +23,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -30,7 +31,6 @@ import java.time.Instant;
 import java.util.Set;
 import java.util.UUID;
 
-import org.feature.management.models.FeaturePromotionRequest;
 import org.feature.management.models.FeaturePromotionResponse;
 
 @Service
@@ -44,7 +44,7 @@ public class FeatureService implements FeatureServiceInterface {
     private final StageRepository stageRepository;
     private final PropagationHistoryRepository propagationHistoryRepo;
     private final FeatureMapper featureMapper;
-
+    private final TransactionalOperator transactionalOperator;
     @Override
     public Mono<Void> assignOwnerToFeature(UUID featureId, String owner) {
         log.debug("Assigning owner {} to feature {}", owner, featureId);
@@ -93,7 +93,7 @@ public class FeatureService implements FeatureServiceInterface {
     @Transactional
     public Mono<UUID> createFeature(FeatureCreateRequest featureRequest) {
         log.debug("Creating feature with request: {}", featureRequest);
-        return featureRepo.existsByNameAndEnvironmentId(featureRequest.getName(), featureRequest.getEnvId())
+        return featureRepo.existsByNameAndEnvironmentIdAndWorkspaceId(featureRequest.getName(), featureRequest.getEnvId(),featureRequest.getWorkspaceId())
                 .filter(exists -> !exists)
                 .switchIfEmpty(Mono.error(new FeatureException(
                         "Feature with name " + featureRequest.getName() + " already exists in this environment")))
@@ -170,90 +170,58 @@ public class FeatureService implements FeatureServiceInterface {
     }
 
     @Override
-    @Transactional
     public Mono<FeaturePromotionResponse> propagateFeature(UUID featureId) {
         log.info("Propagating feature {}", featureId);
 
-        return getFeatureEntity(featureId)
-                .flatMap(sourceFeature ->
+        return transactionalOperator.transactional(
+                getFeatureEntity(featureId)
+                        .flatMap(sourceFeature ->
 
-                // 1. Get workflow from workspace
-                workflowRepository.findByWorkspaceId(sourceFeature.getWorkspaceId())
-                        .switchIfEmpty(Mono.error(new FeatureException("Workflow not found for workspace")))
+                                // 1. Get workflow from workspace
+                                workflowRepository.findByWorkspaceId(sourceFeature.getWorkspaceId())
+                                        .switchIfEmpty(Mono.error(new FeatureException("Workflow not found for workspace")))
 
-                        // 2. Find next environment from stages
-                        .flatMap(workflow -> findNextStageEnvironment(workflow.getId(),
-                                sourceFeature.getEnvironmentId()))
+                                        // 2. Find next environment from stages
+                                        .flatMap(workflow -> findNextStageEnvironment(workflow.getId(),
+                                                sourceFeature.getEnvironmentId()))
 
-                        // 3. Clone or update feature in next env
-                        .flatMap(targetEnvId -> featureRepo.getByNameAndWorkspaceIdAndEnvironmentId(
-                                sourceFeature.getName(),
-                                sourceFeature.getWorkspaceId(),
-                                targetEnvId)
-                                .flatMap(existingFeature -> {
-                                    existingFeature.setConfiguration(sourceFeature.getConfiguration());
-                                    existingFeature.setEnabled(sourceFeature.isEnabled());
-                                    return featureRepo.save(existingFeature);
-                                })
-                                .switchIfEmpty(Mono.defer(() -> {
-                                    FeatureEntity newFeature = FeatureEntity.builder()
-                                            .id(UUID.randomUUID())
-                                            .name(sourceFeature.getName())
-                                            .description(sourceFeature.getDescription())
-                                            .workspaceId(sourceFeature.getWorkspaceId())
-                                            .environmentId(targetEnvId)
-                                            .configuration(sourceFeature.getConfiguration())
-                                            .enabled(sourceFeature.isEnabled())
-                                            .owners(sourceFeature.getOwners())
-                                            .createdAt(Instant.now())
-                                            .modifiedAt(Instant.now())
-                                            .build();
+                                        // 3. Clone or update feature in next env
+                                        .flatMap(targetEnvId -> featureRepo.getByNameAndWorkspaceIdAndEnvironmentId(
+                                                        sourceFeature.getName(),
+                                                        sourceFeature.getWorkspaceId(),
+                                                        targetEnvId)
+                                                .flatMap(existingFeature -> {
+                                                    existingFeature.setConfiguration(sourceFeature.getConfiguration());
+                                                    existingFeature.setEnabled(sourceFeature.isEnabled());
+                                                    return featureRepo.save(existingFeature);
+                                                })
+                                                .switchIfEmpty(Mono.defer(() -> {
+                                                    FeatureEntity newFeature = FeatureEntity.builder()
+                                                            .id(UUID.randomUUID())
+                                                            .name(sourceFeature.getName())
+                                                            .description(sourceFeature.getDescription())
+                                                            .workspaceId(sourceFeature.getWorkspaceId())
+                                                            .environmentId(targetEnvId)
+                                                            .configuration(sourceFeature.getConfiguration())
+                                                            .enabled(sourceFeature.isEnabled())
+                                                            .owners(sourceFeature.getOwners())
+                                                            .createdAt(Instant.now())
+                                                            .modifiedAt(Instant.now())
+                                                            .build();
 
-                                    return featureRepo.save(newFeature);
-                                }))
-                                .flatMap(savedFeature -> recordPropagationHistory(
-                                        sourceFeature.getId(),
-                                        savedFeature.getId(),
-                                        sourceFeature.getEnvironmentId(),
-                                        targetEnvId,
-                                        PromotionStatus.SUCCESS).thenReturn(
-                                                FeaturePromotionResponse.builder()
-                                                        .id(savedFeature.getId())
-                                                        .status(PromotionStatus.SUCCESS)
-                                                        .build()))));
-    }
-
-    @Override
-    @Transactional
-    public Mono<FeaturePromotionResponse> propagateFeature(UUID id, FeaturePromotionRequest request) {
-        log.info("Propagating feature {} with request {}", id, request);
-        return getFeatureEntity(id)
-                .flatMap(sourceFeature -> resolveTargetEnvironment(sourceFeature, request)
-                        .flatMap(targetEnvId -> featureRepo
-                                .getByNameAndEnvironmentId(sourceFeature.getName(), targetEnvId)
-                                .flatMap(existingFeature -> {
-                                    existingFeature.setConfiguration(sourceFeature.getConfiguration());
-                                    existingFeature.setEnabled(sourceFeature.isEnabled());
-                                    return featureRepo.save(existingFeature);
-                                })
-                                .switchIfEmpty(Mono.defer(() -> {
-                                    FeatureEntity newFeature = FeatureEntity.builder()
-                                            .id(UUID.randomUUID())
-                                            .name(sourceFeature.getName())
-                                            .description(sourceFeature.getDescription())
-                                            .environmentId(targetEnvId)
-                                            .configuration(sourceFeature.getConfiguration())
-                                            .enabled(sourceFeature.isEnabled())
-                                            .owners(sourceFeature.getOwners())
-                                            .build();
-                                    return featureRepo.save(newFeature);
-                                }))
-                                .flatMap(savedFeature -> recordPropagationHistory(id, sourceFeature.getEnvironmentId(),
-                                        targetEnvId, PromotionStatus.SUCCESS)
-                                        .thenReturn(FeaturePromotionResponse.builder()
-                                                .id(savedFeature.getId())
-                                                .status(PromotionStatus.SUCCESS)
-                                                .build()))));
+                                                    return featureRepo.save(newFeature);
+                                                }))
+                                                .flatMap(savedFeature -> recordPropagationHistory(
+                                                        sourceFeature.getId(),
+                                                        savedFeature.getId(),
+                                                        sourceFeature.getEnvironmentId(),
+                                                        targetEnvId,
+                                                        PromotionStatus.SUCCESS).thenReturn(
+                                                        FeaturePromotionResponse.builder()
+                                                                .id(savedFeature.getId())
+                                                                .status(PromotionStatus.SUCCESS)
+                                                                .build()))))
+        );
     }
 
     @Override
@@ -268,25 +236,6 @@ public class FeatureService implements FeatureServiceInterface {
                         .promotedBy(entity.getPromotedBy())
                         .status(entity.getStatus())
                         .build());
-    }
-
-    private Mono<UUID> resolveTargetEnvironment(FeatureEntity sourceFeature, FeaturePromotionRequest request) {
-        if (request.getTargetEnvironmentId() != null) {
-            return Mono.just(request.getTargetEnvironmentId());
-        }
-
-        UUID workflowId = request.getWorkflowId();
-
-        if (workflowId != null) {
-            return findNextStageEnvironment(workflowId, sourceFeature.getEnvironmentId());
-        }
-
-        return workflowRepository.findAll()
-                .filter(w -> "ACTIVE".equals(w.getStatus()))
-                .flatMap(w -> findNextStageEnvironment(w.getId(), sourceFeature.getEnvironmentId()))
-                .next()
-                .switchIfEmpty(Mono.error(new FeatureException(
-                        "No target environment specified and no active workflow found for propagation")));
     }
 
     private Mono<UUID> findNextStageEnvironment(UUID workflowId, UUID currentEnvId) {
@@ -305,18 +254,6 @@ public class FeatureService implements FeatureServiceInterface {
                 });
     }
 
-    private Mono<Void> recordPropagationHistory(UUID featureId, UUID sourceEnvId, UUID targetEnvId,
-            PromotionStatus status) {
-        PropagationHistoryEntity history = PropagationHistoryEntity.builder()
-                .id(UUID.randomUUID())
-                .sourceFeatureId(featureId)
-                .sourceEnvironmentId(sourceEnvId)
-                .targetEnvironmentId(targetEnvId)
-                .status(status)
-                .completedAt(Instant.now())
-                .build();
-        return propagationHistoryRepo.save(history).then();
-    }
 
     private Mono<Void> recordPropagationHistory(
             UUID sourceFeatureId,
@@ -324,6 +261,7 @@ public class FeatureService implements FeatureServiceInterface {
             UUID sourceEnvId,
             UUID targetEnvId,
             PromotionStatus status) {
+        log.info("Recording propagation history: {} -> {}", sourceFeatureId, targetFeatureId);
         PropagationHistoryEntity history = PropagationHistoryEntity.builder()
                 .id(UUID.randomUUID())
                 .sourceFeatureId(sourceFeatureId)
@@ -333,8 +271,10 @@ public class FeatureService implements FeatureServiceInterface {
                 .status(status)
                 .completedAt(Instant.now())
                 .build();
-
-        return propagationHistoryRepo.save(history).then();
+        return propagationHistoryRepo.save(history)
+                .doOnSuccess(saved -> log.info("Saved propagation history: {}", saved.getId()))
+                .doOnError(err -> log.error("Failed to save propagation history", err))
+                .then();
     }
 
 }

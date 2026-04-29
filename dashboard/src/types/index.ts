@@ -95,14 +95,15 @@ export interface Feature {
   configuration: FeatureConfiguration
   owners?: string[]
   enabled: boolean
-  envId: string
+  environmentId: string
   etag: number
 }
 
 export interface FeatureCreateRequest {
   name: string
   description?: string
-  envId: string
+  environmentId: string
+  workspaceId: string
   configuration: FeatureConfiguration
   owners?: string[]
   enabled?: boolean

@@ -5,7 +5,7 @@ import org.feature.management.shared.utils.DateMapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring", uses = DateMapper.class)
+@Mapper(componentModel = "spring")
 public interface WorkflowMapper {
 
     @Mapping(target = "version", source = "version")

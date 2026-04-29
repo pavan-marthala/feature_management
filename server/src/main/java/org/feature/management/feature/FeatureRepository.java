@@ -12,7 +12,7 @@ import java.util.UUID;
 public interface FeatureRepository extends R2dbcRepository<FeatureEntity, UUID> {
     Mono<FeatureEntity> getByNameAndEnvironmentId(String name, UUID environmentId);
 
-    Mono<Boolean> existsByNameAndEnvironmentId(String name, UUID environmentId);
+    Mono<Boolean> existsByNameAndEnvironmentIdAndWorkspaceId(String name, UUID environmentId, UUID workspaceId);
 
     Flux<FeatureEntity> findBy(Pageable pageable);
 
@@ -28,6 +28,5 @@ public interface FeatureRepository extends R2dbcRepository<FeatureEntity, UUID> 
 
     Flux<FeatureEntity> findByWorkspaceId(UUID workspaceId, Pageable pageable);
 
-    Mono<FeatureEntity> getByNameAndWorkspaceIdAndEnvironmentId(String name, UUID workspaceId,
-            UUID environmentId);
+    Mono<FeatureEntity> getByNameAndWorkspaceIdAndEnvironmentId(String name, UUID workspaceId, UUID environmentId);
 }

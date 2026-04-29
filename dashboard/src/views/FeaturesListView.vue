@@ -2,6 +2,7 @@
 import { onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useFeatureStore } from '@/stores/featureStore'
+import { useEnvironmentStore } from '@/stores/environmentStore'
 import SearchInput from '@/components/ui/SearchInput.vue'
 import ToggleSwitch from '@/components/ui/ToggleSwitch.vue'
 import Badge from '@/components/ui/Badge.vue'
@@ -19,6 +20,7 @@ import {
 import type { FeatureStrategyType } from '@/types'
 
 const featureStore = useFeatureStore()
+const envStore = useEnvironmentStore()
 const router = useRouter()
 const route = useRoute()
 const workspaceId = route.params.workspaceId as string
@@ -28,7 +30,15 @@ onMounted(async () => {
   if (featureStore.strategies.length === 0) {
     await featureStore.fetchStrategies()
   }
+  if (envStore.environments.length === 0) {
+    await envStore.fetchEnvironments(0, 100)
+  }
 })
+
+function getEnvironmentName(id: string) {
+  const env = envStore.environments.find(e => e.id === id)
+  return env ? env.name : 'Unknown'
+}
 
 function getStrategyBadge(strategy?: string) {
   switch (strategy) {
@@ -143,6 +153,7 @@ watch(() => featureStore.searchQuery, () => {
           <thead>
             <tr>
               <th>Feature Name</th>
+              <th>Environment</th>
               <th>Status</th>
               <th>Strategy</th>
               <th>Description</th>
@@ -161,6 +172,9 @@ watch(() => featureStore.searchQuery, () => {
                 <span class="feature-name">
                   {{ feature.name }}
                 </span>
+              </td>
+              <td>
+                <Badge :label="getEnvironmentName(feature.environmentId)" variant="default" />
               </td>
               <td>
                 <Badge v-bind="getStatusBadge(feature.enabled)" />
@@ -224,6 +238,7 @@ watch(() => featureStore.searchQuery, () => {
           <p class="feature-card__desc">{{ feature.description || 'No description' }}</p>
           
           <div class="feature-card__badges">
+            <Badge :label="getEnvironmentName(feature.environmentId)" variant="default" />
             <Badge v-bind="getStatusBadge(feature.enabled)" />
             <Badge v-bind="getStrategyBadge(feature.configuration?.strategy)" />
           </div>

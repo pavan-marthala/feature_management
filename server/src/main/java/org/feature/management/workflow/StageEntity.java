@@ -55,9 +55,9 @@ public class StageEntity implements ETaggableEntity {
     @CreatedDate
     private Instant createdAt;
 
-    @Column("updated_at")
+    @Column("modified_at")
     @LastModifiedDate
-    private Instant updatedAt;
+    private Instant modifiedAt;
 
     @Version
     @Column("version")

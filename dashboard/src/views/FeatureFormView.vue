@@ -123,7 +123,7 @@ function validate(): boolean {
     errors.value.name = 'Name must be 2-36 characters'
   }
   if (!isEdit.value && !selectedEnvId.value) {
-    errors.value.envId = 'Environment is required'
+    errors.value.environmentId = 'Environment is required'
   }
   if (name.value && !/^[a-zA-Z0-9]+$/.test(name.value)) {
     errors.value.name = 'Name can only contain letters and numbers'
@@ -215,7 +215,8 @@ async function handleSubmit() {
       const payload: FeatureCreateRequest = {
         name: name.value,
         description: description.value || undefined,
-        envId: envId,
+        environmentId: envId,
+        workspaceId: workspaceId.value,
         configuration: buildConfiguration(),
         owners: owners.value.length ? owners.value : undefined,
         enabled: enabled.value,
@@ -339,7 +340,7 @@ function removeJwtCustom(idx: number) { jwtCustomClaims.value.splice(idx, 1) }
                 id="env-select" 
                 v-model="selectedEnvId" 
                 class="form-input form-select"
-                :class="{ 'form-input--error': errors.envId }"
+                :class="{ 'form-input--error': errors.environmentId }"
               >
                 <option value="" disabled>Select an environment...</option>
                 <option 
@@ -354,7 +355,7 @@ function removeJwtCustom(idx: number) { jwtCustomClaims.value.splice(idx, 1) }
                 <Plus :size="18" />
               </button>
             </div>
-            <span v-if="errors.envId" class="form-error">{{ errors.envId }}</span>
+            <span v-if="errors.environmentId" class="form-error">{{ errors.environmentId }}</span>
           </template>
         </div>
 

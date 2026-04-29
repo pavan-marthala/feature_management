@@ -160,6 +160,14 @@
 							<modelPackage>org.feature.management.models</modelPackage>
 							<!--<library>spring-boot</library>-->
 							<skipValidateSpec>true</skipValidateSpec>
+
+                            <typeMappings>
+                                <typeMapping>DateTime=Instant</typeMapping>
+                            </typeMappings>
+
+                            <importMappings>
+                                <importMapping>Instant=java.time.Instant</importMapping>
+                            </importMappings>
 							<configOptions>
 								<generatedConstructorWithRequiredArgs>false</generatedConstructorWithRequiredArgs>
 								<useJakartaEe>true</useJakartaEe>
@@ -179,11 +187,19 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.15.0</version>
                 <configuration>
+                    <source>25</source>
+                    <target>25</target>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
+                        </path>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok-mapstruct-binding</artifactId>
+                            <version>0.2.0</version>
                         </path>
                         <path>
 							<groupId>org.mapstruct</groupId>
