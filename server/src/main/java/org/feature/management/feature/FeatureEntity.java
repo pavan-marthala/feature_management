@@ -1,9 +1,12 @@
 package org.feature.management.feature;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.*;
-import org.feature.management.shared.utils.ETaggableEntity;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.feature.management.models.FeatureConfiguration;
+import org.feature.management.shared.utils.ETaggableEntity;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;

@@ -1234,7 +1234,7 @@ components:
     FeatureCreateRequest:
       type: object
       properties:
-        envId:
+        environmentId:
           type: string
           format: uuid
           description: Environment ID to map the feature to

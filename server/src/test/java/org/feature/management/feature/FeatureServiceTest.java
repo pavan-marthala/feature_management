@@ -1,13 +1,13 @@
 package org.feature.management.feature;
 
 import org.feature.management.config.FeatureStrategyConfig;
-import org.feature.management.shared.exception.ResourceNotFoundException;
-import org.feature.management.workflow.StageRepository;
-import org.feature.management.workflow.WorkflowRepository;
 import org.feature.management.models.FeatureCreateRequest;
 import org.feature.management.models.FeatureStrategyResponseInner;
 import org.feature.management.models.IdType;
 import org.feature.management.propagation.PropagationHistoryRepository;
+import org.feature.management.shared.exception.ResourceNotFoundException;
+import org.feature.management.workflow.StageRepository;
+import org.feature.management.workflow.WorkflowRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,12 +18,14 @@ import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class FeatureServiceTest {
@@ -54,20 +56,20 @@ class FeatureServiceTest {
     @BeforeEach
     void setUp() {
         featureService = new FeatureService(featureRepository, strategyConfig,
-                workflowRepository, stageRepository, propagationHistoryRepo, featureMapper,transactionalOperator);
+                workflowRepository, stageRepository, propagationHistoryRepo, featureMapper, transactionalOperator);
     }
 
     @Test
     void shouldCreateFeature() {
         FeatureCreateRequest model = new FeatureCreateRequest();
         model.setName("feature-1");
-        model.setEnvId(UUID.randomUUID());
+        model.setEnvironmentId(UUID.randomUUID());
         model.setWorkspaceId(UUID.randomUUID());
         FeatureEntity entity = new FeatureEntity();
         UUID generatedId = UUID.randomUUID();
         entity.setId(generatedId);
 
-        when(featureRepository.existsByNameAndEnvironmentIdAndWorkspaceId("feature-1", model.getEnvId(), model.getWorkspaceId()))
+        when(featureRepository.existsByNameAndEnvironmentIdAndWorkspaceId("feature-1", model.getEnvironmentId(), model.getWorkspaceId()))
                 .thenReturn(Mono.just(false));
         when(featureRepository.save(any(FeatureEntity.class))).thenReturn(Mono.just(entity));
 
@@ -151,8 +153,8 @@ class FeatureServiceTest {
         FeatureCreateRequest model = new FeatureCreateRequest();
         model.setName("existing-feature");
         model.setWorkspaceId(UUID.randomUUID());
-        model.setEnvId(UUID.randomUUID());
-        when(featureRepository.existsByNameAndEnvironmentIdAndWorkspaceId("existing-feature", model.getEnvId(), model.getWorkspaceId()))
+        model.setEnvironmentId(UUID.randomUUID());
+        when(featureRepository.existsByNameAndEnvironmentIdAndWorkspaceId("existing-feature", model.getEnvironmentId(), model.getWorkspaceId()))
                 .thenReturn(Mono.just(true));
 
         StepVerifier.create(featureService.createFeature(model))

@@ -66,7 +66,7 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
-                  name: updated_at
+                  name: modified_at
                   type: TIMESTAMP
                   defaultValueComputed: NOW()
                   constraints:

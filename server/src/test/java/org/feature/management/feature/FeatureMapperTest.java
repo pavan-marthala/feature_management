@@ -1,8 +1,8 @@
 package org.feature.management.feature;
 
+import org.feature.management.models.BooleanFeatureStrategy;
 import org.feature.management.models.Feature;
 import org.feature.management.models.FeatureCreateRequest;
-import org.feature.management.models.BooleanFeatureStrategy;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 
@@ -79,7 +79,7 @@ class FeatureMapperTest {
     void shouldMapCreateRequestToEntity() {
         FeatureCreateRequest request = new FeatureCreateRequest();
         request.setName("create-request");
-        request.setEnvId(UUID.randomUUID());
+        request.setEnvironmentId(UUID.randomUUID());
         request.setOwners(List.of("owner1"));
         request.setConfiguration(new BooleanFeatureStrategy());
         request.setEnabled(true);
@@ -88,7 +88,7 @@ class FeatureMapperTest {
 
         assertThat(entity).isNotNull();
         assertThat(entity.getName()).isEqualTo("create-request");
-        assertThat(entity.getEnvironmentId()).isEqualTo(request.getEnvId());
+        assertThat(entity.getEnvironmentId()).isEqualTo(request.getEnvironmentId());
         assertThat(entity.isEnabled()).isTrue();
         assertThat(entity.getOwners()).containsExactly("owner1");
     }

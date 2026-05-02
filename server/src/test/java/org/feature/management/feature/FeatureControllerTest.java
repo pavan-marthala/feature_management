@@ -1,23 +1,18 @@
 package org.feature.management.feature;
-import org.feature.management.environment.EnvironmentRepository;
-import java.util.Collections;
 
-import org.feature.management.models.Feature;
-import org.feature.management.models.FeatureCreateRequest;
-import org.feature.management.models.BooleanFeatureStrategy;
-import org.feature.management.models.FeatureStrategy;
-import org.feature.management.models.FeatureStrategyResponseInner;
-import org.feature.management.models.IdType;
+import org.feature.management.environment.EnvironmentRepository;
+import org.feature.management.models.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webflux.test.autoconfigure.WebFluxTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -44,7 +39,7 @@ class FeatureControllerTest {
     void shouldCreateFeature() {
         FeatureCreateRequest request = new FeatureCreateRequest();
         request.setName("feature1");
-        request.setEnvId(UUID.randomUUID());
+        request.setEnvironmentId(UUID.randomUUID());
         request.setOwners(Collections.singletonList("owner1"));
         request.setConfiguration(new BooleanFeatureStrategy());
         request.setEnabled(true);

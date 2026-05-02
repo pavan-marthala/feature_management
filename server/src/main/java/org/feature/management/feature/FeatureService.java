@@ -3,21 +3,16 @@ package org.feature.management.feature;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.feature.management.config.FeatureStrategyConfig;
-
-import org.feature.management.models.Feature;
-import org.feature.management.models.FeatureConfiguration;
-import org.feature.management.models.FeatureCreateRequest;
-import org.feature.management.models.FeatureStrategyResponseInner;
-import org.feature.management.models.IdType;
-import org.feature.management.models.PromotionStatus;
-import org.feature.management.models.PropagationHistory;
-import org.feature.management.propagation.*;
+import org.feature.management.models.*;
+import org.feature.management.propagation.PropagationHistoryEntity;
+import org.feature.management.propagation.PropagationHistoryRepository;
 import org.feature.management.shared.exception.AccessDeniedException;
 import org.feature.management.shared.exception.EnvironmentException;
 import org.feature.management.shared.exception.FeatureException;
 import org.feature.management.shared.exception.ResourceNotFoundException;
 import org.feature.management.shared.utils.SortHelper;
-import org.feature.management.workflow.*;
+import org.feature.management.workflow.StageRepository;
+import org.feature.management.workflow.WorkflowRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -31,8 +26,6 @@ import java.time.Instant;
 import java.util.Set;
 import java.util.UUID;
 
-import org.feature.management.models.FeaturePromotionResponse;
-
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -45,6 +38,7 @@ public class FeatureService implements FeatureServiceInterface {
     private final PropagationHistoryRepository propagationHistoryRepo;
     private final FeatureMapper featureMapper;
     private final TransactionalOperator transactionalOperator;
+
     @Override
     public Mono<Void> assignOwnerToFeature(UUID featureId, String owner) {
         log.debug("Assigning owner {} to feature {}", owner, featureId);
@@ -93,7 +87,7 @@ public class FeatureService implements FeatureServiceInterface {
     @Transactional
     public Mono<UUID> createFeature(FeatureCreateRequest featureRequest) {
         log.debug("Creating feature with request: {}", featureRequest);
-        return featureRepo.existsByNameAndEnvironmentIdAndWorkspaceId(featureRequest.getName(), featureRequest.getEnvId(),featureRequest.getWorkspaceId())
+        return featureRepo.existsByNameAndEnvironmentIdAndWorkspaceId(featureRequest.getName(), featureRequest.getEnvironmentId(), featureRequest.getWorkspaceId())
                 .filter(exists -> !exists)
                 .switchIfEmpty(Mono.error(new FeatureException(
                         "Feature with name " + featureRequest.getName() + " already exists in this environment")))
@@ -216,11 +210,12 @@ public class FeatureService implements FeatureServiceInterface {
                                                         savedFeature.getId(),
                                                         sourceFeature.getEnvironmentId(),
                                                         targetEnvId,
-                                                        PromotionStatus.SUCCESS).thenReturn(
-                                                        FeaturePromotionResponse.builder()
-                                                                .id(savedFeature.getId())
-                                                                .status(PromotionStatus.SUCCESS)
-                                                                .build()))))
+                                                        PromotionStatus.SUCCESS)
+                                                        .thenReturn(
+                                                                FeaturePromotionResponse.builder()
+                                                                        .id(savedFeature.getId())
+                                                                        .status(PromotionStatus.SUCCESS)
+                                                                        .build()))))
         );
     }
 
@@ -262,15 +257,7 @@ public class FeatureService implements FeatureServiceInterface {
             UUID targetEnvId,
             PromotionStatus status) {
         log.info("Recording propagation history: {} -> {}", sourceFeatureId, targetFeatureId);
-        PropagationHistoryEntity history = PropagationHistoryEntity.builder()
-                .id(UUID.randomUUID())
-                .sourceFeatureId(sourceFeatureId)
-                .targetFeatureId(targetFeatureId)
-                .sourceEnvironmentId(sourceEnvId)
-                .targetEnvironmentId(targetEnvId)
-                .status(status)
-                .completedAt(Instant.now())
-                .build();
+        PropagationHistoryEntity history = PropagationHistoryEntity.builder().id(UUID.randomUUID()).sourceFeatureId(sourceFeatureId).targetFeatureId(targetFeatureId).sourceEnvironmentId(sourceEnvId).targetEnvironmentId(targetEnvId).status(status).completedAt(Instant.now()).build();
         return propagationHistoryRepo.save(history)
                 .doOnSuccess(saved -> log.info("Saved propagation history: {}", saved.getId()))
                 .doOnError(err -> log.error("Failed to save propagation history", err))

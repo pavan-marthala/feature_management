@@ -15,7 +15,6 @@ public interface FeatureMapper {
     FeatureEntity toEntity(Feature feature);
 
     @Mapping(target = "configuration", source = "configuration")
-    @Mapping(target = "environmentId", source = "envId")
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "etag", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
