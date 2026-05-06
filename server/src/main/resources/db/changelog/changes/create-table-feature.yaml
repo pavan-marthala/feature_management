@@ -56,6 +56,11 @@ databaseChangeLog:
                               type: UUID
                               constraints:
                                   nullable: false
+                        - column:
+                              name: workflow_id
+                              type: UUID
+                              constraints:
+                                  nullable: false
 
               - addForeignKeyConstraint:
                     baseTableName: feature
@@ -63,13 +68,19 @@ databaseChangeLog:
                     referencedTableName: environment
                     referencedColumnNames: id
                     constraintName: fk_feature_environment
-              - addUniqueConstraint:
-                    tableName: feature
-                    columnNames: name, workspace_id, environment_id
-                    constraintName: uk_feature_name_workspace_env
               - addForeignKeyConstraint:
                     baseTableName: feature
                     baseColumnNames: workspace_id
                     referencedTableName: workspace
                     referencedColumnNames: id
-                    constraintName: fk_feature_workspace_id
+                    constraintName: fk_feature_workspace
+              - addForeignKeyConstraint:
+                    baseTableName: feature
+                    baseColumnNames: workflow_id
+                    referencedTableName: workflow
+                    referencedColumnNames: id
+                    constraintName: fk_feature_workflow
+              - addUniqueConstraint:
+                    tableName: feature
+                    columnNames: name, workspace_id, environment_id
+                    constraintName: uk_feature_name_workspace_env

@@ -87,7 +87,9 @@ public class FeatureService implements FeatureServiceInterface {
     @Transactional
     public Mono<UUID> createFeature(FeatureCreateRequest featureRequest) {
         log.debug("Creating feature with request: {}", featureRequest);
-        return featureRepo.existsByNameAndEnvironmentIdAndWorkspaceId(featureRequest.getName(), featureRequest.getEnvironmentId(), featureRequest.getWorkspaceId())
+        return workflowRepository.findById(featureRequest.getWorkflowId())
+                .switchIfEmpty(Mono.error(new FeatureException("Workflow not found for feature")))
+                .then(featureRepo.existsByNameAndEnvironmentIdAndWorkspaceId(featureRequest.getName(), featureRequest.getEnvironmentId(), featureRequest.getWorkspaceId()))
                 .filter(exists -> !exists)
                 .switchIfEmpty(Mono.error(new FeatureException(
                         "Feature with name " + featureRequest.getName() + " already exists in this environment")))
@@ -170,16 +172,10 @@ public class FeatureService implements FeatureServiceInterface {
         return transactionalOperator.transactional(
                 getFeatureEntity(featureId)
                         .flatMap(sourceFeature ->
-
-                                // 1. Get workflow from workspace
-                                workflowRepository.findByWorkspaceId(sourceFeature.getWorkspaceId())
-                                        .switchIfEmpty(Mono.error(new FeatureException("Workflow not found for workspace")))
-
-                                        // 2. Find next environment from stages
-                                        .flatMap(workflow -> findNextStageEnvironment(workflow.getId(),
+                                workflowRepository.findById(sourceFeature.getWorkflowId())
+                                        .switchIfEmpty(Mono.error(new FeatureException("Workflow not found for feature")))
+                                        .flatMap(workflow -> findNextStageEnvironment(sourceFeature.getWorkflowId(),
                                                 sourceFeature.getEnvironmentId()))
-
-                                        // 3. Clone or update feature in next env
                                         .flatMap(targetEnvId -> featureRepo.getByNameAndWorkspaceIdAndEnvironmentId(
                                                         sourceFeature.getName(),
                                                         sourceFeature.getWorkspaceId(),
@@ -195,6 +191,7 @@ public class FeatureService implements FeatureServiceInterface {
                                                             .name(sourceFeature.getName())
                                                             .description(sourceFeature.getDescription())
                                                             .workspaceId(sourceFeature.getWorkspaceId())
+                                                            .workflowId(sourceFeature.getWorkflowId())
                                                             .environmentId(targetEnvId)
                                                             .configuration(sourceFeature.getConfiguration())
                                                             .enabled(sourceFeature.isEnabled())

@@ -27,9 +27,6 @@ public class WorkflowEntity implements ETaggableEntity {
     @Id
     private UUID id;
 
-    @Column("workspace_id")
-    private UUID workspaceId;
-
     @Column("name")
     private String name;
 

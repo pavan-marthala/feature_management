@@ -1218,6 +1218,10 @@ components:
           type: string
           format: uuid
           description: ID of the workspace this feature instance belongs to
+        workflowId:
+          type: string
+          format: uuid
+          description: ID of the workflow this feature uses for propagation
         createdAt:
           type: string
           format: date-time
@@ -1231,6 +1235,7 @@ components:
         - enabled
         - environmentId
         - workspaceId
+        - workflowId
     FeatureCreateRequest:
       type: object
       properties:
@@ -1250,12 +1255,16 @@ components:
           $ref: "#/components/schemas/Feature/properties/enabled"
         workspaceId:
           $ref: "#/components/schemas/Feature/properties/workspaceId"
+        workflowId:
+          $ref: "#/components/schemas/Feature/properties/workflowId"
       required:
-        - envId
+        - environmentId
         - name
         - configuration
         - owners
         - enabled
+        - workspaceId
+        - workflowId
 
     Workspace:
       type: object
@@ -1322,13 +1331,8 @@ components:
         version:
           type: integer
           format: int64
-        workspaceId:
-          type: string
-          format: uuid
-          description: ID of the workspace this workflow belongs to
       required:
         - name
-        - workspaceId
 
     Workflow:
       allOf:

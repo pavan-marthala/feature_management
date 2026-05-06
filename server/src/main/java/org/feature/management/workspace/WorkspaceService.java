@@ -11,7 +11,6 @@ import org.feature.management.models.WorkspaceRequest;
 import org.feature.management.models.WorkspaceResponse;
 import org.feature.management.shared.exception.AccessDeniedException;
 import org.feature.management.shared.exception.ResourceNotFoundException;
-import org.feature.management.workflow.WorkflowRepository;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -29,7 +28,6 @@ public class WorkspaceService {
     private final WorkspaceRepository workspaceRepository;
     private final WorkspaceMapper workspaceMapper;
     private final FeatureRepository featureRepository;
-    private final WorkflowRepository workflowRepository;
     private final FeatureMapper featureMapper;
 
     public Mono<UUID> createWorkspace(WorkspaceRequest request) {
@@ -103,7 +101,7 @@ public class WorkspaceService {
         return getWorkspaceEntity(id)
                 .flatMap(workspace -> Mono.zip(
                         featureRepository.countByWorkspaceId(id),
-                        workflowRepository.countByWorkspaceId(id)).map(tuple -> {
+                        Mono.just(0L)).map(tuple -> {
                             GetWorkspaceSummary200Response summary = new GetWorkspaceSummary200Response();
                             summary.setFeatureCount(tuple.getT1().intValue());
                             summary.setWorkflowStages(tuple.getT2().intValue());

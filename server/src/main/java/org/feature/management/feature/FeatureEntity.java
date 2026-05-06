@@ -36,6 +36,9 @@ public class FeatureEntity implements ETaggableEntity {
     @Column("workspace_id")
     private UUID workspaceId;
 
+    @Column("workflow_id")
+    private UUID workflowId;
+
     @Column("name")
     private String name;
 

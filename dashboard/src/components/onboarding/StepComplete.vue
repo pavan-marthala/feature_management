@@ -107,26 +107,18 @@ function goToDashboard() {
 
       <!-- Mini pipeline -->
       <div class="mini-pipeline">
-        <div
-          v-for="(stage, idx) in stages"
-          :key="idx"
-          class="mini-pipeline__stage"
-          :class="{ 'mini-pipeline__stage--active': stage.promoted }"
-        >
+        <div v-for="(stage, idx) in stages" :key="idx" class="mini-pipeline__stage"
+          :class="{ 'mini-pipeline__stage--active': stage.promoted }">
           <div class="mini-pipeline__dot">
             <Check v-if="stage.promoted" :size="12" />
           </div>
           <span class="mini-pipeline__name">{{ stage.name }}</span>
-          <div v-if="idx < stages.length - 1" class="mini-pipeline__line" :class="{ 'mini-pipeline__line--filled': stages[idx + 1]?.promoted }" />
+          <div v-if="idx < stages.length - 1" class="mini-pipeline__line"
+            :class="{ 'mini-pipeline__line--filled': stages[idx + 1]?.promoted }" />
         </div>
       </div>
 
-      <button
-        v-if="!promoted"
-        class="btn btn--primary promo-card__cta"
-        :disabled="promoting"
-        @click="handlePromote"
-      >
+      <button v-if="!promoted" class="btn btn--primary promo-card__cta" :disabled="promoting" @click="handlePromote">
         <Loader2 v-if="promoting" :size="16" class="spin" />
         <template v-else>
           Promote to {{ stages[1]?.name || 'next stage' }}
@@ -156,9 +148,14 @@ function goToDashboard() {
   gap: 2rem;
 }
 
-.step-done__hero { position: relative; }
+.step-done__hero {
+  position: relative;
+}
 
-.step-done__icon { color: var(--accent-amber); margin-bottom: 0.5rem; }
+.step-done__icon {
+  color: var(--accent-amber);
+  margin-bottom: 0.5rem;
+}
 
 .step-done__title {
   font-size: 2.25rem;
@@ -189,12 +186,27 @@ function goToDashboard() {
   text-align: center;
 }
 
-.summary-card h4 { font-size: 0.95rem; font-weight: 700; }
-.summary-card p { font-size: 0.75rem; color: var(--text-muted); }
+.summary-card h4 {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
 
-.summary-card__icon--green { color: var(--accent-emerald); }
-.summary-card__icon--cyan { color: var(--accent-cyan); }
-.summary-card__icon--amber { color: var(--accent-amber); }
+.summary-card p {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.summary-card__icon--green {
+  color: var(--accent-emerald);
+}
+
+.summary-card__icon--cyan {
+  color: var(--accent-cyan);
+}
+
+.summary-card__icon--amber {
+  color: var(--accent-amber);
+}
 
 /* Promotion card */
 .promo-card {
@@ -269,7 +281,9 @@ function goToDashboard() {
   background: var(--gradient-accent);
 }
 
-.promo-card__cta { margin: 0 auto; }
+.promo-card__cta {
+  margin: 0 auto;
+}
 
 .promo-card__success {
   display: flex;
@@ -306,21 +320,28 @@ function goToDashboard() {
   opacity: 0;
 }
 
-.confetti-piece:nth-child(3n) { background: var(--accent-cyan); }
-.confetti-piece:nth-child(3n+1) { background: var(--accent-indigo); }
-.confetti-piece:nth-child(3n+2) { background: var(--accent-amber); }
+.confetti-piece:nth-child(3n) {
+  background: var(--accent-cyan);
+}
+
+.confetti-piece:nth-child(3n+1) {
+  background: var(--accent-indigo);
+}
+
+.confetti-piece:nth-child(3n+2) {
+  background: var(--accent-amber);
+}
 
 @keyframes confetti-burst {
   0% {
     opacity: 1;
     transform: translate(0, 0) rotate(0deg) scale(1);
   }
+
   100% {
     opacity: 0;
-    transform: translate(
-      calc((var(--i) - 10) * 15px),
-      calc(-80px + var(--i) * 8px)
-    ) rotate(calc(var(--i) * 45deg)) scale(0.5);
+    transform: translate(calc((var(--i) - 10) * 15px),
+        calc(-80px + var(--i) * 8px)) rotate(calc(var(--i) * 45deg)) scale(0.5);
   }
 }
 
@@ -350,13 +371,28 @@ function goToDashboard() {
   transform: translateY(-2px);
 }
 
-.btn--primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn--primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
-@keyframes spin { to { transform: rotate(360deg); } }
-.spin { animation: spin 1s linear infinite; }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
 
 @media (max-width: 640px) {
-  .step-done__cards { grid-template-columns: 1fr; }
-  .mini-pipeline__line { width: 30px; }
+  .step-done__cards {
+    grid-template-columns: 1fr;
+  }
+
+  .mini-pipeline__line {
+    width: 30px;
+  }
 }
 </style>
