@@ -104,6 +104,7 @@ export interface FeatureCreateRequest {
   description?: string
   environmentId: string
   workspaceId: string
+  workflowId: string
   configuration: FeatureConfiguration
   owners?: string[]
   enabled?: boolean
@@ -199,7 +200,6 @@ export interface WorkflowResponse extends Pagination {
 export interface WorkflowCreateRequest {
   name: string
   status: WorkflowStatus
-  workspaceId: string
 }
 
 export interface WorkflowUpdateRequest {
@@ -233,8 +233,8 @@ export interface WorkspaceResponse extends Pagination {
 
 export interface WorkspaceSummary {
   featureCount: number
-  environments: number
-  workflowStages: number
+  environments?: number
+  workflowStages?: number
 }
 
 /* ===== Propagation & Promotion ===== */

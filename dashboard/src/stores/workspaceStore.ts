@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import type {
   Workspace,
   WorkspaceRequest,
@@ -20,6 +20,10 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   const pagination = ref<Pagination>({ page: 0, size: 25, totalItems: 0, totalPages: 0 })
   const loading = ref(false)
   const error = ref<string | null>(null)
+  const initialized = ref(false)
+
+  // Computed
+  const activeWorkspaceId = computed(() => selectedWorkspace.value?.id || null)
 
   // Restore persisted workspace on init
   function restoreSelection() {
@@ -31,6 +35,47 @@ export const useWorkspaceStore = defineStore('workspace', () => {
         localStorage.removeItem(STORAGE_KEY)
       }
     }
+  }
+
+  /**
+   * Initialize active workspace on app startup.
+   * 1. Restore last persisted workspace
+   * 2. Fetch all workspaces
+   * 3. If persisted workspace exists in list → keep it
+   * 4. Otherwise → select first available
+   */
+  async function initActiveWorkspace() {
+    if (initialized.value) return
+    initialized.value = true
+
+    restoreSelection()
+    await fetchWorkspaces(0, 100)
+
+    if (selectedWorkspace.value) {
+      // Validate persisted workspace still exists
+      const stillExists = workspaces.value.find(w => w.id === selectedWorkspace.value?.id)
+      if (stillExists) {
+        // Update with fresh data
+        selectedWorkspace.value = stillExists
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(stillExists))
+        return
+      }
+    }
+
+    // Auto-select first workspace
+    if (workspaces.value.length > 0) {
+      const first = workspaces.value[0]
+      if (first) selectWorkspace(first)
+    }
+  }
+
+  /**
+   * Lightweight workspace switch — no navigation, just context change.
+   * Views watch selectedWorkspace to auto-refresh.
+   */
+  function switchWorkspace(workspace: Workspace) {
+    selectedWorkspace.value = workspace
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(workspace))
   }
 
   // Actions
@@ -90,7 +135,12 @@ export const useWorkspaceStore = defineStore('workspace', () => {
       const result = await workspaceService.createWorkspace(data)
       const ui = useUiStore()
       ui.addToast('Workspace created successfully', 'success')
-      await fetchWorkspaces(pagination.value.page, pagination.value.size)
+      await fetchWorkspaces(0, 100)
+      // Auto-select newly created workspace
+      const created = workspaces.value.find(w => w.id === result.id)
+      if (created) {
+        selectWorkspace(created)
+      }
       return result
     } catch (err: unknown) {
       const msg = (err && typeof err === 'object' && 'errorMessage' in err)
@@ -110,7 +160,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
       await workspaceService.updateWorkspace(id, data, etag)
       const ui = useUiStore()
       ui.addToast('Workspace updated successfully', 'success')
-      await fetchWorkspaces(pagination.value.page, pagination.value.size)
+      await fetchWorkspaces(0, 100)
     } catch (err: unknown) {
       const msg = (err && typeof err === 'object' && 'errorMessage' in err)
         ? String((err as Record<string, unknown>).errorMessage)
@@ -132,7 +182,12 @@ export const useWorkspaceStore = defineStore('workspace', () => {
       if (selectedWorkspace.value?.id === id) {
         clearSelection()
       }
-      await fetchWorkspaces(pagination.value.page, pagination.value.size)
+      await fetchWorkspaces(0, 100)
+      // Auto-select first remaining workspace
+      if (!selectedWorkspace.value && workspaces.value.length > 0) {
+        const first = workspaces.value[0]
+        if (first) selectWorkspace(first)
+      }
     } catch (err: unknown) {
       const msg = (err && typeof err === 'object' && 'errorMessage' in err)
         ? String((err as Record<string, unknown>).errorMessage)
@@ -161,12 +216,16 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     // State
     workspaces,
     selectedWorkspace,
+    activeWorkspaceId,
     workspaceSummary,
     pagination,
     loading,
     error,
+    initialized,
     // Actions
     restoreSelection,
+    initActiveWorkspace,
+    switchWorkspace,
     fetchWorkspaces,
     fetchWorkspace,
     selectWorkspace,
@@ -177,3 +236,4 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     clearSelection,
   }
 })
+

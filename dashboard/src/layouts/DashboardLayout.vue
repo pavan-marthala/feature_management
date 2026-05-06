@@ -1,61 +1,36 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { ref } from 'vue'
+import { RouterLink, useRoute } from 'vue-router'
 import { useUiStore } from '@/stores/uiStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import ThemeSelector from '@/components/ui/ThemeSelector.vue'
+import WorkspaceDropdown from '@/components/workspace/WorkspaceDropdown.vue'
 import {
-  LayoutDashboard,
   Flag,
   Layers,
   PanelLeftClose,
   PanelLeftOpen,
   Menu,
   GitBranch,
-  FolderKanban,
-  ArrowLeft,
 } from 'lucide-vue-next'
 
 const uiStore = useUiStore()
 const workspaceStore = useWorkspaceStore()
 const route = useRoute()
-const router = useRouter()
 const mobileDrawerOpen = ref(false)
 
 function closeMobileDrawer() {
   mobileDrawerOpen.value = false
 }
 
-const workspaceId = computed(() => route.params.workspaceId as string | undefined)
+const navItems = [
+  { to: '/features', label: 'Features', icon: Flag },
+  { to: '/workflows', label: 'Workflows', icon: GitBranch },
+  { to: '/environments', label: 'Environments', icon: Layers },
+]
 
-const isInsideWorkspace = computed(() => !!workspaceId.value)
-
-const navItems = computed(() => {
-  if (isInsideWorkspace.value) {
-    const wsId = workspaceId.value
-    return [
-      { to: `/workspaces/${wsId}`, label: 'Dashboard', icon: LayoutDashboard, exact: true },
-      { to: `/workspaces/${wsId}/features`, label: 'Features', icon: Flag },
-      { to: `/workspaces/${wsId}/workflow`, label: 'Workflow', icon: GitBranch },
-      { to: '/environments', label: 'Environments', icon: Layers },
-    ]
-  }
-  return [
-    { to: '/workspaces', label: 'Workspaces', icon: FolderKanban },
-    { to: '/environments', label: 'Environments', icon: Layers },
-  ]
-})
-
-function isActive(item: { to: string; exact?: boolean }) {
-  if (item.exact) {
-    return route.path === item.to
-  }
+function isActive(item: { to: string }) {
   return route.path.startsWith(item.to)
-}
-
-function goBackToWorkspaces() {
-  workspaceStore.clearSelection()
-  router.push('/workspaces')
 }
 </script>
 
@@ -65,10 +40,15 @@ function goBackToWorkspaces() {
     <!-- Ambient Background -->
     <div class="bg-ambient"></div>
 
-    <!-- Mobile Header/Toggle -->
-    <button class="mobile-menu-btn" @click="mobileDrawerOpen = true">
-      <Menu :size="22" />
-    </button>
+    <!-- Mobile Header Bar (always visible on mobile) -->
+    <header class="mobile-header">
+      <button class="mobile-header__menu" @click="mobileDrawerOpen = true">
+        <Menu :size="20" />
+      </button>
+      <div class="mobile-header__ws">
+        <WorkspaceDropdown />
+      </div>
+    </header>
 
     <!-- Overlay for mobile drawer -->
     <Transition name="fade">
@@ -102,18 +82,9 @@ function goBackToWorkspaces() {
         </div>
       </div>
 
-      <!-- Workspace context indicator -->
-      <div v-if="isInsideWorkspace && !uiStore.sidebarCollapsed" class="sidebar__workspace-ctx">
-        <button class="sidebar__workspace-back" @click="goBackToWorkspaces" title="Back to workspaces">
-          <ArrowLeft :size="16" />
-          <span class="sidebar__workspace-name">{{ workspaceStore.selectedWorkspace?.name || 'Workspace' }}</span>
-        </button>
-      </div>
-      <div v-else-if="isInsideWorkspace && uiStore.sidebarCollapsed" class="sidebar__workspace-ctx">
-        <button class="sidebar__workspace-back sidebar__workspace-back--icon" @click="goBackToWorkspaces"
-          title="Back to workspaces">
-          <ArrowLeft :size="16" />
-        </button>
+      <!-- Workspace Dropdown (desktop sidebar only) -->
+      <div v-if="!uiStore.sidebarCollapsed" class="sidebar__workspace-dropdown">
+        <WorkspaceDropdown />
       </div>
 
       <nav class="sidebar__nav">
@@ -169,6 +140,43 @@ function goBackToWorkspaces() {
   position: relative;
 }
 
+/* ===== Mobile Header Bar ===== */
+.mobile-header {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  z-index: 50;
+  background: var(--sidebar-bg);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border-bottom: 1px solid var(--glass-border);
+  padding: 0 12px;
+  align-items: center;
+  gap: 8px;
+}
+
+.mobile-header__menu {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.mobile-header__ws {
+  flex: 1;
+  min-width: 0;
+}
+
 /* ===== Sidebar ===== */
 .sidebar {
   position: fixed;
@@ -204,35 +212,6 @@ function goBackToWorkspaces() {
   white-space: nowrap;
 }
 
-.mobile-menu-btn {
-  display: none;
-  position: fixed;
-  top: 1rem;
-  left: 1rem;
-  z-index: 40;
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-md);
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  color: var(--text-primary);
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: var(--shadow-md);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-.mobile-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(4px);
-  z-index: 90;
-}
-
 .sidebar__logo-icon {
   width: 36px;
   height: 36px;
@@ -259,44 +238,10 @@ function goBackToWorkspaces() {
   background-clip: text;
 }
 
-/* Workspace context */
-.sidebar__workspace-ctx {
+/* Workspace Dropdown in Sidebar */
+.sidebar__workspace-dropdown {
   padding: 0.5rem 0.75rem;
   border-bottom: 1px solid var(--glass-border);
-}
-
-.sidebar__workspace-back {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  border-radius: var(--radius-md);
-  background: rgba(34, 211, 238, 0.06);
-  border: 1px solid rgba(34, 211, 238, 0.12);
-  color: var(--accent-cyan);
-  cursor: pointer;
-  font-size: 0.8rem;
-  font-weight: 600;
-  font-family: inherit;
-  width: 100%;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  transition: all var(--transition-fast);
-}
-
-.sidebar__workspace-back:hover {
-  background: rgba(34, 211, 238, 0.12);
-}
-
-.sidebar__workspace-back--icon {
-  justify-content: center;
-  padding: 8px;
-}
-
-.sidebar__workspace-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* Nav */
@@ -427,6 +372,18 @@ function goBackToWorkspaces() {
 }
 
 /* ===== Responsive ===== */
+
+/* Overlay */
+.mobile-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 90;
+}
+
+/* Tablet */
 @media (max-width: 1024px) {
   .sidebar {
     width: var(--sidebar-collapsed-width);
@@ -446,13 +403,14 @@ function goBackToWorkspaces() {
     display: none;
   }
 
-  .sidebar__workspace-name {
+  .sidebar__workspace-dropdown {
     display: none;
   }
 }
 
+/* Mobile */
 @media (max-width: 640px) {
-  .mobile-menu-btn {
+  .mobile-header {
     display: flex;
   }
 
@@ -475,8 +433,8 @@ function goBackToWorkspaces() {
     display: inline;
   }
 
-  .sidebar__workspace-name {
-    display: inline;
+  .sidebar__workspace-dropdown {
+    display: block;
   }
 
   /* Reset layout constraints for mobile */
@@ -492,8 +450,8 @@ function goBackToWorkspaces() {
 
   .content {
     padding: 1rem;
-    padding-top: 5rem;
-    /* Make room for floating btn */
+    padding-top: 72px;
+    /* Make room for fixed mobile header */
   }
 }
 </style>

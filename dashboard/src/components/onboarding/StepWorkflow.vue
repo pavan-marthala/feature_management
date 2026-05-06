@@ -28,14 +28,9 @@ async function handleCreate() {
   creating.value = true
   errorMsg.value = ''
   try {
-    if (!onboarding.createdWorkspaceId) {
-      throw new Error('No active workspace found. Please go back and create a workspace.')
-    }
-
     const wfResultId = await workflowService.createWorkflow({
       name: name.value.trim(),
       status: 'DRAFT',
-      workspaceId: onboarding.createdWorkspaceId
     })
     
     onboarding.setWorkflowId(wfResultId)
@@ -62,8 +57,8 @@ async function handleCreate() {
         Create your workflow
       </h2>
       <p class="step-wf__desc">
-        A workflow dictates how your features propagate across various stages.
-        In the next step, you will map environments to these stages.
+        A workflow is a reusable deployment strategy that defines how features propagate across environments.
+        In the next step, you'll map environments to pipeline stages.
       </p>
 
       <div class="step-wf__field">

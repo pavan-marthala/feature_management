@@ -11,8 +11,6 @@ import {
   FolderKanban,
   Plus,
   Flag,
-  GitBranch,
-  Layers,
   ArrowRight,
   Zap,
 } from 'lucide-vue-next'
@@ -58,7 +56,7 @@ function selectWorkspace(workspace: typeof workspaceStore.workspaces[0]) {
           Workspaces
         </h1>
         <p class="ws-selector__subtitle">
-          Select a workspace to manage its features, workflows, and promotion pipelines.
+          Select a workspace to manage its feature flags.
         </p>
       </div>
       <div class="ws-selector__hero-actions">
@@ -118,14 +116,6 @@ function selectWorkspace(workspace: typeof workspaceStore.workspaces[0]) {
           <div class="ws-card__stat">
             <Flag :size="14" />
             <span>{{ summaries[ws.id]?.featureCount ?? 0 }} features</span>
-          </div>
-          <div class="ws-card__stat">
-            <GitBranch :size="14" />
-            <span>{{ summaries[ws.id]?.workflowStages ?? 0 }} stages</span>
-          </div>
-          <div class="ws-card__stat">
-            <Layers :size="14" />
-            <span>{{ summaries[ws.id]?.environments ?? 0 }} envs</span>
           </div>
         </div>
       </GlassCard>

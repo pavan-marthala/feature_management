@@ -10,9 +10,9 @@ const props = defineProps<{
 const steps = [
   { label: 'Welcome', short: 'W' },
   { label: 'Environments', short: 'E' },
-  { label: 'Workspace', short: 'Ws' },
   { label: 'Workflow', short: 'Wf' },
   { label: 'Stages', short: 'S' },
+  { label: 'Workspace', short: 'Ws' },
   { label: 'Feature', short: 'F' },
   { label: 'Complete', short: '✓' },
 ]

@@ -5,12 +5,18 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: '/workspaces',
+      redirect: '/features',
     },
     // Legacy redirects
-    { path: '/dashboard', redirect: '/workspaces' },
-    { path: '/features', redirect: '/workspaces' },
-    { path: '/workflows', redirect: '/workspaces' },
+    { path: '/dashboard', redirect: '/features' },
+    { path: '/workspaces', redirect: '/features' },
+
+    // Legacy workspace-scoped redirects (graceful migration)
+    { path: '/workspaces/:workspaceId', redirect: '/features' },
+    { path: '/workspaces/:workspaceId/features', redirect: '/features' },
+    { path: '/workspaces/:workspaceId/features/create', redirect: '/features/create' },
+    { path: '/workspaces/:workspaceId/features/:id', redirect: to => `/features/${to.params.id}` },
+    { path: '/workspaces/:workspaceId/features/:id/edit', redirect: to => `/features/${to.params.id}/edit` },
 
     // Onboarding wizard (full-screen, no sidebar)
     {
@@ -20,13 +26,7 @@ const router = createRouter({
       meta: { title: 'Get Started', hideLayout: true },
     },
 
-    // Workspace selector (landing page)
-    {
-      path: '/workspaces',
-      name: 'workspaces',
-      component: () => import('@/views/WorkspaceSelectorView.vue'),
-      meta: { title: 'Workspaces' },
-    },
+    // Workspace create (standalone page, rarely used)
     {
       path: '/workspaces/create',
       name: 'workspace-create',
@@ -34,45 +34,47 @@ const router = createRouter({
       meta: { title: 'Create Workspace' },
     },
 
-    // Workspace-scoped routes
+    // Features (flat routes — workspace context from store)
     {
-      path: '/workspaces/:workspaceId',
-      name: 'workspace-dashboard',
-      component: () => import('@/views/WorkspaceDashboardView.vue'),
-      meta: { title: 'Workspace Dashboard', requiresWorkspace: true },
-    },
-    {
-      path: '/workspaces/:workspaceId/features',
-      name: 'workspace-features',
+      path: '/features',
+      name: 'features',
       component: () => import('@/views/FeaturesListView.vue'),
-      meta: { title: 'Features', requiresWorkspace: true },
+      meta: { title: 'Features' },
     },
     {
-      path: '/workspaces/:workspaceId/features/create',
-      name: 'workspace-feature-create',
+      path: '/features/create',
+      name: 'feature-create',
       component: () => import('@/views/FeatureFormView.vue'),
-      meta: { title: 'Create Feature', requiresWorkspace: true },
+      meta: { title: 'Create Feature' },
     },
     {
-      path: '/workspaces/:workspaceId/features/:id',
-      name: 'workspace-feature-detail',
+      path: '/features/:id',
+      name: 'feature-detail',
       component: () => import('@/views/FeatureDetailView.vue'),
-      meta: { title: 'Feature Detail', requiresWorkspace: true },
+      meta: { title: 'Feature Detail' },
     },
     {
-      path: '/workspaces/:workspaceId/features/:id/edit',
-      name: 'workspace-feature-edit',
+      path: '/features/:id/edit',
+      name: 'feature-edit',
       component: () => import('@/views/FeatureFormView.vue'),
-      meta: { title: 'Edit Feature', requiresWorkspace: true },
-    },
-    {
-      path: '/workspaces/:workspaceId/workflow',
-      name: 'workspace-workflow',
-      component: () => import('@/views/WorkflowDetailView.vue'),
-      meta: { title: 'Workflow', requiresWorkspace: true },
+      meta: { title: 'Edit Feature' },
     },
 
-    // Global environment routes (unchanged)
+    // Global workflow routes
+    {
+      path: '/workflows',
+      name: 'workflows',
+      component: () => import('@/views/WorkflowsListView.vue'),
+      meta: { title: 'Workflows' },
+    },
+    {
+      path: '/workflows/:workflowId',
+      name: 'workflow-detail',
+      component: () => import('@/views/WorkflowDetailView.vue'),
+      meta: { title: 'Workflow Detail' },
+    },
+
+    // Global environment routes
     {
       path: '/environments',
       name: 'environments',

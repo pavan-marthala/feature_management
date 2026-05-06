@@ -3,23 +3,22 @@ import { ref, computed } from 'vue'
 import { environmentService } from '@/services/environmentService'
 import { workspaceService } from '@/services/workspaceService'
 import { workflowService } from '@/services/workflowService'
-import { useWorkspaceStore } from './workspaceStore'
 
 export type OnboardingStep = 
   | 'WELCOME'
   | 'ENV_SETUP'
-  | 'WORKSPACE_SETUP'
   | 'WORKFLOW_SETUP'
   | 'STAGES_SETUP'
+  | 'WORKSPACE_SETUP'
   | 'FEATURE_SETUP'
   | 'COMPLETED'
 
 export type OnboardingStatus = 
   | 'NOT_STARTED'
   | 'ENV_CREATED'
-  | 'WORKSPACE_CREATED'
   | 'WORKFLOW_CREATED'
   | 'STAGES_CREATED'
+  | 'WORKSPACE_CREATED'
   | 'FEATURE_CREATED'
 
 const STORAGE_KEY_COMPLETED = 'onboarding-completed'
@@ -30,9 +29,9 @@ const STORAGE_KEY_STATE = 'onboarding-state'
 const STEP_ORDER: OnboardingStep[] = [
   'WELCOME',
   'ENV_SETUP',
-  'WORKSPACE_SETUP',
   'WORKFLOW_SETUP',
   'STAGES_SETUP',
+  'WORKSPACE_SETUP',
   'FEATURE_SETUP',
   'COMPLETED'
 ]
@@ -107,36 +106,31 @@ export const useOnboardingStore = defineStore('onboarding', () => {
   }
 
   /**
-   * Resolves the current step deterministically to prevent race conditions.
-   * Jumps forward based on backend or local creation status.
+   * Resolves the current step deterministically.
+   * Workflow and Workspace are now independent — neither gates the other.
+   * New order: ENV → WORKFLOW → STAGES → WORKSPACE → FEATURE
    */
   async function resolveStep() {
     if (completed.value) return
 
-    const wsStore = useWorkspaceStore()
-    
-    // 1. Check workspaces
-    if (wsStore.workspaces.length > 0 || createdWorkspaceId.value) {
+    // 1. Check workflows (independent of workspace)
+    if (createdWorkflowId.value) {
+      // Workflow already tracked, skip API check
       const currentIndex = STEP_ORDER.indexOf(currentStep.value)
-      const workflowSetupIndex = STEP_ORDER.indexOf('WORKFLOW_SETUP')
-      
-      if (currentIndex < workflowSetupIndex) {
-        currentStep.value = 'WORKFLOW_SETUP'
-        onboardingStatus.value = 'WORKSPACE_CREATED'
+      const stagesSetupIndex = STEP_ORDER.indexOf('STAGES_SETUP')
+      if (currentIndex < stagesSetupIndex) {
+        currentStep.value = 'STAGES_SETUP'
+        onboardingStatus.value = 'WORKFLOW_CREATED'
         persistState()
       }
-    }
-
-    // 2. Check workflows
-    if (createdWorkflowId.value) {
-      return // DO NOT override existing workflow
+      return
     }
 
     try {
       const wfResponse = await workflowService.getWorkflows(0, 1)
       const hasWorkflows = (wfResponse.totalItems ?? 0) > 0
       
-      if (hasWorkflows || createdWorkflowId.value) {
+      if (hasWorkflows) {
         const currentIndex = STEP_ORDER.indexOf(currentStep.value)
         const stagesSetupIndex = STEP_ORDER.indexOf('STAGES_SETUP')
         
@@ -147,7 +141,7 @@ export const useOnboardingStore = defineStore('onboarding', () => {
         }
 
         const firstWorkflow = wfResponse.items?.[0]
-        if (!createdWorkflowId.value && firstWorkflow?.id) {
+        if (firstWorkflow?.id) {
           createdWorkflowId.value = firstWorkflow.id
           persistState()
         }
@@ -161,13 +155,13 @@ export const useOnboardingStore = defineStore('onboarding', () => {
     if (completed.value) return false
 
     try {
-      const [envResponse, wsResponse] = await Promise.all([
+      const [envResponse, wfResponse] = await Promise.all([
         environmentService.getEnvironments(0, 1),
-        workspaceService.getWorkspaces(0, 1),
+        workflowService.getWorkflows(0, 1),
       ])
       const hasEnvs = (envResponse.totalItems ?? 0) > 0
-      const hasWorkspaces = (wsResponse.totalItems ?? 0) > 0
-      return !hasEnvs && !hasWorkspaces
+      const hasWorkflows = (wfResponse.totalItems ?? 0) > 0
+      return !hasEnvs && !hasWorkflows
     } catch {
       return false
     }
@@ -284,3 +278,4 @@ export const useOnboardingStore = defineStore('onboarding', () => {
     resetOnboarding,
   }
 })
+

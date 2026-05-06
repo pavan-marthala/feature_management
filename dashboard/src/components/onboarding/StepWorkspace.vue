@@ -2,10 +2,9 @@
 import { ref } from 'vue'
 import { useOnboardingStore } from '@/stores/onboardingStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
-import { workflowService } from '@/services/workflowService'
 import GlassCard from '@/components/ui/GlassCard.vue'
 import {
-  FolderKanban, ArrowRight, Loader2, AlertCircle, Flag, GitBranch, Layers,
+  FolderKanban, ArrowRight, Loader2, AlertCircle, Flag, Layers,
 } from 'lucide-vue-next'
 
 const emit = defineEmits<{ next: [] }>()
@@ -68,8 +67,8 @@ async function handleCreate() {
         Create your first workspace
       </h2>
       <p class="step-ws__desc">
-        A workspace groups related features under one project.
-        Think of it as a boundary for a microservice or product area.
+        A workspace groups related features under one project boundary.
+        Think of it as an organizational scope for a microservice or product area.
       </p>
 
       <div class="step-ws__field">
@@ -138,12 +137,8 @@ async function handleCreate() {
             <span>Feature Flags</span>
           </div>
           <div class="preview-item">
-            <GitBranch :size="16" />
-            <span>Promotion Workflow</span>
-          </div>
-          <div class="preview-item">
             <Layers :size="16" />
-            <span>Pipeline Stages</span>
+            <span>Organized Features</span>
           </div>
         </div>
       </GlassCard>

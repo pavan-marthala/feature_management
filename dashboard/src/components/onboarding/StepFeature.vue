@@ -121,6 +121,10 @@ async function handleCreate() {
     errorMsg.value = 'No workspace selected'
     return
   }
+  if (!onboarding.createdWorkflowId) {
+    errorMsg.value = 'No workflow selected'
+    return
+  }
 
   creating.value = true
   errorMsg.value = ''
@@ -131,6 +135,7 @@ async function handleCreate() {
       description: description.value.trim() || undefined,
       environmentId: firstEnvId.value,
       workspaceId: onboarding.createdWorkspaceId,
+      workflowId: onboarding.createdWorkflowId,
       configuration: config,
       owners: owners.value.length ? owners.value : undefined,
       enabled: enabled.value,

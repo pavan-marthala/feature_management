@@ -3,16 +3,18 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useOnboardingStore } from '@/stores/onboardingStore'
 import { useEnvironmentStore } from '@/stores/environmentStore'
+import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { workflowService } from '@/services/workflowService'
 import { featureService } from '@/services/featureService'
 import GlassCard from '@/components/ui/GlassCard.vue'
 import {
-  PartyPopper, Layers, FolderKanban, Flag, ArrowRight, Loader2, Check,
+  PartyPopper, Layers, FolderKanban, Flag, ArrowRight, Loader2, Check, GitBranch,
 } from 'lucide-vue-next'
 
 const router = useRouter()
 const onboarding = useOnboardingStore()
 const envStore = useEnvironmentStore()
+const workspaceStore = useWorkspaceStore()
 
 interface StageInfo { name: string; promoted: boolean }
 
@@ -21,6 +23,7 @@ const promoting = ref(false)
 const promoted = ref(false)
 const featureName = ref('')
 const workspaceName = ref('Your Workspace')
+const workflowName = ref('Your Workflow')
 
 onMounted(async () => {
   await envStore.fetchEnvironments(0, 100)
@@ -35,7 +38,7 @@ onMounted(async () => {
           promoted: i === 0, // first stage already has the feature
         }))
       }
-      workspaceName.value = wf?.name?.replace(' Workflow', '') || 'Your Workspace'
+      workflowName.value = wf?.name || 'Your Workflow'
     } catch { /* ignore */ }
   }
   // Get feature name
@@ -62,10 +65,21 @@ async function handlePromote() {
   finally { promoting.value = false }
 }
 
-function goToDashboard() {
+async function goToDashboard() {
   onboarding.completeOnboarding()
+  
+  // Ensure workspaces are loaded so we can auto-select the new one
+  await workspaceStore.initActiveWorkspace()
+  
   const wsId = onboarding.createdWorkspaceId
-  router.push(wsId ? `/workspaces/${wsId}` : '/workspaces')
+  if (wsId) {
+    const ws = workspaceStore.workspaces.find(w => w.id === wsId)
+    if (ws) {
+      workspaceStore.switchWorkspace(ws)
+    }
+  }
+  
+  router.push('/features')
 }
 </script>
 
@@ -88,6 +102,11 @@ function goToDashboard() {
         <Layers :size="20" class="summary-card__icon summary-card__icon--green" />
         <h4>Environments</h4>
         <p>{{ onboarding.createdEnvironmentIds.length }} created</p>
+      </GlassCard>
+      <GlassCard class="summary-card">
+        <GitBranch :size="20" class="summary-card__icon summary-card__icon--indigo" />
+        <h4>{{ workflowName }}</h4>
+        <p>Workflow ready</p>
       </GlassCard>
       <GlassCard class="summary-card">
         <FolderKanban :size="20" class="summary-card__icon summary-card__icon--cyan" />
@@ -172,10 +191,10 @@ function goToDashboard() {
 /* Summary cards */
 .step-done__cards {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
   width: 100%;
-  max-width: 640px;
+  max-width: 720px;
 }
 
 .summary-card {
@@ -202,6 +221,10 @@ function goToDashboard() {
 
 .summary-card__icon--cyan {
   color: var(--accent-cyan);
+}
+
+.summary-card__icon--indigo {
+  color: var(--accent-indigo);
 }
 
 .summary-card__icon--amber {

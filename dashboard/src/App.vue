@@ -5,9 +5,11 @@ import DashboardLayout from '@/layouts/DashboardLayout.vue'
 import ToastContainer from '@/components/ui/ToastContainer.vue'
 import { useUiStore } from '@/stores/uiStore'
 import { useOnboardingStore } from '@/stores/onboardingStore'
+import { useWorkspaceStore } from '@/stores/workspaceStore'
 
 const uiStore = useUiStore()
 const onboardingStore = useOnboardingStore()
+const workspaceStore = useWorkspaceStore()
 const route = useRoute()
 const router = useRouter()
 
@@ -22,8 +24,12 @@ onMounted(async () => {
     const isNew = await onboardingStore.checkIfNewUser()
     if (isNew) {
       router.push('/onboarding')
+      return
     }
   }
+
+  // Initialize active workspace context
+  await workspaceStore.initActiveWorkspace()
 })
 </script>
 
@@ -32,3 +38,4 @@ onMounted(async () => {
   <router-view v-else />
   <ToastContainer />
 </template>
+

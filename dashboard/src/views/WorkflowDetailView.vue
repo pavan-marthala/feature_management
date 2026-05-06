@@ -25,8 +25,7 @@ const route = useRoute()
 const router = useRouter()
 const workflowStore = useWorkflowStore()
 const environmentStore = useEnvironmentStore()
-const workspaceId = computed(() => route.params.workspaceId as string)
-const workflowId = ref<string>('')
+const workflowId = computed(() => route.params.workflowId as string)
 
 // Stage Modal State
 const showStageModal = ref(false)
@@ -49,15 +48,10 @@ onMounted(async () => {
 })
 
 async function fetchWorkflowData() {
-  // Fetch all workflows and find the one for this workspace
-  await workflowStore.fetchWorkflows(0, 100)
-  const wsWorkflow = workflowStore.workflows.find((w: any) => w.workspaceId === workspaceId.value)
-  if (wsWorkflow?.id) {
-    workflowId.value = wsWorkflow.id
-    const data = await workflowStore.fetchWorkflow(wsWorkflow.id)
-    if (data) {
-      localStages.value = [...data.stages]
-    }
+  if (!workflowId.value) return
+  const data = await workflowStore.fetchWorkflow(workflowId.value)
+  if (data) {
+    localStages.value = [...data.stages]
   }
 }
 
@@ -166,9 +160,9 @@ async function onDrop() {
   <div class="workflow-detail-page">
     <!-- Header -->
     <div class="header-section">
-      <button class="back-btn" @click="router.push(`/workspaces/${workspaceId}`)">
+      <button class="back-btn" @click="router.push('/workflows')">
         <ArrowLeft :size="18" />
-        Back to Dashboard
+        Back to Workflows
       </button>
       
       <div v-if="workflow" class="header-content animate-fadeInUp">

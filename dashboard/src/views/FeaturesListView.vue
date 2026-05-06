@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { onMounted, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { onMounted, watch, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useFeatureStore } from '@/stores/featureStore'
 import { useEnvironmentStore } from '@/stores/environmentStore'
+import { useWorkspaceStore } from '@/stores/workspaceStore'
 import SearchInput from '@/components/ui/SearchInput.vue'
 import ToggleSwitch from '@/components/ui/ToggleSwitch.vue'
 import Badge from '@/components/ui/Badge.vue'
@@ -16,23 +17,35 @@ import {
   Pencil,
   Trash2,
   Filter,
+  FolderKanban,
 } from 'lucide-vue-next'
 import type { FeatureStrategyType } from '@/types'
 
 const featureStore = useFeatureStore()
 const envStore = useEnvironmentStore()
+const workspaceStore = useWorkspaceStore()
 const router = useRouter()
-const route = useRoute()
-const workspaceId = route.params.workspaceId as string
+
+const workspaceId = computed(() => workspaceStore.activeWorkspaceId)
+
+async function loadFeatures() {
+  if (!workspaceId.value) return
+  await featureStore.fetchWorkspaceFeatures(workspaceId.value, 0, 25)
+}
 
 onMounted(async () => {
-  await featureStore.fetchWorkspaceFeatures(workspaceId, 0, 25)
+  await loadFeatures()
   if (featureStore.strategies.length === 0) {
     await featureStore.fetchStrategies()
   }
   if (envStore.environments.length === 0) {
     await envStore.fetchEnvironments(0, 100)
   }
+})
+
+// Auto-refresh when workspace changes
+watch(() => workspaceStore.selectedWorkspace, () => {
+  loadFeatures()
 })
 
 function getEnvironmentName(id: string) {
@@ -57,13 +70,9 @@ function getStatusBadge(enabled: boolean) {
 }
 
 function onPageChange(page: number) {
-  featureStore.fetchWorkspaceFeatures(workspaceId, page, featureStore.pagination.size)
+  if (!workspaceId.value) return
+  featureStore.fetchWorkspaceFeatures(workspaceId.value, page, featureStore.pagination.size)
 }
-
-// Watch is needed to handle the filtered list in the client
-watch(() => featureStore.searchQuery, () => {
-  // Client-side filtering, no API call needed
-})
 </script>
 
 <template>
@@ -74,7 +83,7 @@ watch(() => featureStore.searchQuery, () => {
         <h1 class="features-page__title">Features</h1>
         <p class="features-page__subtitle">Manage your feature flags and rollout strategies</p>
       </div>
-      <button class="btn btn--primary" @click="router.push(`/workspaces/${workspaceId}/features/create`)" id="create-feature-btn">
+      <button class="btn btn--primary" @click="router.push(`/features/create`)" id="create-feature-btn">
         <Plus :size="18" />
         Create Feature
       </button>
@@ -139,7 +148,7 @@ watch(() => featureStore.searchQuery, () => {
         <button
           v-if="!featureStore.searchQuery && featureStore.statusFilter === 'all' && featureStore.strategyFilter === 'all'"
           class="btn btn--primary"
-          @click="router.push(`/workspaces/${workspaceId}/features/create`)"
+          @click="router.push(`/features/create`)"
         >
           <Plus :size="18" /> Create Feature
         </button>
@@ -166,7 +175,7 @@ watch(() => featureStore.searchQuery, () => {
               v-for="feature in featureStore.filteredFeatures"
               :key="feature.id"
               class="features-table__row"
-              @click="router.push(`/workspaces/${workspaceId}/features/${feature.id}`)"
+              @click="router.push(`/features/${feature.id}`)"
             >
               <td>
                 <span class="feature-name">
@@ -197,7 +206,7 @@ watch(() => featureStore.searchQuery, () => {
                   <button
                     class="action-btn"
                     title="Edit"
-                    @click="router.push(`/workspaces/${workspaceId}/features/${feature.id}/edit`)"
+                    @click="router.push(`/features/${feature.id}/edit`)"
                   >
                     <Pencil :size="16" />
                   </button>
@@ -222,7 +231,7 @@ watch(() => featureStore.searchQuery, () => {
           :key="feature.id"
           class="feature-card"
           hover
-          @click="router.push(`/workspaces/${workspaceId}/features/${feature.id}`)"
+          @click="router.push(`/features/${feature.id}`)"
         >
           <div class="feature-card__header">
             <h3 class="feature-card__name">{{ feature.name }}</h3>
@@ -247,7 +256,7 @@ watch(() => featureStore.searchQuery, () => {
             <div class="feature-card__actions">
               <button
                 class="btn btn--ghost btn--sm"
-                @click="router.push(`/workspaces/${workspaceId}/features/${feature.id}/edit`)"
+                @click="router.push(`/features/${feature.id}/edit`)"
               >
                 <Pencil :size="14" /> Edit
               </button>

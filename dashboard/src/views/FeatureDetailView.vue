@@ -51,7 +51,6 @@ const newOwnerName = ref('')
 const copied = ref(false)
 
 const featureId = computed(() => route.params.id as string)
-const workspaceId = computed(() => route.params.workspaceId as string)
 
 onMounted(async () => {
   await featureStore.fetchFeature(featureId.value, 'ID')
@@ -84,7 +83,7 @@ async function handleDelete() {
   if (!feature.value) return
   try {
     await featureStore.deleteFeature(feature.value.id, feature.value.etag)
-    router.push(`/workspaces/${workspaceId.value}/features`)
+    router.push(`/features`)
   } catch {
     // Toast already shown
   }
@@ -138,11 +137,10 @@ async function openHistory() {
 </script>
 
 <template>
-  <div class="detail-page">
+  <div class="feature-detail" v-if="feature">
     <!-- Back -->
-    <button class="back-btn" @click="router.push(`/workspaces/${workspaceId}/features`)">
-      <ArrowLeft :size="18" />
-      Back to Features
+    <button class="back-btn" @click="router.push(`/features`)">
+      <ArrowLeft :size="18" /> Back to Features
     </button>
 
     <LoadingSkeleton v-if="featureStore.loading && !feature" variant="card" />
@@ -170,7 +168,7 @@ async function openHistory() {
           <button class="btn btn--ghost" @click="openHistory">
             <History :size="16" /> History
           </button>
-          <button class="btn btn--ghost" @click="router.push(`/workspaces/${workspaceId}/features/${feature.id}/edit`)">
+          <button class="btn btn--ghost" @click="router.push(`/features/${feature.id}/edit`)">
             <Pencil :size="16" /> Edit
           </button>
           <button class="btn btn--danger" @click="showDeleteModal = true">
@@ -200,7 +198,7 @@ async function openHistory() {
         />
         <div v-else class="no-workflow glass">
           <p>No propagation workflow assigned to this feature.</p>
-          <button class="btn btn--primary btn--sm" @click="router.push(`/workspaces/${workspaceId}/workflow`)">Configure Workflow</button>
+          <button class="btn btn--primary btn--sm" @click="router.push('/workflows')">Configure Workflow</button>
         </div>
       </GlassCard>
 

@@ -63,9 +63,9 @@ function handleBack() {
       <Transition name="step-slide" mode="out-in">
         <StepWelcome v-if="step === 'WELCOME'" :key="0" @next="handleNext" />
         <StepEnvironments v-else-if="step === 'ENV_SETUP'" :key="1" @next="handleNext" />
-        <StepWorkspace v-else-if="step === 'WORKSPACE_SETUP'" :key="2" @next="handleNext" />
-        <StepWorkflow v-else-if="step === 'WORKFLOW_SETUP'" :key="3" @next="handleNext" />
-        <StepStages v-else-if="step === 'STAGES_SETUP'" :key="4" @next="handleNext" />
+        <StepWorkflow v-else-if="step === 'WORKFLOW_SETUP'" :key="2" @next="handleNext" />
+        <StepStages v-else-if="step === 'STAGES_SETUP'" :key="3" @next="handleNext" />
+        <StepWorkspace v-else-if="step === 'WORKSPACE_SETUP'" :key="4" @next="handleNext" />
         <StepFeature v-else-if="step === 'FEATURE_SETUP'" :key="5" @next="handleNext" />
         <StepComplete v-else-if="step === 'COMPLETED'" :key="6" />
       </Transition>

@@ -3,6 +3,8 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useFeatureStore } from '@/stores/featureStore'
 import { useEnvironmentStore } from '@/stores/environmentStore'
+import { useWorkflowStore } from '@/stores/workflowStore'
+import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { useUiStore } from '@/stores/uiStore'
 import GlassCard from '@/components/ui/GlassCard.vue'
 import ToggleSwitch from '@/components/ui/ToggleSwitch.vue'
@@ -13,11 +15,13 @@ const route = useRoute()
 const router = useRouter()
 const featureStore = useFeatureStore()
 const environmentStore = useEnvironmentStore()
+const workflowStore = useWorkflowStore()
+const workspaceStore = useWorkspaceStore()
 const uiStore = useUiStore()
 
-const isEdit = computed(() => route.name === 'workspace-feature-edit')
+const isEdit = computed(() => route.name === 'feature-edit')
 const featureId = computed(() => route.params.id as string)
-const workspaceId = computed(() => route.params.workspaceId as string)
+const workspaceId = computed(() => workspaceStore.activeWorkspaceId)
 
 // Form state
 const name = ref('')
@@ -25,6 +29,7 @@ const description = ref('')
 const strategy = ref<FeatureStrategyType>('BooleanFeatureStrategy')
 const enabled = ref(true)
 const selectedEnvId = ref('')
+const selectedWorkflowId = ref('')
 const owners = ref<string[]>([])
 const newOwner = ref('')
 
@@ -57,7 +62,8 @@ const errors = ref<Record<string, string>>({})
 onMounted(async () => {
   await Promise.all([
     featureStore.fetchStrategies(),
-    environmentStore.fetchEnvironments(0, 100) // Get more to be safe for dropdown
+    environmentStore.fetchEnvironments(0, 100),
+    workflowStore.fetchWorkflows(0, 100),
   ])
 
   if (isEdit.value && featureId.value) {
@@ -124,6 +130,9 @@ function validate(): boolean {
   }
   if (!isEdit.value && !selectedEnvId.value) {
     errors.value.environmentId = 'Environment is required'
+  }
+  if (!isEdit.value && !selectedWorkflowId.value) {
+    errors.value.workflowId = 'Workflow is required'
   }
   if (name.value && !/^[a-zA-Z0-9]+$/.test(name.value)) {
     errors.value.name = 'Name can only contain letters and numbers'
@@ -208,28 +217,25 @@ async function handleSubmit() {
     if (isEdit.value) {
       // Send only the edited configuration, not the full object
       const data = buildConfiguration() as any
-      
       await featureStore.updateFeature(featureId.value, data, featureStore.selectedEtag)
-      router.push(`/workspaces/${workspaceId.value}/features/${featureId.value}`)
+      const ui = useUiStore()
+      ui.addToast('Feature updated successfully', 'success')
+      router.push(`/features`)
     } else {
       const payload: FeatureCreateRequest = {
         name: name.value,
         description: description.value || undefined,
         environmentId: envId,
-        workspaceId: workspaceId.value,
+        workspaceId: workspaceId.value!,
+        workflowId: selectedWorkflowId.value,
         configuration: buildConfiguration(),
         owners: owners.value.length ? owners.value : undefined,
         enabled: enabled.value,
       }
       const result = await featureStore.createFeature(payload)
-      // Navigate using the returned id if available, otherwise fall back to list
-      if (result?.id) {
-        router.push(`/workspaces/${workspaceId.value}/features/${result.id}`)
-      } else {
-        router.push(`/workspaces/${workspaceId.value}/features`)
-      }
+      router.push(`/features`)
     }
-  } catch (err) {
+  } catch (err: unknown) {
     console.error('Submit failed', err)
   } finally {
     submitting.value = false
@@ -257,9 +263,9 @@ function removeJwtCustom(idx: number) { jwtCustomClaims.value.splice(idx, 1) }
 
 <template>
   <div class="form-page">
-    <button class="back-btn" @click="router.back()">
+    <button class="back-btn" @click="router.push(`/features`)">
       <ArrowLeft :size="18" />
-      Back
+      Back to Features
     </button>
 
     <div class="form-page__header animate-fadeInUp">
@@ -357,6 +363,27 @@ function removeJwtCustom(idx: number) { jwtCustomClaims.value.splice(idx, 1) }
             </div>
             <span v-if="errors.environmentId" class="form-error">{{ errors.environmentId }}</span>
           </template>
+        </div>
+
+        <div class="form-group" v-if="!isEdit">
+          <label class="form-label" for="workflow-select">Workflow *</label>
+          <select
+            id="workflow-select"
+            v-model="selectedWorkflowId"
+            class="form-input form-select"
+            :class="{ 'form-input--error': errors.workflowId }"
+          >
+            <option value="" disabled>Select a workflow...</option>
+            <option
+              v-for="wf in workflowStore.workflows"
+              :key="wf.id"
+              :value="wf.id"
+            >
+              {{ wf.name }}
+            </option>
+          </select>
+          <span v-if="errors.workflowId" class="form-error">{{ errors.workflowId }}</span>
+          <span class="form-hint">The deployment pipeline this feature will follow</span>
         </div>
 
         <div class="form-group" v-if="!isEdit">
