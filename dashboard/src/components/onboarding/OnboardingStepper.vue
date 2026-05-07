@@ -1,36 +1,30 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { Check } from 'lucide-vue-next'
+import { computed } from "vue";
+import { Check } from "lucide-vue-next";
 
 const props = defineProps<{
-  currentStep: number
-  totalSteps: number
-}>()
+  currentStep: number;
+  totalSteps: number;
+}>();
 
 const steps = [
-  { label: 'Welcome', short: 'W' },
-  { label: 'Environments', short: 'E' },
-  { label: 'Workflow', short: 'Wf' },
-  { label: 'Stages', short: 'S' },
-  { label: 'Workspace', short: 'Ws' },
-  { label: 'Feature', short: 'F' },
-  { label: 'Complete', short: '✓' },
-]
+  { label: "Welcome", short: "W" },
+  { label: "Environments", short: "E" },
+  { label: "Workflow", short: "Wf" },
+  { label: "Stages", short: "S" },
+  { label: "Workspace", short: "Ws" },
+  { label: "Feature", short: "F" },
+  { label: "Complete", short: "✓" },
+];
 
 const progressWidth = computed(() => {
-  if (props.currentStep === 0) return '0%'
-  return `${(props.currentStep / (props.totalSteps - 1)) * 100}%`
-})
+  if (props.currentStep === 0) return "0%";
+  return `${(props.currentStep / (props.totalSteps - 1)) * 100}%`;
+});
 </script>
 
 <template>
   <div class="stepper" role="navigation" aria-label="Onboarding progress">
-    <!-- Background track -->
-    <div class="stepper__track">
-      <div class="stepper__track-fill" :style="{ width: progressWidth }" />
-    </div>
-
-    <!-- Steps -->
     <div class="stepper__steps">
       <div
         v-for="(step, idx) in steps"
@@ -42,10 +36,20 @@ const progressWidth = computed(() => {
           'stepper__step--upcoming': idx > currentStep,
         }"
       >
+        <!-- Connector Line: Spans from this dot's center to the next dot's center -->
+        <div
+          v-if="idx < steps.length - 1"
+          class="stepper__connector"
+          :class="{ 'stepper__connector--filled': idx < currentStep }"
+        ></div>
+
+        <!-- Step Indicator: Higher z-index and solid background to cover the connector -->
         <div class="stepper__dot">
           <Check v-if="idx < currentStep" :size="14" />
           <span v-else>{{ idx + 1 }}</span>
         </div>
+
+        <!-- Step Label -->
         <span class="stepper__label">{{ step.label }}</span>
       </div>
     </div>
@@ -57,9 +61,9 @@ const progressWidth = computed(() => {
   position: relative;
   padding: 0 2rem;
   width: 100%;
-  max-width: 720px;
+  max-width: 720px; /* Increased to accommodate all labels without overlap */
+  margin: 0 auto;
 }
-
 .stepper__track {
   position: absolute;
   top: 16px;
@@ -70,14 +74,12 @@ const progressWidth = computed(() => {
   border-radius: 4px;
   z-index: 0;
 }
-
 .stepper__track-fill {
   height: 100%;
   background: var(--gradient-accent);
   border-radius: 4px;
   transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
 .stepper__steps {
   display: flex;
   justify-content: space-between;
@@ -89,8 +91,27 @@ const progressWidth = computed(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   flex: 1;
+  min-width: 100px;
+  position: relative;
+}
+
+/* Connector Logic: Hidden behind the solid dots */
+.stepper__connector {
+  position: absolute;
+  top: 16px;
+  left: 50%; /* Start at center of current dot */
+  width: 100%; /* Reach to center of next dot */
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  z-index: 0;
+  transition: background 0.4s ease;
+}
+
+.stepper__connector--filled {
+  background: #22d3ee;
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.3);
 }
 
 .stepper__dot {
@@ -100,62 +121,103 @@ const progressWidth = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   font-weight: 700;
-  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
 }
 
 .stepper__label {
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  transition: color 0.3s ease;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  text-align: center;
+  line-height: 1.3;
   white-space: nowrap;
 }
 
-/* Completed */
+/* Completed State */
 .stepper__step--completed .stepper__dot {
   background: var(--gradient-accent);
   color: white;
-  box-shadow: 0 2px 8px rgba(34, 211, 238, 0.25);
+  box-shadow: 0 0 15px rgba(34, 211, 238, 0.3);
 }
 
 .stepper__step--completed .stepper__label {
   color: var(--accent-cyan);
 }
 
-/* Active */
+/* Active State */
 .stepper__step--active .stepper__dot {
   background: var(--bg-secondary);
   border: 2px solid var(--accent-cyan);
   color: var(--accent-cyan);
   box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.12);
-  animation: step-pulse 2s ease-in-out infinite;
+  transform: scale(1.1);
 }
 
 .stepper__step--active .stepper__label {
   color: var(--text-primary);
 }
-
-/* Upcoming */
 .stepper__step--upcoming .stepper__dot {
   background: var(--bg-tertiary);
   color: var(--text-muted);
   border: 1px solid var(--glass-border);
+  /* Responsive Overrides */
+  @media (max-width: 1100px) {
+    .stepper__step {
+      min-width: 120px;
+    }
+  }
 }
-
 .stepper__step--upcoming .stepper__label {
   color: var(--text-muted);
 }
 
-@keyframes step-pulse {
-  0%, 100% {
-    box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.12);
+@media (max-width: 1000px) {
+  .stepper {
+    padding: 0 1rem;
   }
-  50% {
-    box-shadow: 0 0 0 8px rgba(34, 211, 238, 0.06);
+
+  .stepper__step {
+    min-width: 0;
+  }
+
+  .stepper__connector {
+    top: 14px;
+    height: 3px;
+  }
+
+  .stepper__dot {
+    width: 28px;
+    height: 28px;
+    font-size: 0.75rem;
+  }
+
+  .stepper__label {
+    position: absolute;
+    top: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    pointer-events: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .stepper__step--active .stepper__label {
+    opacity: 1;
+    position: relative;
+    top: 0;
+    transform: none;
+    left: 0;
+    margin-top: 10px;
+    font-size: 1rem;
+    letter-spacing: 0.01em;
+  }
+
+  .stepper__step:not(.stepper__step--active) .stepper__label {
+    display: none;
   }
 }
 
@@ -163,21 +225,22 @@ const progressWidth = computed(() => {
   .stepper {
     padding: 0 0.5rem;
   }
+}
 
-  .stepper__label {
-    display: none;
+/* Animations */
+.stepper__step--active .stepper__dot {
+  animation: pulse-ring 2s infinite;
+}
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.4);
   }
-
-  .stepper__dot {
-    width: 28px;
-    height: 28px;
-    font-size: 0.65rem;
+  70% {
+    box-shadow: 0 0 0 10px rgba(34, 211, 238, 0);
   }
-
-  .stepper__track {
-    left: calc(0.5rem + 14px);
-    right: calc(0.5rem + 14px);
-    top: 14px;
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 211, 238, 0);
   }
 }
 </style>

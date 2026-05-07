@@ -49,7 +49,7 @@ async function handleDelete() {
 }
 
 function onPageChange(page: number) {
-  envStore.fetchEnvironments(page, envStore.pagination.size);
+  envStore.fetchEnvironments(page - 1, envStore.pagination.size);
 }
 </script>
 

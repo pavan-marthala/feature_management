@@ -73,7 +73,7 @@ function onPageChange(page: number) {
   featureStore.fetchWorkspaceFeatures(
     workspaceId.value,
     environmentId.value,
-    page,
+    page - 1,
     featureStore.pagination.size,
   );
 }
@@ -365,7 +365,7 @@ function handleEnvironmentChange(event: Event) {
 
       <!-- Pagination -->
       <PaginationComp
-        :page="featureStore.pagination.page"
+        :page="featureStore.pagination.page + 1"
         :total-pages="featureStore.pagination.totalPages"
         :total-items="featureStore.pagination.totalItems"
         :size="featureStore.pagination.size"

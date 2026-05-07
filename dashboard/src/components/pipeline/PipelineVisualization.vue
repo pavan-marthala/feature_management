@@ -513,11 +513,7 @@ function isTransitionNode(row: OrcRow, ci: number): boolean {
 .sc__btns {
   display: flex;
   gap: 1px;
-  opacity: 0;
-  transition: opacity 0.15s;
 }
-
-.sc:hover .sc__btns { opacity: 1; }
 
 /* icon buttons */
 .ib {

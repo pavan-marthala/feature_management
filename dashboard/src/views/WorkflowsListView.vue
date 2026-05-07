@@ -7,11 +7,10 @@ import Badge from '@/components/ui/Badge.vue'
 import LoadingSkeleton from '@/components/ui/LoadingSkeleton.vue'
 import SearchInput from '@/components/ui/SearchInput.vue'
 import Modal from '@/components/ui/Modal.vue'
-import type { WorkflowStatus, WorkflowCreateRequest } from '@/types'
+import type { WorkflowStatus } from '@/types'
 import {
   GitBranch,
   Plus,
-  ArrowRight,
   Zap,
   Layers,
   Loader2,
@@ -142,7 +141,13 @@ async function handleDeleteWorkflow(id: string, version: number, event: Event) {
           </div>
           <div class="wf-card__header-right">
             <Badge v-bind="getStatusBadge(wf.status)" />
-            <ArrowRight :size="16" class="wf-card__arrow" />
+            <button
+              class="action-btn action-btn--danger"
+              title="Delete workflow"
+              @click="handleDeleteWorkflow(wf.id!, wf.version || 0, $event)"
+            >
+              <Trash2 :size="16" />
+            </button>
           </div>
         </div>
         <h3 class="wf-card__name">{{ wf.name }}</h3>
@@ -151,15 +156,6 @@ async function handleDeleteWorkflow(id: string, version: number, event: Event) {
             <Layers :size="14" />
             <span>Version {{ wf.version || 1 }}</span>
           </div>
-        </div>
-        <div class="wf-card__actions">
-          <button
-            class="action-btn action-btn--danger"
-            title="Delete workflow"
-            @click="handleDeleteWorkflow(wf.id!, wf.version || 0, $event)"
-          >
-            <Trash2 :size="16" />
-          </button>
         </div>
       </GlassCard>
     </div>
@@ -274,15 +270,6 @@ async function handleDeleteWorkflow(id: string, version: number, event: Event) {
   color: white;
 }
 
-.wf-card__arrow {
-  color: var(--text-muted);
-  transition: transform var(--transition-fast), color var(--transition-fast);
-}
-
-.wf-card:hover .wf-card__arrow {
-  color: var(--accent-cyan);
-  transform: translateX(4px);
-}
 
 .wf-card__name {
   font-size: 1.1rem;
@@ -303,17 +290,6 @@ async function handleDeleteWorkflow(id: string, version: number, event: Event) {
   color: var(--text-secondary);
 }
 
-.wf-card__actions {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  opacity: 0;
-  transition: opacity var(--transition-fast);
-}
-
-.wf-card:hover .wf-card__actions {
-  opacity: 1;
-}
 
 .action-btn {
   background: none;

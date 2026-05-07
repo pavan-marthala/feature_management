@@ -1,30 +1,30 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
-import { useOnboardingStore } from '@/stores/onboardingStore'
-import OnboardingStepper from '@/components/onboarding/OnboardingStepper.vue'
-import StepWelcome from '@/components/onboarding/StepWelcome.vue'
-import StepEnvironments from '@/components/onboarding/StepEnvironments.vue'
-import StepWorkspace from '@/components/onboarding/StepWorkspace.vue'
-import StepWorkflow from '@/components/onboarding/StepWorkflow.vue'
-import StepStages from '@/components/onboarding/StepStages.vue'
-import StepFeature from '@/components/onboarding/StepFeature.vue'
-import StepComplete from '@/components/onboarding/StepComplete.vue'
-import { Zap } from 'lucide-vue-next'
+import { computed, onMounted } from "vue";
+import { useOnboardingStore } from "@/stores/onboardingStore";
+import OnboardingStepper from "@/components/onboarding/OnboardingStepper.vue";
+import StepWelcome from "@/components/onboarding/StepWelcome.vue";
+import StepEnvironments from "@/components/onboarding/StepEnvironments.vue";
+import StepWorkspace from "@/components/onboarding/StepWorkspace.vue";
+import StepWorkflow from "@/components/onboarding/StepWorkflow.vue";
+import StepStages from "@/components/onboarding/StepStages.vue";
+import StepFeature from "@/components/onboarding/StepFeature.vue";
+import StepComplete from "@/components/onboarding/StepComplete.vue";
+import { Zap } from "lucide-vue-next";
 
-const onboarding = useOnboardingStore()
-const step = computed(() => onboarding.currentStep)
-const stepIndex = computed(() => onboarding.currentStepIndex)
+const onboarding = useOnboardingStore();
+const step = computed(() => onboarding.currentStep);
+const stepIndex = computed(() => onboarding.currentStepIndex);
 
 onMounted(() => {
-  onboarding.resolveStep()
-})
+  onboarding.resolveStep();
+});
 
 function handleNext() {
-  onboarding.nextStep()
+  onboarding.nextStep();
 }
 
 function handleBack() {
-  onboarding.prevStep()
+  onboarding.prevStep();
 }
 </script>
 
@@ -73,9 +73,7 @@ function handleBack() {
 
     <!-- Footer navigation -->
     <footer v-if="stepIndex > 0 && stepIndex < 6" class="onboarding__footer">
-      <button class="nav-btn nav-btn--back" @click="handleBack">
-        ← Back
-      </button>
+      <button class="nav-btn nav-btn--back" @click="handleBack">← Back</button>
     </footer>
   </div>
 </template>
