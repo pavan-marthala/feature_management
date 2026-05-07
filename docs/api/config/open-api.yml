@@ -851,7 +851,20 @@ paths:
       summary: Get features under workspace
       operationId: getWorkspaceFeatures
       parameters:
-        - $ref: "#/components/parameters/Id"
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: environmentId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/size"
       responses:
         "200":
           description: Workspace features list

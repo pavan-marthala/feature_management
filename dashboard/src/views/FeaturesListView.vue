@@ -18,6 +18,7 @@ import {
   Trash2,
   Filter,
   FolderKanban,
+  Layers,
 } from 'lucide-vue-next'
 import type { FeatureStrategyType } from '@/types'
 
@@ -27,10 +28,11 @@ const workspaceStore = useWorkspaceStore()
 const router = useRouter()
 
 const workspaceId = computed(() => workspaceStore.activeWorkspaceId)
+const environmentId = computed(() => envStore.activeEnvironmentId)
 
 async function loadFeatures() {
   if (!workspaceId.value) return
-  await featureStore.fetchWorkspaceFeatures(workspaceId.value, 0, 25)
+  await featureStore.fetchWorkspaceFeatures(workspaceId.value, environmentId.value, 0, 25)
 }
 
 onMounted(async () => {
@@ -43,8 +45,8 @@ onMounted(async () => {
   }
 })
 
-// Auto-refresh when workspace changes
-watch(() => workspaceStore.selectedWorkspace, () => {
+// Auto-refresh when workspace or environment changes
+watch([() => workspaceStore.selectedWorkspace, () => envStore.selectedEnvironment], () => {
   loadFeatures()
 })
 
@@ -71,7 +73,16 @@ function getStatusBadge(enabled: boolean) {
 
 function onPageChange(page: number) {
   if (!workspaceId.value) return
-  featureStore.fetchWorkspaceFeatures(workspaceId.value, page, featureStore.pagination.size)
+  featureStore.fetchWorkspaceFeatures(workspaceId.value, environmentId.value, page, featureStore.pagination.size)
+}
+
+function handleEnvironmentChange(event: Event) {
+  const target = event.target as HTMLSelectElement
+  const envId = target.value
+  const env = envStore.environments.find(e => e.id === envId)
+  if (env) {
+    envStore.switchEnvironment(env)
+  }
 }
 </script>
 
@@ -96,6 +107,20 @@ function onPageChange(page: number) {
         placeholder="Search features..."
       />
       <div class="features-page__filter-group">
+        <div class="filter-select">
+          <Layers :size="16" class="filter-select__icon" />
+          <select
+            :value="envStore.activeEnvironmentId"
+            @change="handleEnvironmentChange"
+            class="filter-select__input"
+            id="environment-filter"
+          >
+            <option v-for="env in envStore.environments" :key="env.id" :value="env.id">
+              {{ env.name }}
+            </option>
+            <option v-if="envStore.environments.length === 0" value="" disabled>No Environments</option>
+          </select>
+        </div>
         <div class="filter-select">
           <Filter :size="16" class="filter-select__icon" />
           <select
@@ -175,10 +200,12 @@ function onPageChange(page: number) {
               v-for="feature in featureStore.filteredFeatures"
               :key="feature.id"
               class="features-table__row"
-              @click="router.push(`/features/${feature.id}`)"
+              :class="{ 'features-table__row--propagating': featureStore.propagatingFeatureId === feature.id }"
+              @click="featureStore.propagatingFeatureId === feature.id ? null : router.push(`/features/${feature.id}`)"
             >
               <td>
                 <span class="feature-name">
+                  <span v-if="featureStore.propagatingFeatureId === feature.id" class="propagating-spinner"></span>
                   {{ feature.name }}
                 </span>
               </td>
@@ -198,13 +225,16 @@ function onPageChange(page: number) {
                 <ToggleSwitch
                   :model-value="feature.enabled"
                   size="sm"
+                  :disabled="featureStore.propagatingFeatureId === feature.id"
                   @update:model-value="featureStore.toggleFeature(feature)"
                 />
               </td>
               <td @click.stop>
                 <div class="actions">
-                  <button
-                    class="action-btn"
+                  <span v-if="featureStore.propagatingFeatureId === feature.id" class="propagating-text">Propagating to staging...</span>
+                  <template v-else>
+                    <button
+                      class="action-btn"
                     title="Edit"
                     @click="router.push(`/features/${feature.id}/edit`)"
                   >
@@ -217,6 +247,7 @@ function onPageChange(page: number) {
                   >
                     <Trash2 :size="16" />
                   </button>
+                  </template>
                 </div>
               </td>
             </tr>
@@ -230,21 +261,27 @@ function onPageChange(page: number) {
           v-for="feature in featureStore.filteredFeatures"
           :key="feature.id"
           class="feature-card"
+          :class="{ 'feature-card--propagating': featureStore.propagatingFeatureId === feature.id }"
           hover
-          @click="router.push(`/features/${feature.id}`)"
+          @click="featureStore.propagatingFeatureId === feature.id ? null : router.push(`/features/${feature.id}`)"
         >
           <div class="feature-card__header">
-            <h3 class="feature-card__name">{{ feature.name }}</h3>
+            <h3 class="feature-card__name">
+              <span v-if="featureStore.propagatingFeatureId === feature.id" class="propagating-spinner"></span>
+              {{ feature.name }}
+            </h3>
             <div class="feature-card__status" @click.stop>
               <ToggleSwitch
                 :model-value="feature.enabled"
                 size="sm"
+                :disabled="featureStore.propagatingFeatureId === feature.id"
                 @update:model-value="featureStore.toggleFeature(feature)"
               />
             </div>
           </div>
           
           <p class="feature-card__desc">{{ feature.description || 'No description' }}</p>
+          <p v-if="featureStore.propagatingFeatureId === feature.id" class="propagating-text">Propagating to staging...</p>
           
           <div class="feature-card__badges">
             <Badge :label="getEnvironmentName(feature.environmentId)" variant="default" />
@@ -339,7 +376,8 @@ function onPageChange(page: number) {
 
 .filter-select__input {
   appearance: none;
-  padding: 10px 32px 10px 34px;
+  height: 40px;
+  padding: 0 32px 0 34px;
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
@@ -618,5 +656,45 @@ function onPageChange(page: number) {
   .features-page__filter-group {
     flex-direction: column;
   }
+}
+
+@media (max-width: 640px) {
+  .features-page__header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+.features-table__row--propagating {
+  opacity: 0.6;
+  pointer-events: none;
+  background: rgba(255, 255, 255, 0.02) !important;
+}
+
+.feature-card--propagating {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.propagating-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 6px;
+  border: 2px solid rgba(34, 211, 238, 0.2);
+  border-top-color: var(--accent-cyan);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.propagating-text {
+  font-size: 0.75rem;
+  color: var(--accent-cyan);
+  font-style: italic;
 }
 </style>

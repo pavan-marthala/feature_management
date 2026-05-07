@@ -29,4 +29,8 @@ public interface FeatureRepository extends R2dbcRepository<FeatureEntity, UUID> 
     Flux<FeatureEntity> findByWorkspaceId(UUID workspaceId, Pageable pageable);
 
     Mono<FeatureEntity> getByNameAndWorkspaceIdAndEnvironmentId(String name, UUID workspaceId, UUID environmentId);
+
+    Flux<FeatureEntity> findByWorkspaceIdAndEnvironmentId(UUID workspaceId, UUID environmentId, Pageable pageable);
+
+    Mono<Long> countByWorkspaceIdAndEnvironmentId(UUID workspaceId, UUID environmentId);
 }

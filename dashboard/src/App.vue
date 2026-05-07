@@ -6,10 +6,12 @@ import ToastContainer from '@/components/ui/ToastContainer.vue'
 import { useUiStore } from '@/stores/uiStore'
 import { useOnboardingStore } from '@/stores/onboardingStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
+import { useEnvironmentStore } from '@/stores/environmentStore'
 
 const uiStore = useUiStore()
 const onboardingStore = useOnboardingStore()
 const workspaceStore = useWorkspaceStore()
+const environmentStore = useEnvironmentStore()
 const route = useRoute()
 const router = useRouter()
 
@@ -28,8 +30,11 @@ onMounted(async () => {
     }
   }
 
-  // Initialize active workspace context
-  await workspaceStore.initActiveWorkspace()
+  // Initialize active contexts
+  await Promise.all([
+    workspaceStore.initActiveWorkspace(),
+    environmentStore.initActiveEnvironment()
+  ])
 })
 </script>
 

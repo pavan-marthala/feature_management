@@ -12,6 +12,8 @@ import type {
 import { featureService } from '@/services/featureService'
 import { workspaceService } from '@/services/workspaceService'
 import { useUiStore } from './uiStore'
+import { useWorkspaceStore } from './workspaceStore'
+import { useEnvironmentStore } from './environmentStore'
 
 export const useFeatureStore = defineStore('feature', () => {
   // State
@@ -23,6 +25,7 @@ export const useFeatureStore = defineStore('feature', () => {
   const pagination = ref<Pagination>({ page: 0, size: 25, totalItems: 0, totalPages: 0 })
   const loading = ref(false)
   const error = ref<string | null>(null)
+  const propagatingFeatureId = ref<string | null>(null)
 
   // Filters
   const searchQuery = ref('')
@@ -58,25 +61,16 @@ export const useFeatureStore = defineStore('feature', () => {
   })
 
   // Actions
-  async function fetchFeatures(page = 0, size = 25) {
-    loading.value = true
-    error.value = null
-    try {
-      const response: FeatureResponse = await featureService.getFeatures(page, size)
-      features.value = response.items || []
-      pagination.value = {
-        page: response.page,
-        size: response.size,
-        totalItems: response.totalItems,
-        totalPages: response.totalPages,
-      }
-    } catch (err: unknown) {
-      const msg = (err && typeof err === 'object' && 'errorMessage' in err) ? String((err as Record<string, unknown>).errorMessage) : 'Failed to fetch features'
-      error.value = msg
-      const ui = useUiStore()
-      ui.addToast(msg, 'error')
-    } finally {
-      loading.value = false
+  async function refreshCurrentFeatures() {
+    const workspaceStore = useWorkspaceStore()
+    const envStore = useEnvironmentStore()
+    if (workspaceStore.activeWorkspaceId) {
+      await fetchWorkspaceFeatures(
+        workspaceStore.activeWorkspaceId,
+        envStore.activeEnvironmentId,
+        pagination.value.page,
+        pagination.value.size
+      )
     }
   }
 
@@ -105,7 +99,7 @@ export const useFeatureStore = defineStore('feature', () => {
       const result = await featureService.createFeature(data)
       const ui = useUiStore()
       ui.addToast('Feature created successfully', 'success')
-      await fetchFeatures(pagination.value.page, pagination.value.size)
+      await refreshCurrentFeatures()
       return result
     } catch (err: unknown) {
       const msg = (err && typeof err === 'object' && 'errorMessage' in err) ? String((err as Record<string, unknown>).errorMessage) : 'Failed to create feature'
@@ -123,7 +117,7 @@ export const useFeatureStore = defineStore('feature', () => {
       await featureService.updateFeature(id, data, etag)
       const ui = useUiStore()
       ui.addToast('Feature updated successfully', 'success')
-      await fetchFeatures(pagination.value.page, pagination.value.size)
+      await refreshCurrentFeatures()
     } catch (err: unknown) {
       const msg = (err && typeof err === 'object' && 'errorMessage' in err) ? String((err as Record<string, unknown>).errorMessage) : 'Failed to update feature'
       const ui = useUiStore()
@@ -145,7 +139,7 @@ export const useFeatureStore = defineStore('feature', () => {
         const ui = useUiStore()
         ui.addToast(`Feature ${!prev ? 'enabled' : 'disabled'}`, 'success')
         // Re-fetch to get updated etag
-        await fetchFeatures(pagination.value.page, pagination.value.size)
+        await refreshCurrentFeatures()
       } catch {
         // Rollback
         features.value[idx]!.enabled = prev
@@ -160,7 +154,7 @@ export const useFeatureStore = defineStore('feature', () => {
       await featureService.deleteFeature(id, etag)
       const ui = useUiStore()
       ui.addToast('Feature deleted successfully', 'success')
-      await fetchFeatures(pagination.value.page, pagination.value.size)
+      await refreshCurrentFeatures()
     } catch (err: unknown) {
       const msg = (err && typeof err === 'object' && 'errorMessage' in err) ? String((err as Record<string, unknown>).errorMessage) : 'Failed to delete feature'
       const ui = useUiStore()
@@ -220,11 +214,11 @@ export const useFeatureStore = defineStore('feature', () => {
     }
   }
 
-  async function fetchWorkspaceFeatures(workspaceId: string, page = 0, size = 25) {
+  async function fetchWorkspaceFeatures(workspaceId: string, environmentId: string | null = null, page = 0, size = 25) {
     loading.value = true
     error.value = null
     try {
-      const response: FeatureResponse = await workspaceService.getWorkspaceFeatures(workspaceId, page, size)
+      const response: FeatureResponse = await workspaceService.getWorkspaceFeatures(workspaceId, environmentId || undefined, page, size)
       features.value = response.items || []
       pagination.value = {
         page: response.page,
@@ -245,6 +239,7 @@ export const useFeatureStore = defineStore('feature', () => {
   }
 
   async function propagateFeature(id: string) {
+    propagatingFeatureId.value = id
     loading.value = true
     try {
       const result = await featureService.propagateFeature(id)
@@ -262,6 +257,7 @@ export const useFeatureStore = defineStore('feature', () => {
       throw err
     } finally {
       loading.value = false
+      propagatingFeatureId.value = null
     }
   }
 
@@ -281,13 +277,14 @@ export const useFeatureStore = defineStore('feature', () => {
     pagination,
     loading,
     error,
+    propagatingFeatureId,
     searchQuery,
     statusFilter,
     strategyFilter,
     // Getters
     filteredFeatures,
     // Actions
-    fetchFeatures,
+    refreshCurrentFeatures,
     fetchWorkspaceFeatures,
     fetchFeature,
     createFeature,

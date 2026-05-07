@@ -68,9 +68,10 @@ public class WorkspaceController {
     @GetMapping("/{workspaceId}/features")
     public Mono<FeatureResponse> getWorkspaceFeatures(
             @PathVariable UUID workspaceId,
+            @RequestParam(required = false) UUID environmentId,
             @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "25") Integer size) {
-        log.debug("Controller: Getting features for workspace {}", workspaceId);
-        return workspaceService.getWorkspaceFeatures(workspaceId, page, size);
+        log.debug("Controller: Getting features for workspace {} and environment {}", workspaceId, environmentId);
+        return workspaceService.getWorkspaceFeatures(workspaceId, environmentId, page, size);
     }
 }

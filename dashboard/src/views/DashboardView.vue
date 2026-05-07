@@ -5,6 +5,7 @@ import { dashboardService } from '@/services/dashboardService'
 import type { DashboardStats } from '@/types'
 import { useFeatureStore } from '@/stores/featureStore'
 import { useEnvironmentStore } from '@/stores/environmentStore'
+import { useWorkspaceStore } from '@/stores/workspaceStore'
 import StatCard from '@/components/ui/StatCard.vue'
 import GlassCard from '@/components/ui/GlassCard.vue'
 import Badge from '@/components/ui/Badge.vue'
@@ -22,6 +23,7 @@ import {
 
 const featureStore = useFeatureStore()
 const envStore = useEnvironmentStore()
+const workspaceStore = useWorkspaceStore()
 const router = useRouter()
 
 const stats = ref<DashboardStats | null>(null)
@@ -39,7 +41,9 @@ onMounted(async () => {
     // Conditionally fetch features/environments if stores are empty
     // We use page 0, size 25 as the global cache limit
     if (featureStore.features.length === 0 && !featureStore.loading) {
-      promises.push(featureStore.fetchFeatures(0, 25))
+      if (workspaceStore.activeWorkspaceId) {
+        promises.push(featureStore.fetchWorkspaceFeatures(workspaceStore.activeWorkspaceId, envStore.activeEnvironmentId, 0, 25))
+      }
     }
     if (envStore.environments.length === 0 && !envStore.loading) {
       promises.push(envStore.fetchEnvironments(0, 25))

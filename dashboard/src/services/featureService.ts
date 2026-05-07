@@ -10,13 +10,6 @@ import type {
 } from '@/types'
 
 export const featureService = {
-  async getFeatures(page = 0, size = 25): Promise<FeatureResponse> {
-    const { data } = await api.get<FeatureResponse>('/features', {
-      params: { page, size },
-    })
-    return data
-  },
-
   async getFeature(id: string, idType: IdType = 'NAME'): Promise<{ feature: Feature; etag: string }> {
     const response = await api.get<Feature>(`/features/${id}`, {
       params: { idType },

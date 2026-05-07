@@ -2,6 +2,8 @@ package org.feature.management.workspace;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.feature.management.feature.FeatureEntity;
 import org.feature.management.feature.FeatureMapper;
 import org.feature.management.feature.FeatureRepository;
 import org.feature.management.models.FeatureResponse;
@@ -14,6 +16,8 @@ import org.feature.management.shared.exception.ResourceNotFoundException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Optional;
@@ -110,13 +114,26 @@ public class WorkspaceService {
                         }));
     }
 
-    public Mono<FeatureResponse> getWorkspaceFeatures(UUID id, Integer page, Integer size) {
-        log.debug("Getting features for workspace id: {}", id);
-        PageRequest pageRequest = PageRequest.of(page, size);
-        return featureRepository.findByWorkspaceId(id, pageRequest)
+    public Mono<FeatureResponse> getWorkspaceFeatures(UUID id, UUID environmentId, Integer page, Integer size) {
+        log.debug("Getting features for workspace id: {} and environment id: {}", id, environmentId);
+        PageRequest pageRequest = PageRequest.of(page, size, org.springframework.data.domain.Sort
+                .by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt"));
+
+        Flux<FeatureEntity> featuresFlux;
+        Mono<Long> countMono;
+
+        if (environmentId != null) {
+            featuresFlux = featureRepository.findByWorkspaceIdAndEnvironmentId(id, environmentId, pageRequest);
+            countMono = featureRepository.countByWorkspaceIdAndEnvironmentId(id, environmentId);
+        } else {
+            featuresFlux = featureRepository.findByWorkspaceId(id, pageRequest);
+            countMono = featureRepository.countByWorkspaceId(id);
+        }
+
+        return featuresFlux
                 .map(featureMapper::toModel)
                 .collectList()
-                .zipWith(featureRepository.countByWorkspaceId(id))
+                .zipWith(countMono)
                 .map(tuple -> FeatureResponse.builder()
                         .items(tuple.getT1())
                         .page(page)

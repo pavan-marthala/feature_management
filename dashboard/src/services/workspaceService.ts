@@ -45,10 +45,15 @@ export const workspaceService = {
     return data
   },
 
-  async getWorkspaceFeatures(id: string, page = 0, size = 25): Promise<FeatureResponse> {
-    const { data } = await api.get<FeatureResponse>(`/workspaces/${id}/features`, {
-      params: { page, size },
-    })
-    return data
+  async getWorkspaceFeatures(id: string, environmentId?: string, page = 0, size = 25) {
+    const params = new URLSearchParams()
+    params.append('page', page.toString())
+    params.append('size', size.toString())
+    if (environmentId) {
+      params.append('environmentId', environmentId)
+    }
+
+    const response = await api.get(`/workspaces/${id}/features?${params.toString()}`)
+    return response.data
   },
 }

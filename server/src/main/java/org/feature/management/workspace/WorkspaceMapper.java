@@ -1,7 +1,6 @@
 package org.feature.management.workspace;
 
 import org.feature.management.models.*;
-import org.feature.management.shared.utils.DateMapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

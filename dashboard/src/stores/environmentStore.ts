@@ -1,8 +1,10 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import type { Environment, EnvironmentRequest, Pagination } from '@/types'
 import { environmentService } from '@/services/environmentService'
 import { useUiStore } from './uiStore'
+
+const STORAGE_KEY = 'feature-mgmt-environment'
 
 export const useEnvironmentStore = defineStore('environment', () => {
   const environments = ref<Environment[]>([])
@@ -11,6 +13,52 @@ export const useEnvironmentStore = defineStore('environment', () => {
   const pagination = ref<Pagination>({ page: 0, size: 25, totalItems: 0, totalPages: 0 })
   const loading = ref(false)
   const error = ref<string | null>(null)
+  const initialized = ref(false)
+
+  const activeEnvironmentId = computed(() => selectedEnvironment.value?.id || null)
+
+  function restoreSelection() {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    if (saved) {
+      try {
+        selectedEnvironment.value = JSON.parse(saved) as Environment
+      } catch {
+        localStorage.removeItem(STORAGE_KEY)
+      }
+    }
+  }
+
+  async function initActiveEnvironment() {
+    if (initialized.value) return
+    initialized.value = true
+
+    restoreSelection()
+    await fetchEnvironments(0, 100)
+
+    if (selectedEnvironment.value) {
+      const stillExists = environments.value.find(e => e.id === selectedEnvironment.value?.id)
+      if (stillExists) {
+        selectedEnvironment.value = stillExists
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(stillExists))
+        return
+      }
+    }
+
+    if (environments.value.length > 0) {
+      const first = environments.value[0]
+      if (first) selectEnvironment(first)
+    }
+  }
+
+  function switchEnvironment(environment: Environment) {
+    selectedEnvironment.value = environment
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(environment))
+  }
+
+  function selectEnvironment(environment: Environment) {
+    selectedEnvironment.value = environment
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(environment))
+  }
 
   async function fetchEnvironments(page = 0, size = 25) {
     loading.value = true
@@ -144,10 +192,12 @@ export const useEnvironmentStore = defineStore('environment', () => {
   return {
     environments,
     selectedEnvironment,
+    activeEnvironmentId,
     selectedEtag,
     pagination,
     loading,
     error,
+    initialized,
     fetchEnvironments,
     fetchEnvironment,
     createEnvironment,
@@ -156,5 +206,9 @@ export const useEnvironmentStore = defineStore('environment', () => {
     addOwnerToEnvironment,
     removeOwnerFromEnvironment,
     clearSelectedEnvironment,
+    restoreSelection,
+    initActiveEnvironment,
+    switchEnvironment,
+    selectEnvironment,
   }
 })
