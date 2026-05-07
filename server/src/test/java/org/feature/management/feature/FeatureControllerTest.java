@@ -39,7 +39,6 @@ class FeatureControllerTest {
     void shouldCreateFeature() {
         FeatureCreateRequest request = new FeatureCreateRequest();
         request.setName("feature1");
-        request.setEnvironmentId(UUID.randomUUID());
         request.setOwners(Collections.singletonList("owner1"));
         request.setConfiguration(new BooleanFeatureStrategy());
         request.setEnabled(true);

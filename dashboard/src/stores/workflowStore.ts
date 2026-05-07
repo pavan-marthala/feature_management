@@ -184,20 +184,12 @@ export const useWorkflowStore = defineStore('workflow', () => {
   async function reorderStages(workflowId: string, stages: Stage[]) {
     loading.value = true
     try {
-      // Update each stage that has a different orderIndex
-      const updates = stages.map((s, idx) => {
-        if (s.orderIndex !== idx) {
-          return workflowService.updateStage(workflowId, s.id!, { orderIndex: idx }, s.version || 0)
-        }
-        return null
-      }).filter(Boolean)
-
-      if (updates.length > 0) {
-        await Promise.all(updates)
-        const ui = useUiStore()
-        ui.addToast('Stages reordered successfully', 'success')
-        await fetchWorkflow(workflowId)
-      }
+      const stageIds = stages.map(s => s.id!).filter(Boolean)
+      await workflowService.reorderStages(workflowId, stageIds)
+      
+      const ui = useUiStore()
+      ui.addToast('Stages reordered successfully', 'success')
+      await fetchWorkflow(workflowId)
     } catch (err: unknown) {
       const ui = useUiStore()
       ui.addToast('Failed to reorder stages', 'error')

@@ -9,17 +9,14 @@ import Modal from '@/components/ui/Modal.vue'
 import LoadingSkeleton from '@/components/ui/LoadingSkeleton.vue'
 import { 
   ArrowLeft, 
-  Pencil, 
   GitBranch, 
-  Clock, 
   Layers,
-  Settings,
   Plus,
-  GripVertical,
-  Trash2,
   AlertCircle
 } from 'lucide-vue-next'
-import type { WorkflowStatus, Stage, StageType, StageRequest } from '@/types'
+import type { WorkflowStatus, Stage, StageRequest } from '@/types'
+
+import PipelineVisualization from '@/components/pipeline/PipelineVisualization.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -38,9 +35,10 @@ const stageForm = ref<StageRequest>({
   scheduleExpression: ''
 })
 
-// Drag and Drop State
-const draggingIndex = ref<number | null>(null)
+// Reorder State
 const localStages = ref<Stage[]>([])
+const isDirty = ref(false)
+const savingOrder = ref(false)
 
 onMounted(async () => {
   await environmentStore.fetchEnvironments(0, 100)
@@ -52,6 +50,7 @@ async function fetchWorkflowData() {
   const data = await workflowStore.fetchWorkflow(workflowId.value)
   if (data) {
     localStages.value = [...data.stages]
+    isDirty.value = false
   }
 }
 
@@ -64,15 +63,6 @@ function getStatusBadge(status?: WorkflowStatus) {
     case 'DRAFT': return { label: 'Draft', variant: 'warning' as const }
     case 'ARCHIVED': return { label: 'Archived', variant: 'danger' as const }
     default: return { label: status, variant: 'default' as const }
-  }
-}
-
-function getStageTypeBadge(type: string) {
-  switch (type) {
-    case 'MANUAL': return { label: 'Manual', variant: 'info' as const }
-    case 'AUTOMATIC': return { label: 'Automatic', variant: 'success' as const }
-    case 'SCHEDULED': return { label: 'Scheduled', variant: 'warning' as const }
-    default: return { label: type, variant: 'default' as const }
   }
 }
 
@@ -128,31 +118,20 @@ async function deleteStage(stage: Stage) {
   }
 }
 
-// Drag and Drop Implementation
-function onDragStart(index: number) {
-  draggingIndex.value = index
+function handleReorder(newStages: Stage[]) {
+  localStages.value = newStages
+  isDirty.value = true
 }
 
-function onDragOver(event: DragEvent, index: number) {
-  event.preventDefault()
-  if (draggingIndex.value === null || draggingIndex.value === index) return
-  
-  // Reorder locally for visual feedback
-  const items = [...localStages.value]
-  const item = items.splice(draggingIndex.value, 1)[0]
-  if (item) {
-    items.splice(index, 0, item)
-    localStages.value = items
-    draggingIndex.value = index
+async function savePipelineOrder() {
+  if (!workflowId.value) return
+  savingOrder.value = true
+  try {
+    await workflowStore.reorderStages(workflowId.value, localStages.value)
+    isDirty.value = false
+  } finally {
+    savingOrder.value = false
   }
-}
-
-async function onDrop() {
-  if (draggingIndex.value === null || !workflowId.value) return
-  
-  // Persistence
-  await workflowStore.reorderStages(workflowId.value, localStages.value)
-  draggingIndex.value = null
 }
 </script>
 
@@ -180,7 +159,19 @@ async function onDrop() {
             </div>
           </div>
           <div class="header-actions">
-            <!-- Workflow editing is inline in workspace context -->
+            <button 
+              v-if="isDirty" 
+              class="btn btn--primary animate-pulse" 
+              :disabled="savingOrder"
+              @click="savePipelineOrder"
+            >
+              <Loader2 v-if="savingOrder" :size="16" class="spin" />
+              Save Pipeline Changes
+            </button>
+            <button class="btn btn--secondary" @click="openAddStage">
+              <Plus :size="18" />
+              Add Stage
+            </button>
           </div>
         </div>
       </div>
@@ -198,69 +189,20 @@ async function onDrop() {
         <div class="section-header">
           <div class="section-title-box">
             <Layers :size="20" />
-            <h2 class="section-title">Pipeline Stages</h2>
+            <h2 class="section-title">Pipeline Orchestration</h2>
           </div>
-          <button class="btn btn--primary btn--sm" @click="openAddStage">
-            <Plus :size="16" />
-            Add Stage
-          </button>
         </div>
 
-        <div v-if="localStages.length === 0" class="empty-stages glass">
-          <div class="empty-icon-wrapper">
-            <Clock :size="48" class="empty-icon" />
-          </div>
-          <h3>No stages defined</h3>
-          <p>This workflow doesn't have any propagation stages yet.</p>
-          <button class="btn btn--secondary btn--sm mt-4" @click="openAddStage">
-            Create First Stage
-          </button>
-        </div>
-
-        <div v-else class="stages-timeline">
-          <div 
-            v-for="(stage, index) in localStages" 
-            :key="stage.id" 
-            class="stage-item-wrapper"
-            :class="{ 'stage-item-wrapper--dragging': draggingIndex === index }"
-            draggable="true"
-            @dragstart="onDragStart(index)"
-            @dragover="onDragOver($event, index)"
-            @drop="onDrop"
-          >
-            <div class="stage-connector" v-if="index < localStages.length - 1"></div>
-            <GlassCard class="stage-item" hover>
-              <div class="stage-item__grip">
-                <GripVertical :size="20" />
-              </div>
-              <div class="stage-item__index">{{ index + 1 }}</div>
-              <div class="stage-item__content">
-                <div class="stage-item__header">
-                  <h3 class="stage-env-name">{{ stage.environmentName || 'Unknown Environment' }}</h3>
-                  <Badge v-bind="getStageTypeBadge(stage.type)" />
-                </div>
-                <div class="stage-item__details">
-                  <div class="detail-pill" v-if="stage.scheduleExpression">
-                    <Clock :size="14" />
-                    {{ stage.scheduleExpression }}
-                  </div>
-                  <div class="detail-pill" v-if="stage.approvalNeeded">
-                    <Settings :size="14" />
-                    Approval Required
-                  </div>
-                </div>
-              </div>
-              <div class="stage-item__actions">
-                <button class="action-btn" @click="openEditStage(stage)" title="Edit Stage">
-                  <Pencil :size="16" />
-                </button>
-                <button class="action-btn action-btn--danger" @click="deleteStage(stage)" title="Remove Stage">
-                  <Trash2 :size="16" />
-                </button>
-              </div>
-            </GlassCard>
-          </div>
-        </div>
+        <GlassCard class="orchestration-card">
+          <PipelineVisualization
+            :stages="localStages"
+            mode="BUILDER"
+            @add="openAddStage"
+            @edit="openEditStage"
+            @delete="deleteStage"
+            @reorder="handleReorder"
+          />
+        </GlassCard>
       </div>
 
       <!-- Sidebar / Info Section -->
@@ -458,160 +400,11 @@ async function onDrop() {
   font-weight: 700;
 }
 
-/* Stages Timeline */
-.stages-timeline {
-  display: flex;
-  flex-direction: column;
-}
-
-.stage-item-wrapper {
-  position: relative;
-  padding-bottom: 2rem;
-  transition: all var(--transition-normal);
-}
-
-.stage-item-wrapper--dragging {
-  opacity: 0.5;
-  transform: scale(0.98);
-}
-
-.stage-connector {
-  position: absolute;
-  left: 64px;
-  top: 60px;
-  bottom: 0;
-  width: 2px;
-  background: var(--glass-border);
-  z-index: 0;
-  opacity: 0.5;
-}
-
-.stage-item {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.25rem;
-}
-
-.stage-item__grip {
-  color: var(--text-muted);
-  cursor: grab;
-  padding: 4px;
-  opacity: 0;
-  transition: opacity var(--transition-fast);
-}
-
-.stage-item:hover .stage-item__grip {
-  opacity: 0.5;
-}
-
-.stage-item__index {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--bg-tertiary);
-  border: 2px solid var(--glass-border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.875rem;
-  font-weight: 700;
-  color: var(--text-secondary);
-  flex-shrink: 0;
-}
-
-.stage-item__content {
-  flex: 1;
-}
-
-.stage-item__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.stage-env-name {
-  font-size: 1.125rem;
-  font-weight: 600;
-}
-
-.stage-item__details {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.detail-pill {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 20px;
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-
-.stage-item__actions {
-  display: flex;
-  gap: 4px;
-  opacity: 0;
-  transition: opacity var(--transition-fast);
-}
-
-.stage-item:hover .stage-item__actions {
-  opacity: 1;
-}
-
-.action-btn {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 8px;
-  border-radius: var(--radius-sm);
-  transition: all var(--transition-fast);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.action-btn:hover {
-  background: var(--glass-bg-hover);
-  color: var(--text-primary);
-}
-
-.action-btn--danger:hover {
-  color: var(--accent-rose);
-  background: rgba(251, 113, 133, 0.1);
-}
-
-.empty-stages {
-  padding: 4rem 2rem;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-}
-
-.empty-icon-wrapper {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.03);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 0.5rem;
-}
-
-.empty-icon {
-  color: var(--text-muted);
-  opacity: 0.5;
+.orchestration-card {
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 /* Sidebar */
@@ -776,6 +569,10 @@ async function onDrop() {
 .btn--sm { padding: 8px 16px; font-size: 0.8rem; }
 
 @media (max-width: 1024px) {
+  .content-grid { grid-template-columns: 1fr 260px; }
+}
+
+@media (max-width: 768px) {
   .content-grid { grid-template-columns: 1fr; }
 }
 

@@ -1,87 +1,89 @@
 <script setup lang="ts">
-import { onMounted, watch, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { useFeatureStore } from '@/stores/featureStore'
-import { useEnvironmentStore } from '@/stores/environmentStore'
-import { useWorkspaceStore } from '@/stores/workspaceStore'
-import SearchInput from '@/components/ui/SearchInput.vue'
-import ToggleSwitch from '@/components/ui/ToggleSwitch.vue'
-import Badge from '@/components/ui/Badge.vue'
-import LoadingSkeleton from '@/components/ui/LoadingSkeleton.vue'
-import PaginationComp from '@/components/ui/Pagination.vue'
-import GlassCard from '@/components/ui/GlassCard.vue'
-import {
-  Plus,
-  Flag,
-  Eye,
-  Pencil,
-  Trash2,
-  Filter,
-  FolderKanban,
-  Layers,
-} from 'lucide-vue-next'
-import type { FeatureStrategyType } from '@/types'
+import { onMounted, watch, computed } from "vue";
+import { useRouter } from "vue-router";
+import { useFeatureStore } from "@/stores/featureStore";
+import { useEnvironmentStore } from "@/stores/environmentStore";
+import { useWorkspaceStore } from "@/stores/workspaceStore";
+import { useUiStore } from "@/stores/uiStore";
+import SearchInput from "@/components/ui/SearchInput.vue";
+import ToggleSwitch from "@/components/ui/ToggleSwitch.vue";
+import Badge from "@/components/ui/Badge.vue";
+import LoadingSkeleton from "@/components/ui/LoadingSkeleton.vue";
+import PaginationComp from "@/components/ui/Pagination.vue";
+import GlassCard from "@/components/ui/GlassCard.vue";
+import { Plus, Flag, Pencil, Trash2, Filter, Layers } from "lucide-vue-next";
 
-const featureStore = useFeatureStore()
-const envStore = useEnvironmentStore()
-const workspaceStore = useWorkspaceStore()
-const router = useRouter()
+const featureStore = useFeatureStore();
+const envStore = useEnvironmentStore();
+const workspaceStore = useWorkspaceStore();
+const uiStore = useUiStore();
+const router = useRouter();
 
-const workspaceId = computed(() => workspaceStore.activeWorkspaceId)
-const environmentId = computed(() => envStore.activeEnvironmentId)
+const workspaceId = computed(() => workspaceStore.activeWorkspaceId);
+const environmentId = computed(() => envStore.activeEnvironmentId);
 
 async function loadFeatures() {
-  if (!workspaceId.value) return
-  await featureStore.fetchWorkspaceFeatures(workspaceId.value, environmentId.value, 0, 25)
+  if (!workspaceId.value) return;
+  await featureStore.fetchWorkspaceFeatures(workspaceId.value, environmentId.value, 0, 25);
 }
 
 onMounted(async () => {
-  await loadFeatures()
+  await loadFeatures();
   if (featureStore.strategies.length === 0) {
-    await featureStore.fetchStrategies()
+    await featureStore.fetchStrategies();
   }
   if (envStore.environments.length === 0) {
-    await envStore.fetchEnvironments(0, 100)
+    await envStore.fetchEnvironments(0, 100);
   }
-})
+});
 
 // Auto-refresh when workspace or environment changes
 watch([() => workspaceStore.selectedWorkspace, () => envStore.selectedEnvironment], () => {
-  loadFeatures()
-})
+  loadFeatures();
+});
 
 function getEnvironmentName(id: string) {
-  const env = envStore.environments.find(e => e.id === id)
-  return env ? env.name : 'Unknown'
+  const env = envStore.environments.find((e) => e.id === id);
+  return env ? env.name : "Unknown";
 }
 
 function getStrategyBadge(strategy?: string) {
   switch (strategy) {
-    case 'BooleanFeatureStrategy': return { label: 'Boolean', variant: 'cyan' as const }
-    case 'JWTClaimFeatureStrategy': return { label: 'JWT Claim', variant: 'indigo' as const }
-    case 'HTTPRequestFeatureStrategy': return { label: 'HTTP Request', variant: 'warning' as const }
-    case 'ScheduleFeatureStrategy': return { label: 'Schedule', variant: 'success' as const }
-    default: return { label: 'Unknown', variant: 'default' as const }
+    case "BooleanFeatureStrategy":
+      return { label: "Boolean", variant: "cyan" as const };
+    case "JWTClaimFeatureStrategy":
+      return { label: "JWT Claim", variant: "indigo" as const };
+    case "HTTPRequestFeatureStrategy":
+      return { label: "HTTP Request", variant: "warning" as const };
+    case "ScheduleFeatureStrategy":
+      return { label: "Schedule", variant: "success" as const };
+    default:
+      return { label: "Unknown", variant: "default" as const };
   }
 }
 
 function getStatusBadge(enabled: boolean) {
   return enabled
-    ? { label: 'Enabled', variant: 'success' as const }
-    : { label: 'Disabled', variant: 'danger' as const }
+    ? { label: "Enabled", variant: "success" as const }
+    : { label: "Disabled", variant: "danger" as const };
 }
 
 function onPageChange(page: number) {
-  if (!workspaceId.value) return
-  featureStore.fetchWorkspaceFeatures(workspaceId.value, environmentId.value, page, featureStore.pagination.size)
+  if (!workspaceId.value) return;
+  featureStore.fetchWorkspaceFeatures(
+    workspaceId.value,
+    environmentId.value,
+    page,
+    featureStore.pagination.size,
+  );
 }
 
 function handleEnvironmentChange(event: Event) {
-  const target = event.target as HTMLSelectElement
-  const envId = target.value
-  const env = envStore.environments.find(e => e.id === envId)
+  const target = event.target as HTMLSelectElement;
+  const envId = target.value;
+  const env = envStore.environments.find((e) => e.id === envId);
   if (env) {
-    envStore.switchEnvironment(env)
+    envStore.switchEnvironment(env);
   }
 }
 </script>
@@ -94,7 +96,11 @@ function handleEnvironmentChange(event: Event) {
         <h1 class="features-page__title">Features</h1>
         <p class="features-page__subtitle">Manage your feature flags and rollout strategies</p>
       </div>
-      <button class="btn btn--primary" @click="router.push(`/features/create`)" id="create-feature-btn">
+      <button
+        class="btn btn--primary"
+        @click="uiStore.openFeatureModal()"
+        id="create-feature-btn"
+      >
         <Plus :size="18" />
         Create Feature
       </button>
@@ -102,10 +108,7 @@ function handleEnvironmentChange(event: Event) {
 
     <!-- Filters Bar -->
     <div class="features-page__filters animate-fadeInUp stagger-1">
-      <SearchInput
-        v-model="featureStore.searchQuery"
-        placeholder="Search features..."
-      />
+      <SearchInput v-model="featureStore.searchQuery" placeholder="Search features..." />
       <div class="features-page__filter-group">
         <div class="filter-select">
           <Layers :size="16" class="filter-select__icon" />
@@ -118,7 +121,9 @@ function handleEnvironmentChange(event: Event) {
             <option v-for="env in envStore.environments" :key="env.id" :value="env.id">
               {{ env.name }}
             </option>
-            <option v-if="envStore.environments.length === 0" value="" disabled>No Environments</option>
+            <option v-if="envStore.environments.length === 0" value="" disabled>
+              No Environments
+            </option>
           </select>
         </div>
         <div class="filter-select">
@@ -141,39 +146,66 @@ function handleEnvironmentChange(event: Event) {
             id="strategy-filter"
           >
             <option value="all">All Strategies</option>
-            <option
-              v-for="s in featureStore.strategies"
-              :key="s.name"
-              :value="s.name"
-            >
-              {{ s.name.replace('FeatureStrategy', '') }}
+            <option v-for="s in featureStore.strategies" :key="s.name" :value="s.name">
+              {{ s.name.replace("FeatureStrategy", "") }}
             </option>
-            <option v-if="featureStore.strategies.length === 0" value="BooleanFeatureStrategy">Boolean</option>
-            <option v-if="featureStore.strategies.length === 0" value="JWTClaimFeatureStrategy">JWT Claim</option>
-            <option v-if="featureStore.strategies.length === 0" value="HTTPRequestFeatureStrategy">HTTP Request</option>
-            <option v-if="featureStore.strategies.length === 0" value="ScheduleFeatureStrategy">Schedule</option>
+            <option v-if="featureStore.strategies.length === 0" value="BooleanFeatureStrategy">
+              Boolean
+            </option>
+            <option v-if="featureStore.strategies.length === 0" value="JWTClaimFeatureStrategy">
+              JWT Claim
+            </option>
+            <option v-if="featureStore.strategies.length === 0" value="HTTPRequestFeatureStrategy">
+              HTTP Request
+            </option>
+            <option v-if="featureStore.strategies.length === 0" value="ScheduleFeatureStrategy">
+              Schedule
+            </option>
           </select>
         </div>
       </div>
     </div>
 
     <!-- Loading -->
-    <LoadingSkeleton v-if="featureStore.loading && featureStore.features.length === 0" variant="table-row" :rows="8" />
+    <LoadingSkeleton
+      v-if="featureStore.loading && featureStore.features.length === 0"
+      variant="table-row"
+      :rows="8"
+    />
 
     <!-- Empty State -->
-    <div v-else-if="featureStore.filteredFeatures.length === 0" class="empty-state animate-fadeInUp">
+    <div
+      v-else-if="featureStore.filteredFeatures.length === 0"
+      class="empty-state animate-fadeInUp"
+    >
       <div class="empty-state__card glass">
         <Flag :size="56" class="empty-state__icon" />
-        <h3>{{ featureStore.searchQuery || featureStore.statusFilter !== 'all' || featureStore.strategyFilter !== 'all' ? 'No matching features' : 'No features yet' }}</h3>
+        <h3>
+          {{
+            featureStore.searchQuery ||
+            featureStore.statusFilter !== "all" ||
+            featureStore.strategyFilter !== "all"
+              ? "No matching features"
+              : "No features yet"
+          }}
+        </h3>
         <p>
-          {{ featureStore.searchQuery || featureStore.statusFilter !== 'all' || featureStore.strategyFilter !== 'all'
-            ? 'Try adjusting your search or filters.'
-            : 'Create your first feature flag to get started.' }}
+          {{
+            featureStore.searchQuery ||
+            featureStore.statusFilter !== "all" ||
+            featureStore.strategyFilter !== "all"
+              ? "Try adjusting your search or filters."
+              : "Create your first feature flag to get started."
+          }}
         </p>
         <button
-          v-if="!featureStore.searchQuery && featureStore.statusFilter === 'all' && featureStore.strategyFilter === 'all'"
+          v-if="
+            !featureStore.searchQuery &&
+            featureStore.statusFilter === 'all' &&
+            featureStore.strategyFilter === 'all'
+          "
           class="btn btn--primary"
-          @click="router.push(`/features/create`)"
+          @click="uiStore.openFeatureModal()"
         >
           <Plus :size="18" /> Create Feature
         </button>
@@ -200,12 +232,22 @@ function handleEnvironmentChange(event: Event) {
               v-for="feature in featureStore.filteredFeatures"
               :key="feature.id"
               class="features-table__row"
-              :class="{ 'features-table__row--propagating': featureStore.propagatingFeatureId === feature.id }"
-              @click="featureStore.propagatingFeatureId === feature.id ? null : router.push(`/features/${feature.id}`)"
+              :class="{
+                'features-table__row--propagating':
+                  featureStore.propagatingFeatureId === feature.id,
+              }"
+              @click="
+                featureStore.propagatingFeatureId === feature.id
+                  ? null
+                  : router.push(`/features/${feature.id}`)
+              "
             >
               <td>
                 <span class="feature-name">
-                  <span v-if="featureStore.propagatingFeatureId === feature.id" class="propagating-spinner"></span>
+                  <span
+                    v-if="featureStore.propagatingFeatureId === feature.id"
+                    class="propagating-spinner"
+                  ></span>
                   {{ feature.name }}
                 </span>
               </td>
@@ -219,7 +261,7 @@ function handleEnvironmentChange(event: Event) {
                 <Badge v-bind="getStrategyBadge(feature.configuration?.strategy)" />
               </td>
               <td>
-                <span class="feature-desc">{{ feature.description || '—' }}</span>
+                <span class="feature-desc">{{ feature.description || "—" }}</span>
               </td>
               <td @click.stop>
                 <ToggleSwitch
@@ -231,22 +273,26 @@ function handleEnvironmentChange(event: Event) {
               </td>
               <td @click.stop>
                 <div class="actions">
-                  <span v-if="featureStore.propagatingFeatureId === feature.id" class="propagating-text">Propagating to staging...</span>
+                  <span
+                    v-if="featureStore.propagatingFeatureId === feature.id"
+                    class="propagating-text"
+                    >Propagating to staging...</span
+                  >
                   <template v-else>
                     <button
                       class="action-btn"
-                    title="Edit"
-                    @click="router.push(`/features/${feature.id}/edit`)"
-                  >
-                    <Pencil :size="16" />
-                  </button>
-                  <button
-                    class="action-btn action-btn--danger"
-                    title="Delete"
-                    @click="featureStore.deleteFeature(feature.id, feature.etag)"
-                  >
-                    <Trash2 :size="16" />
-                  </button>
+                      title="Edit"
+                      @click="uiStore.openFeatureModal(feature.id)"
+                    >
+                      <Pencil :size="16" />
+                    </button>
+                    <button
+                      class="action-btn action-btn--danger"
+                      title="Delete"
+                      @click="featureStore.deleteFeature(feature.id, feature.etag)"
+                    >
+                      <Trash2 :size="16" />
+                    </button>
                   </template>
                 </div>
               </td>
@@ -263,11 +309,18 @@ function handleEnvironmentChange(event: Event) {
           class="feature-card"
           :class="{ 'feature-card--propagating': featureStore.propagatingFeatureId === feature.id }"
           hover
-          @click="featureStore.propagatingFeatureId === feature.id ? null : router.push(`/features/${feature.id}`)"
+          @click="
+            featureStore.propagatingFeatureId === feature.id
+              ? null
+              : router.push(`/features/${feature.id}`)
+          "
         >
           <div class="feature-card__header">
             <h3 class="feature-card__name">
-              <span v-if="featureStore.propagatingFeatureId === feature.id" class="propagating-spinner"></span>
+              <span
+                v-if="featureStore.propagatingFeatureId === feature.id"
+                class="propagating-spinner"
+              ></span>
               {{ feature.name }}
             </h3>
             <div class="feature-card__status" @click.stop>
@@ -279,10 +332,12 @@ function handleEnvironmentChange(event: Event) {
               />
             </div>
           </div>
-          
-          <p class="feature-card__desc">{{ feature.description || 'No description' }}</p>
-          <p v-if="featureStore.propagatingFeatureId === feature.id" class="propagating-text">Propagating to staging...</p>
-          
+
+          <p class="feature-card__desc">{{ feature.description || "No description" }}</p>
+          <p v-if="featureStore.propagatingFeatureId === feature.id" class="propagating-text">
+            Propagating to staging...
+          </p>
+
           <div class="feature-card__badges">
             <Badge :label="getEnvironmentName(feature.environmentId)" variant="default" />
             <Badge v-bind="getStatusBadge(feature.enabled)" />
@@ -452,7 +507,9 @@ function handleEnvironmentChange(event: Event) {
 
 .features-table__row:hover {
   background: var(--glass-bg-hover);
-  box-shadow: inset 0 0 0 1px var(--glass-border-hover), 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow:
+    inset 0 0 0 1px var(--glass-border-hover),
+    0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .feature-name {
@@ -641,7 +698,7 @@ function handleEnvironmentChange(event: Event) {
   .desktop-features {
     display: none;
   }
-  
+
   .mobile-features {
     display: grid;
   }
@@ -689,7 +746,9 @@ function handleEnvironmentChange(event: Event) {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .propagating-text {

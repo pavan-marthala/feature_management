@@ -2,7 +2,6 @@ package org.feature.management.feature;
 
 import org.feature.management.models.Feature;
 import org.feature.management.models.FeatureCreateRequest;
-import org.feature.management.shared.utils.DateMapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -19,6 +18,7 @@ public interface FeatureMapper {
     @Mapping(target = "etag", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "modifiedAt", ignore = true)
+    @Mapping(target = "environmentId", ignore = true)
     FeatureEntity toEntity(FeatureCreateRequest feature);
 
     @Mapping(target = "_configuration", source = "configuration")

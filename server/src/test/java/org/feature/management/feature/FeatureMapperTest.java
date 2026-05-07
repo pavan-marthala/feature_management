@@ -79,7 +79,6 @@ class FeatureMapperTest {
     void shouldMapCreateRequestToEntity() {
         FeatureCreateRequest request = new FeatureCreateRequest();
         request.setName("create-request");
-        request.setEnvironmentId(UUID.randomUUID());
         request.setOwners(List.of("owner1"));
         request.setConfiguration(new BooleanFeatureStrategy());
         request.setEnabled(true);
@@ -88,7 +87,6 @@ class FeatureMapperTest {
 
         assertThat(entity).isNotNull();
         assertThat(entity.getName()).isEqualTo("create-request");
-        assertThat(entity.getEnvironmentId()).isEqualTo(request.getEnvironmentId());
         assertThat(entity.isEnabled()).isTrue();
         assertThat(entity.getOwners()).containsExactly("owner1");
     }

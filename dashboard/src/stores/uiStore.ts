@@ -9,6 +9,22 @@ export const useUiStore = defineStore('ui', () => {
   const toasts = ref<Toast[]>([])
   const globalLoading = ref(false)
   const theme = ref<ThemeMode>('system')
+  
+  // Modals
+  const featureModalOpen = ref(false)
+  const workspaceModalOpen = ref(false)
+  const environmentModalOpen = ref(false)
+  const editingFeatureId = ref<string | null>(null)
+
+  function openFeatureModal(id: string | null = null) {
+    editingFeatureId.value = id
+    featureModalOpen.value = true
+  }
+
+  function closeFeatureModal() {
+    featureModalOpen.value = false
+    editingFeatureId.value = null
+  }
 
   function toggleSidebar() {
     sidebarCollapsed.value = !sidebarCollapsed.value
@@ -67,6 +83,12 @@ export const useUiStore = defineStore('ui', () => {
     toasts,
     globalLoading,
     theme,
+    featureModalOpen,
+    workspaceModalOpen,
+    environmentModalOpen,
+    editingFeatureId,
+    openFeatureModal,
+    closeFeatureModal,
     toggleSidebar,
     addToast,
     removeToast,

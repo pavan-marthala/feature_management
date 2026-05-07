@@ -25,7 +25,7 @@ import {
   ArrowRight,
 } from 'lucide-vue-next'
 import type { Feature } from '@/types'
-import PipelineBoard from '@/components/features/PipelineBoard.vue'
+import PipelineVisualization from '@/components/pipeline/PipelineVisualization.vue'
 import SideDrawer from '@/components/ui/SideDrawer.vue'
 import { useWorkflowStore } from '@/stores/workflowStore'
 
@@ -55,10 +55,9 @@ const featureId = computed(() => route.params.id as string)
 onMounted(async () => {
   await featureStore.fetchFeature(featureId.value, 'ID')
   await featureStore.fetchPropagationHistory(featureId.value)
-  await workflowStore.fetchWorkflows()
-  const firstWorkflow = workflowStore.workflows[0]
-  if (firstWorkflow?.id) {
-    await workflowStore.fetchWorkflow(firstWorkflow.id)
+  const f = featureStore.selectedFeature
+  if (f?.workflowId) {
+    await workflowStore.fetchWorkflow(f.workflowId)
   }
 })
 
@@ -126,8 +125,7 @@ async function handlePromote() {
 }
 
 const currentWorkflow = computed(() => {
-  // Mocking: finding a workflow that might fit. In a real app, this would be linked to the feature or environment.
-  return workflowStore.selectedWorkflow || workflowStore.workflows[0]
+  return workflowStore.selectedWorkflow
 })
 
 async function openHistory() {
@@ -152,19 +150,13 @@ async function openHistory() {
           <div class="detail-header__name-row">
             <h1 class="detail-header__name">{{ feature.name }}</h1>
             <Badge v-bind="getStrategyInfo(feature.configuration?.strategy)" />
-            <Badge
-              :label="feature.enabled ? 'Enabled' : 'Disabled'"
-              :variant="feature.enabled ? 'success' : 'danger'"
-            />
+            <Badge :label="feature.enabled ? 'Enabled' : 'Disabled'"
+              :variant="feature.enabled ? 'success' : 'danger'" />
           </div>
           <p class="detail-header__desc">{{ feature.description || 'No description provided' }}</p>
         </div>
         <div class="detail-header__actions">
-          <ToggleSwitch
-            :model-value="feature.enabled"
-            size="lg"
-            @update:model-value="handleToggle(feature)"
-          />
+          <ToggleSwitch :model-value="feature.enabled" size="lg" @update:model-value="handleToggle(feature)" />
           <button class="btn btn--ghost" @click="openHistory">
             <History :size="16" /> History
           </button>
@@ -188,17 +180,15 @@ async function openHistory() {
             Using: {{ currentWorkflow.name }}
           </span>
         </div>
-        
-        <PipelineBoard
-          v-if="currentWorkflow && 'stages' in currentWorkflow"
-          :stages="(currentWorkflow as any).stages"
-          :current-environment-id="feature.environmentId"
-          :loading="featureStore.loading"
-          @promote="handlePromote"
-        />
-        <div v-else class="no-workflow glass">
-          <p>No propagation workflow assigned to this feature.</p>
-          <button class="btn btn--primary btn--sm" @click="router.push('/workflows')">Configure Workflow</button>
+
+        <div class="pipeline-wrapper">
+          <PipelineVisualization v-if="currentWorkflow && 'stages' in currentWorkflow"
+            :stages="(currentWorkflow as any).stages" :current-stage-id="feature.environmentId"
+            :loading="featureStore.loading" mode="OPERATIONAL" @promote="handlePromote" />
+          <div v-else class="no-workflow glass">
+            <p>No propagation workflow assigned to this feature.</p>
+            <button class="btn btn--primary btn--sm" @click="router.push('/workflows')">Configure Workflow</button>
+          </div>
         </div>
       </GlassCard>
 
@@ -209,7 +199,8 @@ async function openHistory() {
           <h2 class="card-title">Configuration</h2>
           <div class="config-section">
             <div class="config-strategy">
-              <component :is="getStrategyInfo(feature.configuration?.strategy).icon" :size="24" class="config-strategy__icon" />
+              <component :is="getStrategyInfo(feature.configuration?.strategy).icon" :size="24"
+                class="config-strategy__icon" />
               <div>
                 <h3 class="config-strategy__name">{{ getStrategyInfo(feature.configuration?.strategy).label }}</h3>
                 <p class="config-strategy__desc">{{ getStrategyInfo(feature.configuration?.strategy).description }}</p>
@@ -220,10 +211,8 @@ async function openHistory() {
             <div v-if="feature.configuration?.strategy === 'BooleanFeatureStrategy'" class="config-detail">
               <div class="config-row">
                 <span class="config-label">Value</span>
-                <Badge
-                  :label="(feature.configuration as any).value ? 'True' : 'False'"
-                  :variant="(feature.configuration as any).value ? 'success' : 'danger'"
-                />
+                <Badge :label="(feature.configuration as any).value ? 'True' : 'False'"
+                  :variant="(feature.configuration as any).value ? 'success' : 'danger'" />
               </div>
             </div>
 
@@ -308,11 +297,7 @@ async function openHistory() {
             </button>
           </div>
           <div v-if="feature.owners?.length" class="owners-list">
-            <div
-              v-for="owner in feature.owners"
-              :key="owner"
-              class="owner-chip"
-            >
+            <div v-for="owner in feature.owners" :key="owner" class="owner-chip">
               <div class="owner-avatar">{{ owner.charAt(0).toUpperCase() }}</div>
               <span>{{ owner }}</span>
               <button class="owner-remove-btn" @click="handleRemoveOwner(owner)">
@@ -345,13 +330,8 @@ async function openHistory() {
     <Modal :show="showAddOwnerModal" title="Add Owner" size="sm" @close="showAddOwnerModal = false">
       <div class="form-group">
         <label class="form-label">Owner Name or ID</label>
-        <input
-          v-model="newOwnerName"
-          type="text"
-          class="form-input"
-          placeholder="e.g. john.doe"
-          @keyup.enter="handleAddOwner"
-        />
+        <input v-model="newOwnerName" type="text" class="form-input" placeholder="e.g. john.doe"
+          @keyup.enter="handleAddOwner" />
       </div>
       <template #footer>
         <button class="btn btn--ghost" @click="showAddOwnerModal = false">Cancel</button>
@@ -377,7 +357,7 @@ async function openHistory() {
             </div>
             <div class="timeline-event__line"></div>
           </div>
-          
+
           <div class="timeline-event__card">
             <div class="event-header">
               <div class="event-user">
@@ -386,7 +366,7 @@ async function openHistory() {
               </div>
               <span class="event-time">{{ formatDate(log.createdAt) }}</span>
             </div>
-            
+
             <div class="event-details">
               <div class="propagation-path">
                 <div class="env-node">
@@ -399,12 +379,10 @@ async function openHistory() {
                   {{ log.targetEnvironmentId.split('-')[0] }}
                 </div>
               </div>
-              
-              <Badge 
-                :label="log.status" 
-                :variant="log.status === 'SUCCESS' ? 'success' : log.status === 'PENDING' ? 'warning' : 'danger'" 
-                size="sm" 
-              />
+
+              <Badge :label="log.status"
+                :variant="log.status === 'SUCCESS' ? 'success' : log.status === 'PENDING' ? 'warning' : 'danger'"
+                size="sm" />
             </div>
           </div>
         </div>
@@ -579,9 +557,17 @@ async function openHistory() {
   font-family: 'SF Mono', 'Fira Code', monospace;
 }
 
-.config-kv__key { color: var(--accent-cyan); }
-.config-kv__sep { color: var(--text-muted); }
-.config-kv__val { color: var(--accent-emerald); }
+.config-kv__key {
+  color: var(--accent-cyan);
+}
+
+.config-kv__sep {
+  color: var(--text-muted);
+}
+
+.config-kv__val {
+  color: var(--accent-emerald);
+}
 
 /* Metadata */
 .metadata-list {
@@ -812,11 +798,22 @@ async function openHistory() {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
 }
 
 .pipeline-header .card-title {
   margin-bottom: 0;
+}
+
+.pipeline-wrapper {
+  width: 100%;
+  overflow: hidden;
+}
+
+.pipeline-section {
+  overflow: hidden;
 }
 
 .workflow-badge {
@@ -873,9 +870,20 @@ async function openHistory() {
   box-shadow: var(--shadow-sm);
 }
 
-.timeline-event__dot--success { background: var(--accent-emerald); color: white; }
-.timeline-event__dot--pending { background: var(--accent-cyan); color: white; }
-.timeline-event__dot--failed { background: var(--accent-rose); color: white; }
+.timeline-event__dot--success {
+  background: var(--accent-emerald);
+  color: white;
+}
+
+.timeline-event__dot--pending {
+  background: var(--accent-cyan);
+  color: white;
+}
+
+.timeline-event__dot--failed {
+  background: var(--accent-rose);
+  color: white;
+}
 
 .timeline-event__line {
   flex: 1;
@@ -996,5 +1004,16 @@ async function openHistory() {
 .history-empty p {
   font-size: 0.95rem;
   max-width: 200px;
+}
+
+@media (max-width: 768px) {
+  .pipeline-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .workflow-badge {
+    width: 100%;
+  }
 }
 </style>

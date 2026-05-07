@@ -96,6 +96,7 @@ export interface Feature {
   owners?: string[]
   enabled: boolean
   environmentId: string
+  workflowId: string
   etag: number
 }
 

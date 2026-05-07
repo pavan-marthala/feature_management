@@ -5,6 +5,9 @@ import { useUiStore } from '@/stores/uiStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import ThemeSelector from '@/components/ui/ThemeSelector.vue'
 import WorkspaceDropdown from '@/components/workspace/WorkspaceDropdown.vue'
+import WorkspaceFormModal from '@/components/modals/WorkspaceFormModal.vue'
+import EnvironmentFormModal from '@/components/modals/EnvironmentFormModal.vue'
+import FeatureFormModal from '@/components/modals/FeatureFormModal.vue'
 import {
   Flag,
   Layers,
@@ -130,6 +133,11 @@ function isActive(item: { to: string }) {
         </router-view>
       </main>
     </div>
+
+    <!-- Global Modals -->
+    <WorkspaceFormModal />
+    <EnvironmentFormModal />
+    <FeatureFormModal />
   </div>
 </template>
 

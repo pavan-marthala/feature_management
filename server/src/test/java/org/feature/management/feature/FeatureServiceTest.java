@@ -63,13 +63,12 @@ class FeatureServiceTest {
     void shouldCreateFeature() {
         FeatureCreateRequest model = new FeatureCreateRequest();
         model.setName("feature-1");
-        model.setEnvironmentId(UUID.randomUUID());
         model.setWorkspaceId(UUID.randomUUID());
         FeatureEntity entity = new FeatureEntity();
         UUID generatedId = UUID.randomUUID();
         entity.setId(generatedId);
 
-        when(featureRepository.existsByNameAndEnvironmentIdAndWorkspaceId("feature-1", model.getEnvironmentId(), model.getWorkspaceId()))
+        when(featureRepository.existsByNameAndEnvironmentIdAndWorkspaceId("feature-1", UUID.randomUUID(), model.getWorkspaceId()))
                 .thenReturn(Mono.just(false));
         when(featureRepository.save(any(FeatureEntity.class))).thenReturn(Mono.just(entity));
 
@@ -153,8 +152,7 @@ class FeatureServiceTest {
         FeatureCreateRequest model = new FeatureCreateRequest();
         model.setName("existing-feature");
         model.setWorkspaceId(UUID.randomUUID());
-        model.setEnvironmentId(UUID.randomUUID());
-        when(featureRepository.existsByNameAndEnvironmentIdAndWorkspaceId("existing-feature", model.getEnvironmentId(), model.getWorkspaceId()))
+        when(featureRepository.existsByNameAndEnvironmentIdAndWorkspaceId("existing-feature", UUID.randomUUID(), model.getWorkspaceId()))
                 .thenReturn(Mono.just(true));
 
         StepVerifier.create(featureService.createFeature(model))

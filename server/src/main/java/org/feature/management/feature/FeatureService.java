@@ -83,19 +83,32 @@ public class FeatureService implements FeatureServiceInterface {
                 .map(tuple -> new PageImpl<>(tuple.getT1(), pageRequest, tuple.getT2()));
     }
 
+
     @Override
     @Transactional
     public Mono<UUID> createFeature(FeatureCreateRequest featureRequest) {
         log.debug("Creating feature with request: {}", featureRequest);
         return workflowRepository.findById(featureRequest.getWorkflowId())
                 .switchIfEmpty(Mono.error(new FeatureException("Workflow not found for feature")))
-                .then(featureRepo.existsByNameAndEnvironmentIdAndWorkspaceId(featureRequest.getName(), featureRequest.getEnvironmentId(), featureRequest.getWorkspaceId()))
-                .filter(exists -> !exists)
-                .switchIfEmpty(Mono.error(new FeatureException(
-                        "Feature with name " + featureRequest.getName() + " already exists in this environment")))
-                .then(Mono.defer(() -> Mono.just(featureMapper.toEntity(featureRequest))))
-                .flatMap(featureRepo::save)
-                .map(FeatureEntity::getId);
+                .flatMap(workflow ->
+                        stageRepository.findFirstByWorkflowIdOrderByOrderIndexAsc(workflow.getId()).switchIfEmpty(Mono.error(new FeatureException("Workflow must contain at least one stage before creating features"))))
+                .flatMap(firstStage -> {
+                    UUID initialEnvironmentId = firstStage.getEnvironmentId();
+                    return featureRepo.existsByNameAndEnvironmentIdAndWorkspaceId(
+                                    featureRequest.getName(),
+                                    initialEnvironmentId,
+                                    featureRequest.getWorkspaceId()
+                            )
+                            .filter(exists -> !exists)
+                            .switchIfEmpty(Mono.error(new FeatureException("Feature with name " + featureRequest.getName() + " already exists in this environment")))
+                            .then(Mono.defer(() -> {
+                                FeatureEntity featureEntity = featureMapper.toEntity(featureRequest);
+                                featureEntity.setEnvironmentId(initialEnvironmentId);
+                                return Mono.just(featureEntity);
+                            }))
+                            .flatMap(featureRepo::save)
+                            .map(FeatureEntity::getId);
+                });
     }
 
     @Override

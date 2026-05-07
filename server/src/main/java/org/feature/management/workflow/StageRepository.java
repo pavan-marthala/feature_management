@@ -10,5 +10,8 @@ import java.util.UUID;
 @Repository
 public interface StageRepository extends ReactiveCrudRepository<StageEntity, UUID> {
     Flux<StageEntity> findAllByWorkflowIdOrderByOrderIndexAsc(UUID workflowId);
+
     Mono<Void> deleteAllByWorkflowId(UUID workflowId);
+
+    Mono<StageEntity> findFirstByWorkflowIdOrderByOrderIndexAsc(UUID workflowId);
 }

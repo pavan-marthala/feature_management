@@ -11,14 +11,10 @@ const router = createRouter({
     { path: '/dashboard', redirect: '/features' },
     { path: '/workspaces', redirect: '/features' },
 
-    // Legacy workspace-scoped redirects (graceful migration)
     { path: '/workspaces/:workspaceId', redirect: '/features' },
     { path: '/workspaces/:workspaceId/features', redirect: '/features' },
-    { path: '/workspaces/:workspaceId/features/create', redirect: '/features/create' },
     { path: '/workspaces/:workspaceId/features/:id', redirect: to => `/features/${to.params.id}` },
-    { path: '/workspaces/:workspaceId/features/:id/edit', redirect: to => `/features/${to.params.id}/edit` },
 
-    // Onboarding wizard (full-screen, no sidebar)
     {
       path: '/onboarding',
       name: 'onboarding',
@@ -26,15 +22,7 @@ const router = createRouter({
       meta: { title: 'Get Started', hideLayout: true },
     },
 
-    // Workspace create (standalone page, rarely used)
-    {
-      path: '/workspaces/create',
-      name: 'workspace-create',
-      component: () => import('@/views/WorkspaceFormView.vue'),
-      meta: { title: 'Create Workspace' },
-    },
-
-    // Features (flat routes — workspace context from store)
+    // Workspace (mostly handled via modal now, but keeping list just in case, though usually global)
     {
       path: '/features',
       name: 'features',
@@ -42,22 +30,10 @@ const router = createRouter({
       meta: { title: 'Features' },
     },
     {
-      path: '/features/create',
-      name: 'feature-create',
-      component: () => import('@/views/FeatureFormView.vue'),
-      meta: { title: 'Create Feature' },
-    },
-    {
       path: '/features/:id',
       name: 'feature-detail',
       component: () => import('@/views/FeatureDetailView.vue'),
       meta: { title: 'Feature Detail' },
-    },
-    {
-      path: '/features/:id/edit',
-      name: 'feature-edit',
-      component: () => import('@/views/FeatureFormView.vue'),
-      meta: { title: 'Edit Feature' },
     },
 
     // Global workflow routes
@@ -82,22 +58,10 @@ const router = createRouter({
       meta: { title: 'Environments' },
     },
     {
-      path: '/environments/create',
-      name: 'environment-create',
-      component: () => import('@/views/EnvironmentFormView.vue'),
-      meta: { title: 'Create Environment' },
-    },
-    {
       path: '/environments/:id',
       name: 'environment-detail',
       component: () => import('@/views/EnvironmentDetailView.vue'),
       meta: { title: 'Environment Detail' },
-    },
-    {
-      path: '/environments/:id/edit',
-      name: 'environment-edit',
-      component: () => import('@/views/EnvironmentFormView.vue'),
-      meta: { title: 'Edit Environment' },
     },
   ],
 })

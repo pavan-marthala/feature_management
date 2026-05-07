@@ -1,26 +1,22 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, computed, watch } from 'vue'
 import { useFeatureStore } from '@/stores/featureStore'
-import { useEnvironmentStore } from '@/stores/environmentStore'
 import { useWorkflowStore } from '@/stores/workflowStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
+import { useEnvironmentStore } from '@/stores/environmentStore'
 import { useUiStore } from '@/stores/uiStore'
-import GlassCard from '@/components/ui/GlassCard.vue'
+import Modal from '@/components/ui/Modal.vue'
 import ToggleSwitch from '@/components/ui/ToggleSwitch.vue'
-import { ArrowLeft, Plus, Minus, Save, X } from 'lucide-vue-next'
-import type { FeatureStrategyType, FeatureCreateRequest, FeatureConfiguration } from '@/types'
+import { Plus, Minus, X } from 'lucide-vue-next'
+import type { FeatureStrategyType, FeatureCreateRequest, FeatureConfiguration, JWTClaimScope, JWTClaimRole, JWTClaimCustom } from '@/types'
 
-const route = useRoute()
-const router = useRouter()
 const featureStore = useFeatureStore()
-const environmentStore = useEnvironmentStore()
 const workflowStore = useWorkflowStore()
 const workspaceStore = useWorkspaceStore()
+const envStore = useEnvironmentStore()
 const uiStore = useUiStore()
 
-const isEdit = computed(() => route.name === 'feature-edit')
-const featureId = computed(() => route.params.id as string)
+const isEdit = computed(() => !!uiStore.editingFeatureId)
 const workspaceId = computed(() => workspaceStore.activeWorkspaceId)
 
 // Form state
@@ -28,7 +24,6 @@ const name = ref('')
 const description = ref('')
 const strategy = ref<FeatureStrategyType>('BooleanFeatureStrategy')
 const enabled = ref(true)
-const selectedEnvId = ref('')
 const selectedWorkflowId = ref('')
 const owners = ref<string[]>([])
 const newOwner = ref('')
@@ -51,76 +46,120 @@ const httpPath = ref('')
 // Schedule strategy
 const cronExpression = ref('')
 
-// Inline Environment Creation
-const showInlineEnvForm = ref(false)
-const inlineEnvName = ref('')
-const inlineEnvDesc = ref('')
-
 const submitting = ref(false)
 const errors = ref<Record<string, string>>({})
 
-onMounted(async () => {
-  await Promise.all([
-    featureStore.fetchStrategies(),
-    environmentStore.fetchEnvironments(0, 100),
-    workflowStore.fetchWorkflows(0, 100),
-  ])
+watch(selectedWorkflowId, async (newId) => {
+  if (newId && newId !== workflowStore.selectedWorkflow?.id) {
+    await workflowStore.fetchWorkflow(newId)
+  }
+})
 
-  if (isEdit.value && featureId.value) {
-    const feature = await featureStore.fetchFeature(featureId.value, 'ID')
-    if (feature) {
-      name.value = feature.name
-      description.value = feature.description || ''
-      enabled.value = feature.enabled
-      owners.value = feature.owners || []
+const fullSelectedWorkflow = computed(() => {
+  if (workflowStore.selectedWorkflow?.id === selectedWorkflowId.value) {
+    return workflowStore.selectedWorkflow
+  }
+  return null
+})
 
-      if (feature.configuration) {
-        strategy.value = feature.configuration.strategy
-        switch (feature.configuration.strategy) {
-          case 'BooleanFeatureStrategy':
-            booleanValue.value = (feature.configuration as any).value
-            break
-          case 'JWTClaimFeatureStrategy': {
-            const claims = (feature.configuration as any).claims
-            if (claims?.[0]) {
-              if ('scopes' in claims[0]) {
-                jwtClaimType.value = 'scopes'
-                jwtScopes.value = claims[0].scopes
-              } else if ('roles' in claims[0]) {
-                jwtClaimType.value = 'roles'
-                jwtRoles.value = claims[0].roles
-              } else {
-                jwtClaimType.value = 'custom'
-                jwtCustomClaims.value = Array.isArray(claims[0]) ? claims[0] : [claims[0]]
+const initialEnvironment = computed(() => {
+  const wf = fullSelectedWorkflow.value
+  if (!wf) return null
+  if (!wf.stages || wf.stages.length === 0) return null
+  const firstStage = wf.stages.find(s => s.orderIndex === 0) || wf.stages[0]
+  if (!firstStage) return null
+  const env = envStore.environments.find(e => e.id === firstStage.environmentId)
+  return env || { name: firstStage.environmentName || 'Unknown Environment', id: firstStage.environmentId }
+})
+
+watch(() => uiStore.featureModalOpen, async (open) => {
+  if (open) {
+    if (workflowStore.workflows.length === 0) {
+      await workflowStore.fetchWorkflows(0, 100)
+    }
+    if (envStore.environments.length === 0) {
+      await envStore.fetchEnvironments(0, 100)
+    }
+    
+    if (isEdit.value && uiStore.editingFeatureId) {
+      const feature = await featureStore.fetchFeature(uiStore.editingFeatureId, 'ID')
+      if (feature) {
+        name.value = feature.name
+        description.value = feature.description || ''
+        enabled.value = feature.enabled
+        owners.value = feature.owners || []
+
+        if (feature.configuration) {
+          strategy.value = feature.configuration.strategy
+          switch (feature.configuration.strategy) {
+            case 'BooleanFeatureStrategy':
+              booleanValue.value = feature.configuration.value
+              break
+            case 'JWTClaimFeatureStrategy': {
+              const claims = feature.configuration.claims
+              if (claims?.[0]) {
+                if ('scopes' in claims[0]) {
+                  jwtClaimType.value = 'scopes'
+                  jwtScopes.value = claims[0].scopes
+                } else if ('roles' in claims[0]) {
+                  jwtClaimType.value = 'roles'
+                  jwtRoles.value = claims[0].roles
+                } else {
+                  jwtClaimType.value = 'custom'
+                  jwtCustomClaims.value = Array.isArray(claims[0]) ? claims[0] : [claims[0]]
+                }
               }
+              break
             }
-            break
-          }
-          case 'HTTPRequestFeatureStrategy': {
-            const config = feature.configuration as any
-            if (config.header) {
-              httpType.value = 'header'
-              httpName.value = config.header.name
-              httpValue.value = config.header.value
-            } else if (config.requestBody) {
-              httpType.value = 'requestBody'
-              httpPath.value = config.requestBody.path
-              httpValue.value = config.requestBody.value
-            } else if (config.query) {
-              httpType.value = 'query'
-              httpName.value = config.query.name
-              httpValue.value = config.query.value
+            case 'HTTPRequestFeatureStrategy': {
+              const config = feature.configuration
+              if (config.header) {
+                httpType.value = 'header'
+                httpName.value = config.header.name
+                httpValue.value = config.header.value
+              } else if (config.requestBody) {
+                httpType.value = 'requestBody'
+                httpPath.value = config.requestBody.path
+                httpValue.value = config.requestBody.value
+              } else if (config.query) {
+                httpType.value = 'query'
+                httpName.value = config.query.name
+                httpValue.value = config.query.value
+              }
+              break
             }
-            break
+            case 'ScheduleFeatureStrategy':
+              cronExpression.value = feature.configuration.cron || ''
+              break
           }
-          case 'ScheduleFeatureStrategy':
-            cronExpression.value = (feature.configuration as any).cron || ''
-            break
         }
       }
+    } else {
+      // Reset form on create
+      name.value = ''
+      description.value = ''
+      strategy.value = 'BooleanFeatureStrategy'
+      enabled.value = true
+      selectedWorkflowId.value = ''
+      owners.value = []
+      newOwner.value = ''
+      booleanValue.value = false
+      jwtScopes.value = ['']
+      jwtRoles.value = ['']
+      jwtCustomClaims.value = [{ name: '', value: '' }]
+      httpType.value = 'header'
+      httpName.value = ''
+      httpValue.value = ''
+      httpPath.value = ''
+      cronExpression.value = ''
+      errors.value = {}
     }
   }
 })
+
+function close() {
+  uiStore.closeFeatureModal()
+}
 
 function validate(): boolean {
   errors.value = {}
@@ -128,11 +167,12 @@ function validate(): boolean {
   if (!name.value || name.value.length < 2 || name.value.length > 36) {
     errors.value.name = 'Name must be 2-36 characters'
   }
-  if (!isEdit.value && !selectedEnvId.value) {
-    errors.value.environmentId = 'Environment is required'
-  }
   if (!isEdit.value && !selectedWorkflowId.value) {
     errors.value.workflowId = 'Workflow is required'
+  } else if (!isEdit.value && fullSelectedWorkflow.value) {
+    if (!fullSelectedWorkflow.value.stages || fullSelectedWorkflow.value.stages.length === 0) {
+      errors.value.workflowId = 'Workflow must contain at least one stage before creating features.'
+    }
   }
   if (name.value && !/^[a-zA-Z0-9]+$/.test(name.value)) {
     errors.value.name = 'Name can only contain letters and numbers'
@@ -155,12 +195,6 @@ function validate(): boolean {
     }
   }
 
-  if (showInlineEnvForm.value) {
-    if (!inlineEnvName.value || inlineEnvName.value.length < 2) {
-      errors.value.inlineEnvName = 'Environment name must be at least 2 characters'
-    }
-  }
-
   return Object.keys(errors.value).length === 0
 }
 
@@ -169,7 +203,7 @@ function buildConfiguration(): FeatureConfiguration {
     case 'BooleanFeatureStrategy':
       return { strategy: 'BooleanFeatureStrategy', value: booleanValue.value }
     case 'JWTClaimFeatureStrategy': {
-      let claims: any[]
+      let claims: Array<JWTClaimScope | JWTClaimRole | JWTClaimCustom[]>
       if (jwtClaimType.value === 'scopes') {
         claims = [{ scopes: jwtScopes.value.filter(s => s.trim()) }]
       } else if (jwtClaimType.value === 'roles') {
@@ -180,7 +214,12 @@ function buildConfiguration(): FeatureConfiguration {
       return { strategy: 'JWTClaimFeatureStrategy', claims }
     }
     case 'HTTPRequestFeatureStrategy': {
-      const config: any = { strategy: 'HTTPRequestFeatureStrategy' }
+      const config: {
+        strategy: 'HTTPRequestFeatureStrategy'
+        header?: { name: string; value: string }
+        requestBody?: { path: string; value: string }
+        query?: { name: string; value: string }
+      } = { strategy: 'HTTPRequestFeatureStrategy' }
       if (httpType.value === 'header') {
         config.header = { name: httpName.value, value: httpValue.value }
       } else if (httpType.value === 'requestBody') {
@@ -200,40 +239,29 @@ async function handleSubmit() {
   submitting.value = true
 
   try {
-    let envId = selectedEnvId.value
-
-    if (!isEdit.value && showInlineEnvForm.value) {
-      const envResult = await environmentStore.createEnvironment({
-        name: inlineEnvName.value,
-        description: inlineEnvDesc.value || undefined
-      })
-      if (envResult?.id) {
-        envId = envResult.id
-      } else {
-        throw new Error('Failed to create environment inline')
-      }
-    }
-
-    if (isEdit.value) {
-      // Send only the edited configuration, not the full object
-      const data = buildConfiguration() as any
-      await featureStore.updateFeature(featureId.value, data, featureStore.selectedEtag)
-      const ui = useUiStore()
-      ui.addToast('Feature updated successfully', 'success')
-      router.push(`/features`)
+    if (isEdit.value && uiStore.editingFeatureId) {
+      const data = buildConfiguration() as unknown as Record<string, unknown>
+      await featureStore.updateFeature(uiStore.editingFeatureId, data, featureStore.selectedEtag)
+      close()
     } else {
+      if (!initialEnvironment.value?.id) {
+        errors.value.workflowId = 'Workflow must contain at least one stage before creating features.'
+        submitting.value = false
+        return
+      }
+      
       const payload: FeatureCreateRequest = {
         name: name.value,
         description: description.value || undefined,
-        environmentId: envId,
+        environmentId: initialEnvironment.value.id,
         workspaceId: workspaceId.value!,
         workflowId: selectedWorkflowId.value,
         configuration: buildConfiguration(),
         owners: owners.value.length ? owners.value : undefined,
         enabled: enabled.value,
       }
-      const result = await featureStore.createFeature(payload)
-      router.push(`/features`)
+      await featureStore.createFeature(payload)
+      close()
     }
   } catch (err: unknown) {
     console.error('Submit failed', err)
@@ -262,23 +290,10 @@ function removeJwtCustom(idx: number) { jwtCustomClaims.value.splice(idx, 1) }
 </script>
 
 <template>
-  <div class="form-page">
-    <button class="back-btn" @click="router.push(`/features`)">
-      <ArrowLeft :size="18" />
-      Back to Features
-    </button>
-
-    <div class="form-page__header animate-fadeInUp">
-      <h1>{{ isEdit ? 'Edit Feature' : 'Create Feature' }}</h1>
-      <p class="form-page__subtitle">
-        {{ isEdit ? 'Update the feature configuration' : 'Set up a new feature flag with your preferred strategy' }}
-      </p>
-    </div>
-
-    <form @submit.prevent="handleSubmit" class="form animate-fadeInUp stagger-1">
-      <!-- Basic Info -->
-      <GlassCard>
-        <h2 class="section-title">Basic Information</h2>
+  <Modal :show="uiStore.featureModalOpen" :title="isEdit ? 'Edit Feature' : 'Create Feature'" size="lg" @close="close">
+    <form @submit.prevent="handleSubmit" class="form">
+      <div class="form-section">
+        <h3 class="section-title">Basic Information</h3>
 
         <div class="form-group">
           <label class="form-label" for="feature-name">Feature Name *</label>
@@ -293,76 +308,6 @@ function removeJwtCustom(idx: number) { jwtCustomClaims.value.splice(idx, 1) }
             maxlength="36"
           />
           <span v-if="errors.name" class="form-error">{{ errors.name }}</span>
-          <span class="form-hint">Alphanumeric, 2-36 characters</span>
-        </div>
-
-        <div class="form-group" v-if="!isEdit">
-          <label class="form-label" for="env-select">Environment *</label>
-          
-          <!-- Empty State -->
-          <div v-if="!environmentStore.loading && environmentStore.environments.length === 0 && !showInlineEnvForm" class="empty-env-state">
-            <div class="empty-env-msg">
-              <span>No environments found</span>
-              <p>You need at least one environment to create a feature.</p>
-            </div>
-            <button type="button" class="btn btn--primary btn--sm" @click="showInlineEnvForm = true">
-              <Plus :size="16" /> Create Environment
-            </button>
-          </div>
-
-          <!-- Inline Creation Form -->
-          <div v-else-if="showInlineEnvForm" class="inline-form animate-fadeIn">
-            <div class="inline-form__header">
-              <span class="inline-form__title">New Environment</span>
-              <button type="button" class="inline-toggle" @click="showInlineEnvForm = false" v-if="environmentStore.environments.length > 0">
-                Cancel
-              </button>
-            </div>
-            <div class="form-group">
-              <input
-                v-model="inlineEnvName"
-                type="text"
-                class="form-input"
-                :class="{ 'form-input--error': errors.inlineEnvName }"
-                placeholder="Environment name (e.g. Production)"
-              />
-              <span v-if="errors.inlineEnvName" class="form-error">{{ errors.inlineEnvName }}</span>
-            </div>
-            <div class="form-group">
-              <input
-                v-model="inlineEnvDesc"
-                type="text"
-                class="form-input"
-                placeholder="Description (optional)"
-              />
-            </div>
-            <p class="inline-form__hint">This environment will be created along with your feature.</p>
-          </div>
-
-          <!-- Selection Dropdown -->
-          <template v-else>
-            <div class="selection-row">
-              <select 
-                id="env-select" 
-                v-model="selectedEnvId" 
-                class="form-input form-select"
-                :class="{ 'form-input--error': errors.environmentId }"
-              >
-                <option value="" disabled>Select an environment...</option>
-                <option 
-                  v-for="env in environmentStore.environments" 
-                  :key="env.id" 
-                  :value="env.id"
-                >
-                  {{ env.name }}
-                </option>
-              </select>
-              <button type="button" class="btn btn--ghost btn--icon" title="Create New Environment" @click="showInlineEnvForm = true">
-                <Plus :size="18" />
-              </button>
-            </div>
-            <span v-if="errors.environmentId" class="form-error">{{ errors.environmentId }}</span>
-          </template>
         </div>
 
         <div class="form-group" v-if="!isEdit">
@@ -383,7 +328,15 @@ function removeJwtCustom(idx: number) { jwtCustomClaims.value.splice(idx, 1) }
             </option>
           </select>
           <span v-if="errors.workflowId" class="form-error">{{ errors.workflowId }}</span>
-          <span class="form-hint">The deployment pipeline this feature will follow</span>
+          <span class="form-hint" v-if="!initialEnvironment && !errors.workflowId">The deployment pipeline this feature will follow.</span>
+        </div>
+
+        <div class="form-group" v-if="!isEdit && initialEnvironment">
+          <label class="form-label">Initial Environment</label>
+          <div class="readonly-badge">
+            {{ initialEnvironment.name }}
+          </div>
+          <span class="form-hint">Derived automatically from the selected workflow's first stage.</span>
         </div>
 
         <div class="form-group" v-if="!isEdit">
@@ -396,19 +349,17 @@ function removeJwtCustom(idx: number) { jwtCustomClaims.value.splice(idx, 1) }
             rows="3"
             maxlength="255"
           ></textarea>
-          <span v-if="errors.description" class="form-error">{{ errors.description }}</span>
         </div>
 
         <div class="form-group form-group--inline" v-if="!isEdit">
           <label class="form-label">Enabled</label>
           <ToggleSwitch v-model="enabled" size="md" />
         </div>
-      </GlassCard>
+      </div>
 
-      <!-- Strategy Selection -->
-      <GlassCard class="animate-fadeInUp stagger-2">
-        <h2 class="section-title">Strategy Configuration</h2>
-
+      <div class="form-section">
+        <h3 class="section-title">Strategy Configuration</h3>
+        
         <div class="form-group">
           <label class="form-label" for="strategy-select">Strategy Type *</label>
           <select id="strategy-select" v-model="strategy" class="form-input form-select">
@@ -419,7 +370,7 @@ function removeJwtCustom(idx: number) { jwtCustomClaims.value.splice(idx, 1) }
           </select>
         </div>
 
-        <!-- Boolean Strategy Config -->
+        <!-- Strategy Config Blocks -->
         <div v-if="strategy === 'BooleanFeatureStrategy'" class="strategy-config">
           <div class="form-group form-group--inline">
             <label class="form-label">Default Value</label>
@@ -428,7 +379,6 @@ function removeJwtCustom(idx: number) { jwtCustomClaims.value.splice(idx, 1) }
           </div>
         </div>
 
-        <!-- JWT Claim Strategy Config -->
         <div v-else-if="strategy === 'JWTClaimFeatureStrategy'" class="strategy-config">
           <div class="form-group">
             <label class="form-label">Claim Type</label>
@@ -439,7 +389,7 @@ function removeJwtCustom(idx: number) { jwtCustomClaims.value.splice(idx, 1) }
             </select>
           </div>
 
-          <!-- Scopes -->
+          <!-- Dynamic Lists -->
           <div v-if="jwtClaimType === 'scopes'" class="dynamic-list">
             <label class="form-label">Scopes</label>
             <div v-for="(_, idx) in jwtScopes" :key="idx" class="dynamic-list__row">
@@ -453,7 +403,6 @@ function removeJwtCustom(idx: number) { jwtCustomClaims.value.splice(idx, 1) }
             </button>
           </div>
 
-          <!-- Roles -->
           <div v-else-if="jwtClaimType === 'roles'" class="dynamic-list">
             <label class="form-label">Roles</label>
             <div v-for="(_, idx) in jwtRoles" :key="idx" class="dynamic-list__row">
@@ -467,7 +416,6 @@ function removeJwtCustom(idx: number) { jwtCustomClaims.value.splice(idx, 1) }
             </button>
           </div>
 
-          <!-- Custom Claims -->
           <div v-else class="dynamic-list">
             <label class="form-label">Custom Claims</label>
             <div v-for="(claim, idx) in jwtCustomClaims" :key="idx" class="dynamic-list__row">
@@ -483,7 +431,6 @@ function removeJwtCustom(idx: number) { jwtCustomClaims.value.splice(idx, 1) }
           </div>
         </div>
 
-        <!-- HTTP Request Strategy Config -->
         <div v-else-if="strategy === 'HTTPRequestFeatureStrategy'" class="strategy-config">
           <div class="form-group">
             <label class="form-label">Match Type</label>
@@ -502,9 +449,7 @@ function removeJwtCustom(idx: number) { jwtCustomClaims.value.splice(idx, 1) }
               :class="{ 'form-input--error': errors.httpName }"
               :placeholder="httpType === 'header' ? 'X-Feature-Flag' : 'feature'"
             />
-            <span v-if="errors.httpName" class="form-error">{{ errors.httpName }}</span>
           </div>
-
           <div class="form-group" v-if="httpType === 'requestBody'">
             <label class="form-label">JSON Path *</label>
             <input
@@ -513,9 +458,7 @@ function removeJwtCustom(idx: number) { jwtCustomClaims.value.splice(idx, 1) }
               :class="{ 'form-input--error': errors.httpPath }"
               placeholder="$.user.role"
             />
-            <span v-if="errors.httpPath" class="form-error">{{ errors.httpPath }}</span>
           </div>
-
           <div class="form-group">
             <label class="form-label">Value *</label>
             <input
@@ -524,11 +467,9 @@ function removeJwtCustom(idx: number) { jwtCustomClaims.value.splice(idx, 1) }
               :class="{ 'form-input--error': errors.httpValue }"
               placeholder="Expected value"
             />
-            <span v-if="errors.httpValue" class="form-error">{{ errors.httpValue }}</span>
           </div>
         </div>
 
-        <!-- Schedule Strategy Config -->
         <div v-else-if="strategy === 'ScheduleFeatureStrategy'" class="strategy-config">
           <div class="form-group">
             <label class="form-label">Cron Expression *</label>
@@ -538,206 +479,82 @@ function removeJwtCustom(idx: number) { jwtCustomClaims.value.splice(idx, 1) }
               :class="{ 'form-input--error': errors.cron }"
               placeholder="0 0 * * MON-FRI"
             />
-            <span v-if="errors.cron" class="form-error">{{ errors.cron }}</span>
-            <span class="form-hint">Standard cron syntax (minute hour day month weekday)</span>
           </div>
         </div>
-      </GlassCard>
+      </div>
 
-      <!-- Owners (Create Only) -->
-      <GlassCard class="animate-fadeInUp stagger-3" v-if="!isEdit">
-        <h2 class="section-title">Owners</h2>
-        <div class="owners-input">
-          <input
-            v-model="newOwner"
-            class="form-input"
-            placeholder="Add owner..."
-            @keydown.enter.prevent="addOwner"
-          />
-          <button type="button" class="btn btn--ghost btn--sm" @click="addOwner">
-            <Plus :size="16" /> Add
-          </button>
-        </div>
-        <div v-if="owners.length" class="owner-chips">
-          <div v-for="(owner, idx) in owners" :key="idx" class="owner-chip">
-            <span>{{ owner }}</span>
-            <button type="button" class="owner-chip__remove" @click="removeOwner(idx)">
-              <X :size="14" />
+      <div class="form-section" v-if="!isEdit">
+        <h3 class="section-title">Owners</h3>
+        <div class="form-group">
+          <div class="owners-input">
+            <input
+              v-model="newOwner"
+              class="form-input"
+              placeholder="Add owner..."
+              @keydown.enter.prevent="addOwner"
+            />
+            <button type="button" class="btn btn--ghost btn--sm" @click="addOwner">
+              <Plus :size="16" /> Add
             </button>
           </div>
+          <div v-if="owners.length" class="owner-chips">
+            <div v-for="(owner, idx) in owners" :key="idx" class="owner-chip">
+              <span>{{ owner }}</span>
+              <button type="button" class="owner-chip__remove" @click="removeOwner(idx)">
+                <X :size="14" />
+              </button>
+            </div>
+          </div>
         </div>
-      </GlassCard>
-
-      <!-- Submit -->
-      <div class="form-actions animate-fadeInUp stagger-4">
-        <button type="button" class="btn btn--ghost" @click="router.back()">Cancel</button>
-        <button type="submit" class="btn btn--primary" :disabled="submitting">
-          <Save :size="18" />
-          {{ submitting ? 'Saving...' : (isEdit ? 'Update Feature' : 'Create Feature') }}
-        </button>
       </div>
     </form>
-  </div>
+
+    <template #footer>
+      <button type="button" class="btn btn--ghost" @click="close">Cancel</button>
+      <button type="button" class="btn btn--primary" @click="handleSubmit" :disabled="submitting">
+        {{ submitting ? 'Saving...' : (isEdit ? 'Update Feature' : 'Create Feature') }}
+      </button>
+    </template>
+  </Modal>
 </template>
 
 <style scoped>
-.form-page {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  max-width: 720px;
-  margin: 0 auto;
-}
-
-.back-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  font-size: 0.85rem;
-  font-family: inherit;
-  cursor: pointer;
-  padding: 6px 0;
-  transition: color var(--transition-fast);
-  width: fit-content;
-}
-
-.back-btn:hover { color: var(--accent-cyan); }
-
-.form-page__header h1 {
-  font-size: 1.5rem;
-  font-weight: 700;
-}
-
-.form-page__subtitle {
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  margin-top: 4px;
-}
-
-/* Form */
 .form {
   display: flex;
   flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-section {
+  display: flex;
+  flex-direction: column;
   gap: 1rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.form-section:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
 }
 
 .section-title {
-  font-size: 1rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
+  font-size: 1.05rem;
+  font-weight: 700;
   color: var(--text-primary);
+  margin-bottom: 0.5rem;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  margin-bottom: 1rem;
-}
-
-.form-group:last-child {
-  margin-bottom: 0;
 }
 
 .form-group--inline {
   flex-direction: row;
   align-items: center;
-  gap: 12px;
-}
-
-.label-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 4px;
-}
-
-.inline-toggle {
-  background: none;
-  border: none;
-  color: var(--accent-cyan);
-  font-size: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 0;
-}
-
-.inline-toggle:hover {
-  text-decoration: underline;
-}
-
-.inline-form {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: var(--radius-lg);
-  border: 1px dashed var(--glass-border);
-  margin-top: 4px;
-}
-
-.inline-form__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.inline-form__title {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--accent-cyan);
-}
-
-.inline-form__hint {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  font-style: italic;
-}
-
-.empty-env-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   gap: 1rem;
-  padding: 2rem;
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: var(--radius-lg);
-  border: 1px dashed var(--glass-border);
-  text-align: center;
-}
-
-.empty-env-msg span {
-  display: block;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 4px;
-}
-
-.empty-env-msg p {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-}
-
-.selection-row {
-  display: flex;
-  gap: 8px;
-}
-
-.selection-row select {
-  flex: 1;
-}
-
-.btn--icon {
-  padding: 0;
-  width: 42px;
-  height: 42px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .form-label {
@@ -757,6 +574,7 @@ function removeJwtCustom(idx: number) { jwtCustomClaims.value.splice(idx, 1) }
   font-size: 0.875rem;
   font-family: inherit;
   transition: all var(--transition-fast);
+  width: 100%;
 }
 
 .form-input:focus {
@@ -765,107 +583,46 @@ function removeJwtCustom(idx: number) { jwtCustomClaims.value.splice(idx, 1) }
   outline: none;
 }
 
-.form-input--error {
-  border-color: var(--accent-rose);
-}
+.form-input--error { border-color: var(--accent-rose); }
+.form-input::placeholder { color: var(--text-muted); }
+.form-textarea { resize: vertical; min-height: 80px; }
+.form-error { font-size: 0.75rem; color: var(--accent-rose); }
+.form-hint { font-size: 0.75rem; color: var(--text-muted); }
 
-.form-input--error:focus {
-  box-shadow: 0 0 0 3px rgba(251, 113, 133, 0.1);
-}
-
-.form-input::placeholder {
-  color: var(--text-muted);
-}
-
-.form-input:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.form-textarea {
-  resize: vertical;
-  min-height: 80px;
-}
-
-.form-select {
-  cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%2394a3b8' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  padding-right: 32px;
-}
-
-.form-select option {
-  background: var(--bg-secondary);
+.readonly-badge {
+  display: inline-block;
+  padding: 8px 14px;
+  background: var(--glass-bg);
+  border: 1px dashed var(--glass-border);
+  border-radius: var(--radius-md);
   color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 600;
 }
 
-.form-error {
-  font-size: 0.75rem;
-  color: var(--accent-rose);
-}
-
-.form-hint {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-
-/* Strategy Config */
-.strategy-config {
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--glass-border);
-}
-
-/* Dynamic List */
 .dynamic-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  background: var(--bg-secondary);
+  padding: 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--glass-border);
 }
 
 .dynamic-list__row {
   display: flex;
+  align-items: center;
   gap: 8px;
-  align-items: center;
 }
 
-.dynamic-list__row .form-input {
-  flex: 1;
-}
-
-.icon-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border: 1px solid var(--glass-border);
-  background: transparent;
-  color: var(--text-muted);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  flex-shrink: 0;
-}
-
-.icon-btn--danger:hover {
-  color: var(--accent-rose);
-  border-color: var(--accent-rose);
-  background: rgba(251, 113, 133, 0.1);
-}
-
-/* Owners */
 .owners-input {
   display: flex;
   gap: 8px;
   margin-bottom: 10px;
 }
 
-.owners-input .form-input {
-  flex: 1;
-}
+.owners-input .form-input { flex: 1; }
 
 .owner-chips {
   display: flex;
@@ -895,19 +652,27 @@ function removeJwtCustom(idx: number) { jwtCustomClaims.value.splice(idx, 1) }
   transition: all var(--transition-fast);
 }
 
-.owner-chip__remove:hover {
+.owner-chip__remove:hover { color: var(--accent-rose); }
+
+.icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  border: none;
+  background: var(--glass-bg);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.icon-btn--danger:hover {
+  background: rgba(244, 63, 94, 0.1);
   color: var(--accent-rose);
 }
 
-/* Actions */
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  padding-top: 0.5rem;
-}
-
-/* Buttons */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -920,7 +685,6 @@ function removeJwtCustom(idx: number) { jwtCustomClaims.value.splice(idx, 1) }
   cursor: pointer;
   border: none;
   transition: all var(--transition-fast);
-  white-space: nowrap;
 }
 
 .btn--primary {
@@ -934,11 +698,7 @@ function removeJwtCustom(idx: number) { jwtCustomClaims.value.splice(idx, 1) }
   transform: translateY(-1px);
 }
 
-.btn--primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-}
+.btn--primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
 .btn--ghost {
   background: var(--glass-bg);
@@ -951,8 +711,5 @@ function removeJwtCustom(idx: number) { jwtCustomClaims.value.splice(idx, 1) }
   color: var(--text-primary);
 }
 
-.btn--sm {
-  padding: 6px 14px;
-  font-size: 0.8rem;
-}
+.btn--sm { padding: 6px 14px; font-size: 0.8rem; }
 </style>

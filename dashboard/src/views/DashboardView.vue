@@ -6,6 +6,7 @@ import type { DashboardStats } from '@/types'
 import { useFeatureStore } from '@/stores/featureStore'
 import { useEnvironmentStore } from '@/stores/environmentStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
+import { useUiStore } from '@/stores/uiStore'
 import StatCard from '@/components/ui/StatCard.vue'
 import GlassCard from '@/components/ui/GlassCard.vue'
 import Badge from '@/components/ui/Badge.vue'
@@ -24,6 +25,7 @@ import {
 const featureStore = useFeatureStore()
 const envStore = useEnvironmentStore()
 const workspaceStore = useWorkspaceStore()
+const uiStore = useUiStore()
 const router = useRouter()
 
 const stats = ref<DashboardStats | null>(null)
@@ -86,11 +88,11 @@ function navigateToFeature(id: string) {
         </p>
       </div>
       <div class="dashboard__hero-actions">
-        <button class="btn btn--primary" @click="router.push('/features/create')" id="create-feature-btn">
+        <button class="btn btn--primary" @click="uiStore.openFeatureModal()" id="create-feature-btn">
           <Plus :size="18" />
           New Feature
         </button>
-        <button class="btn btn--ghost" @click="router.push('/environments/create')" id="create-env-btn">
+        <button class="btn btn--ghost" @click="uiStore.environmentModalOpen = true" id="create-env-btn">
           <Plus :size="18" />
           New Environment
         </button>
@@ -156,7 +158,7 @@ function navigateToFeature(id: string) {
             <Flag :size="48" class="empty-state__icon" />
             <h3>No features yet</h3>
             <p>Create your first feature flag to get started.</p>
-            <button class="btn btn--primary" @click="router.push('/features/create')">
+            <button class="btn btn--primary" @click="uiStore.openFeatureModal()">
               <Plus :size="18" /> Create Feature
             </button>
           </div>
@@ -208,7 +210,7 @@ function navigateToFeature(id: string) {
             <Layers :size="48" class="empty-state__icon" />
             <h3>No environments yet</h3>
             <p>Create environments like Development, Staging, Production.</p>
-            <button class="btn btn--primary" @click="router.push('/environments/create')">
+            <button class="btn btn--primary" @click="uiStore.environmentModalOpen = true">
               <Plus :size="18" /> Create Environment
             </button>
           </div>

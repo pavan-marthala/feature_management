@@ -1252,10 +1252,6 @@ components:
     FeatureCreateRequest:
       type: object
       properties:
-        environmentId:
-          type: string
-          format: uuid
-          description: Environment ID to map the feature to
         name:
           $ref: "#/components/schemas/Feature/properties/name"
         description:
@@ -1271,7 +1267,6 @@ components:
         workflowId:
           $ref: "#/components/schemas/Feature/properties/workflowId"
       required:
-        - environmentId
         - name
         - configuration
         - owners
@@ -1586,7 +1581,7 @@ components:
         type: integer
         minimum: 1
         maximum: 100
-        default: 20
+        default: 25
     IfMatch:
       name: If-Match
       in: header
@@ -1600,4 +1595,4 @@ components:
       scheme: bearer
       bearerFormat: JWT
 security:
-  - BearerAuth: []
+  - BearerAuth: [ ]

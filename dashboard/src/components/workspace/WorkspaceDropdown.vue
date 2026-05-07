@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
+import { useUiStore } from '@/stores/uiStore'
 import {
   ChevronDown,
   FolderKanban,
@@ -11,6 +12,7 @@ import {
 } from 'lucide-vue-next'
 
 const workspaceStore = useWorkspaceStore()
+const uiStore = useUiStore()
 const router = useRouter()
 
 const isOpen = ref(false)
@@ -39,7 +41,7 @@ function handleSelect(workspace: typeof workspaceStore.workspaces[0]) {
 
 function handleCreate() {
   isOpen.value = false
-  router.push('/workspaces/create')
+  uiStore.workspaceModalOpen = true
 }
 
 function handleClickOutside(event: MouseEvent) {

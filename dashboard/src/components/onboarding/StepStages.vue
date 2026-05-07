@@ -7,11 +7,19 @@ import GlassCard from '@/components/ui/GlassCard.vue'
 import {
   GitBranch, ArrowRight, Plus, X, Loader2, AlertCircle, Sparkles,
 } from 'lucide-vue-next'
-import type { StageType } from '@/types'
+import type { StageType, Stage } from '@/types'
+import PipelineVisualization from '@/components/pipeline/PipelineVisualization.vue'
 
 const emit = defineEmits<{ next: [] }>()
 const onboarding = useOnboardingStore()
 const envStore = useEnvironmentStore()
+
+function openEditType(stage: any) {
+  const types: StageType[] = ['MANUAL', 'AUTOMATIC', 'SCHEDULED']
+  const currentIndex = types.indexOf(stage.type)
+  const nextIndex = (currentIndex + 1) % types.length
+  stage.type = types[nextIndex]
+}
 
 interface PipelineStage {
   environmentId: string
@@ -118,9 +126,12 @@ async function handleSave() {
     </button>
 
     <div class="step-wf__builder">
-      <!-- Available environments -->
-      <div class="step-wf__available">
-        <p class="step-wf__label">Available Environments</p>
+      <!-- Available environments toolbar -->
+      <div class="builder-toolbar">
+        <div class="builder-toolbar__info">
+           <p class="step-wf__label">Add Stages to Pipeline</p>
+           <p class="builder-toolbar__hint">Click an environment to add it to the flow</p>
+        </div>
         <div class="env-chips">
           <button
             v-for="env in availableEnvs"
@@ -137,36 +148,20 @@ async function handleSave() {
 
       <!-- Pipeline visualization -->
       <div class="step-wf__pipeline">
-        <p class="step-wf__label">Pipeline Order</p>
+        <div class="pipeline-header-row">
+           <p class="step-wf__label">Live Pipeline Orchestration</p>
+        </div>
         <div v-if="pipeline.length === 0" class="pipeline-empty">
           <p>Click environments above to build your pipeline</p>
         </div>
-        <div v-else class="pipeline-flow">
-          <template v-for="(stage, idx) in pipeline" :key="stage.environmentId">
-            <GlassCard class="pipeline-card" hover>
-              <div class="pipeline-card__header">
-                <span class="pipeline-card__num">{{ idx + 1 }}</span>
-                <span class="pipeline-card__name">{{ stage.environmentName }}</span>
-                <button class="pipeline-card__remove" @click="removeFromPipeline(idx)">
-                  <X :size="14" />
-                </button>
-              </div>
-              <div class="pipeline-card__type">
-                <button
-                  v-for="t in (['MANUAL', 'AUTOMATIC', 'SCHEDULED'] as StageType[])"
-                  :key="t"
-                  class="type-btn"
-                  :class="{ 'type-btn--active': stage.type === t }"
-                  @click="setStageType(idx, t)"
-                >
-                  {{ t === 'MANUAL' ? 'Manual' : t === 'AUTOMATIC' ? 'Auto' : 'Scheduled' }}
-                </button>
-              </div>
-            </GlassCard>
-            <div v-if="idx < pipeline.length - 1" class="pipeline-arrow">
-              <ArrowRight :size="20" />
-            </div>
-          </template>
+        <div v-else class="pipeline-orchestration">
+          <PipelineVisualization
+            :stages="(pipeline as any)"
+            mode="BUILDER"
+            @delete="removeFromPipeline(pipeline.findIndex(s => s.environmentId === $event.environmentId))"
+            @reorder="pipeline = ($event as any)"
+            @edit="openEditType"
+          />
         </div>
       </div>
     </div>
@@ -235,6 +230,19 @@ async function handleSave() {
 }
 
 .step-wf__builder { margin-top: 2rem; }
+.builder-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 2rem;
+  gap: 1.5rem;
+}
+.builder-toolbar__info { flex: 1; }
+.builder-toolbar__hint { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
 
 .step-wf__label {
   font-size: 0.7rem;
@@ -242,13 +250,14 @@ async function handleSave() {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--text-muted);
-  margin-bottom: 10px;
+  margin-bottom: 0;
 }
 
 .env-chips {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .env-chip {
@@ -292,93 +301,8 @@ async function handleSave() {
   font-size: 0.85rem;
 }
 
-.pipeline-flow {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  flex-wrap: wrap;
-  row-gap: 1rem;
-}
-
-.pipeline-card {
-  min-width: 160px;
-  padding: 1rem !important;
-}
-
-.pipeline-card__header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-.pipeline-card__num {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--gradient-accent);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.7rem;
-  font-weight: 700;
-  flex-shrink: 0;
-}
-
-.pipeline-card__name {
-  font-weight: 700;
-  font-size: 0.95rem;
-  flex: 1;
-}
-
-.pipeline-card__remove {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  transition: all var(--transition-fast);
-}
-
-.pipeline-card__remove:hover {
-  color: var(--accent-rose);
-  background: rgba(251, 113, 133, 0.1);
-}
-
-.pipeline-card__type {
-  display: flex;
-  gap: 4px;
-  background: rgba(0, 0, 0, 0.15);
-  padding: 3px;
-  border-radius: var(--radius-sm);
-}
-
-.type-btn {
-  flex: 1;
-  padding: 5px 8px;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--text-muted);
-  font-size: 0.68rem;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.type-btn--active {
-  background: var(--glass-bg-hover);
-  color: var(--text-primary);
-}
-
-.pipeline-arrow {
-  color: var(--text-muted);
-  padding: 0 6px;
-  display: flex;
-  align-items: center;
+.pipeline-orchestration {
+  padding-top: 1rem;
 }
 
 .step-wf__error {

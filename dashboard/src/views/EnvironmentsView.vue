@@ -1,61 +1,55 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { useEnvironmentStore } from '@/stores/environmentStore'
-import GlassCard from '@/components/ui/GlassCard.vue'
-import Modal from '@/components/ui/Modal.vue'
-import LoadingSkeleton from '@/components/ui/LoadingSkeleton.vue'
-import PaginationComp from '@/components/ui/Pagination.vue'
-import SearchInput from '@/components/ui/SearchInput.vue'
-import {
-  Plus,
-  Layers,
-  Pencil,
-  Trash2,
-  Eye,
-  Users,
-} from 'lucide-vue-next'
-import type { Environment } from '@/types'
+import { onMounted, ref } from "vue";
+import { useEnvironmentStore } from "@/stores/environmentStore";
+import { useUiStore } from "@/stores/uiStore";
+import GlassCard from "@/components/ui/GlassCard.vue";
+import Modal from "@/components/ui/Modal.vue";
+import LoadingSkeleton from "@/components/ui/LoadingSkeleton.vue";
+import PaginationComp from "@/components/ui/Pagination.vue";
+import SearchInput from "@/components/ui/SearchInput.vue";
+import { Plus, Layers, Pencil, Trash2, Eye, Users } from "lucide-vue-next";
+import type { Environment } from "@/types";
+import { useRouter } from "vue-router";
+const envStore = useEnvironmentStore();
+const uiStore = useUiStore();
+const router = useRouter();
 
-const envStore = useEnvironmentStore()
-const router = useRouter()
-
-const searchQuery = ref('')
-const showDeleteModal = ref(false)
-const envToDelete = ref<Environment | null>(null)
+const searchQuery = ref("");
+const showDeleteModal = ref(false);
+const envToDelete = ref<Environment | null>(null);
 
 onMounted(async () => {
   if (envStore.environments.length === 0 && !envStore.loading) {
-    await envStore.fetchEnvironments(0, 25)
+    await envStore.fetchEnvironments(0, 25);
   }
-})
+});
 
 function filteredEnvs() {
-  if (!searchQuery.value) return envStore.environments
-  const q = searchQuery.value.toLowerCase()
+  if (!searchQuery.value) return envStore.environments;
+  const q = searchQuery.value.toLowerCase();
   return envStore.environments.filter(
-    (e) => e.name.toLowerCase().includes(q) || e.description?.toLowerCase().includes(q)
-  )
+    (e) => e.name.toLowerCase().includes(q) || e.description?.toLowerCase().includes(q),
+  );
 }
 
 function confirmDelete(env: Environment) {
-  envToDelete.value = env
-  showDeleteModal.value = true
+  envToDelete.value = env;
+  showDeleteModal.value = true;
 }
 
 async function handleDelete() {
-  if (!envToDelete.value) return
+  if (!envToDelete.value) return;
   try {
-    await envStore.deleteEnvironment(envToDelete.value.id, envToDelete.value.etag)
+    await envStore.deleteEnvironment(envToDelete.value.id, envToDelete.value.etag);
   } catch {
     // Toast already shown
   }
-  showDeleteModal.value = false
-  envToDelete.value = null
+  showDeleteModal.value = false;
+  envToDelete.value = null;
 }
 
 function onPageChange(page: number) {
-  envStore.fetchEnvironments(page, envStore.pagination.size)
+  envStore.fetchEnvironments(page, envStore.pagination.size);
 }
 </script>
 
@@ -66,7 +60,11 @@ function onPageChange(page: number) {
         <h1 class="envs-page__title">Environments</h1>
         <p class="envs-page__subtitle">Manage deployment environments for your features</p>
       </div>
-      <button class="btn btn--primary" @click="router.push('/environments/create')" id="create-env-btn">
+      <button
+        class="btn btn--primary"
+        @click="uiStore.environmentModalOpen = true"
+        id="create-env-btn"
+      >
         <Plus :size="18" />
         Create Environment
       </button>
@@ -81,9 +79,19 @@ function onPageChange(page: number) {
     <div v-else-if="filteredEnvs().length === 0" class="empty-state animate-fadeInUp">
       <div class="empty-state__card glass">
         <Layers :size="56" class="empty-state__icon" />
-        <h3>{{ searchQuery ? 'No matching environments' : 'No environments yet' }}</h3>
-        <p>{{ searchQuery ? 'Try adjusting your search.' : 'Create environments like Development, Staging, Production.' }}</p>
-        <button v-if="!searchQuery" class="btn btn--primary" @click="router.push('/environments/create')">
+        <h3>{{ searchQuery ? "No matching environments" : "No environments yet" }}</h3>
+        <p>
+          {{
+            searchQuery
+              ? "Try adjusting your search."
+              : "Create environments like Development, Staging, Production."
+          }}
+        </p>
+        <button
+          v-if="!searchQuery"
+          class="btn btn--primary"
+          @click="uiStore.environmentModalOpen = true"
+        >
           <Plus :size="18" /> Create Environment
         </button>
       </div>
@@ -103,16 +111,24 @@ function onPageChange(page: number) {
             <Layers :size="20" />
           </div>
           <div class="env-card__actions">
-            <button class="action-btn" title="Edit" @click.stop="router.push(`/environments/${env.id}/edit`)">
+            <button
+              class="action-btn"
+              title="Edit"
+              @click.stop="router.push(`/environments/${env.id}/edit`)"
+            >
               <Pencil :size="16" />
             </button>
-            <button class="action-btn action-btn--danger" title="Delete" @click.stop="confirmDelete(env)">
+            <button
+              class="action-btn action-btn--danger"
+              title="Delete"
+              @click.stop="confirmDelete(env)"
+            >
               <Trash2 :size="16" />
             </button>
           </div>
         </div>
         <h3 class="env-card__name">{{ env.name }}</h3>
-        <p class="env-card__desc">{{ env.description || 'No description' }}</p>
+        <p class="env-card__desc">{{ env.description || "No description" }}</p>
         <div v-if="env.owners?.length" class="env-card__footer">
           <Users :size="14" />
           <span>{{ env.owners.length }} owner(s)</span>
@@ -129,9 +145,15 @@ function onPageChange(page: number) {
     />
 
     <!-- Delete Modal -->
-    <Modal :show="showDeleteModal" title="Delete Environment" size="sm" @close="showDeleteModal = false">
-      <p style="color: var(--text-secondary); font-size: 0.9rem;">
-        Are you sure you want to delete <strong>{{ envToDelete?.name }}</strong>? This cannot be undone.
+    <Modal
+      :show="showDeleteModal"
+      title="Delete Environment"
+      size="sm"
+      @close="showDeleteModal = false"
+    >
+      <p style="color: var(--text-secondary); font-size: 0.9rem">
+        Are you sure you want to delete <strong>{{ envToDelete?.name }}</strong
+        >? This cannot be undone.
       </p>
       <template #footer>
         <button class="btn btn--ghost" @click="showDeleteModal = false">Cancel</button>
@@ -277,9 +299,17 @@ function onPageChange(page: number) {
   gap: 10px;
 }
 
-.empty-state__icon { color: var(--text-muted); }
-.empty-state__card h3 { font-size: 1.1rem; font-weight: 600; }
-.empty-state__card p { color: var(--text-muted); font-size: 0.85rem; }
+.empty-state__icon {
+  color: var(--text-muted);
+}
+.empty-state__card h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+.empty-state__card p {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
 
 /* Buttons */
 .btn {

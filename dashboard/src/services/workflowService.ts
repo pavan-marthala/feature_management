@@ -67,4 +67,8 @@ export const workflowService = {
       headers: { 'If-Match': etag },
     })
   },
+
+  async reorderStages(workflowId: string, stageIds: string[]): Promise<void> {
+    await api.put(`/workflows/${workflowId}/stages/reorder`, { stageIds })
+  },
 }

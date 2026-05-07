@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useEnvironmentStore } from '@/stores/environmentStore'
+import { useUiStore } from '@/stores/uiStore'
 import {
   ChevronDown,
   Layers,
@@ -11,6 +12,7 @@ import {
 } from 'lucide-vue-next'
 
 const environmentStore = useEnvironmentStore()
+const uiStore = useUiStore()
 const router = useRouter()
 
 const isOpen = ref(false)
@@ -39,7 +41,7 @@ function handleSelect(environment: typeof environmentStore.environments[0]) {
 
 function handleCreate() {
   isOpen.value = false
-  router.push('/environments/create')
+  uiStore.environmentModalOpen = true
 }
 
 function handleClickOutside(event: MouseEvent) {
