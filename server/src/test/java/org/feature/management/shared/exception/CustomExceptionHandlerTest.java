@@ -7,6 +7,7 @@ import org.mockito.Mockito;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.support.WebExchangeBindException;
@@ -38,12 +39,17 @@ class CustomExceptionHandlerTest {
 
     @Test
     void handleWebFluxValidationException_ReturnsBadRequestWithErrorDetails() {
-        WebExchangeBindException ex = Mockito.mock(WebExchangeBindException.class);
-        BindingResult bindingResult = Mockito.mock(BindingResult.class);
-        FieldError fieldError = new FieldError("object", "field", "rejectedValue", false, null, null, "defaultMessage");
-        
-        when(ex.getBindingResult()).thenReturn(bindingResult);
-        when(bindingResult.getFieldErrors()).thenReturn(List.of(fieldError));
+        BindingResult bindingResult = new BeanPropertyBindingResult(new Object(), "object");
+        FieldError fieldError = new FieldError(
+                "object",
+                "field",
+                "rejectedValue",
+                false,
+                null,
+                null,
+                "defaultMessage");
+        bindingResult.addError(fieldError);
+        WebExchangeBindException ex = new WebExchangeBindException(null, bindingResult);
 
         ResponseEntity<Error> response = handler.handleWebFluxValidationException(ex, exchange);
 

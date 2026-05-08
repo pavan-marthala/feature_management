@@ -16,7 +16,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class WorkflowController {
 
-    private final WorkflowService workflowService;
+    private final WorkflowServiceInterface workflowService;
 
     @GetMapping
     public Mono<WorkflowResponse> getAllWorkflows(
@@ -48,9 +48,8 @@ public class WorkflowController {
     @ResponseStatus(HttpStatus.OK)
     public Mono<Void> updateWorkflow(
             @PathVariable UUID id,
-            @RequestHeader("If-Match") Long version,
             @Valid @RequestBody WorkflowBase request) {
-        return workflowService.updateWorkflow(id, request, version);
+        return workflowService.updateWorkflow(id, request);
     }
 
     @DeleteMapping("/{id}")

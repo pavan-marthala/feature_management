@@ -90,4 +90,24 @@ class FeatureMapperTest {
         assertThat(entity.isEnabled()).isTrue();
         assertThat(entity.getOwners()).containsExactly("owner1");
     }
+
+    @Test
+    void shouldMapEntityWithNullOwnersToModel() {
+        FeatureEntity entity = FeatureEntity.builder()
+                .owners(null)
+                .build();
+
+        Feature model = mapper.toModel(entity);
+        assertThat(model.getOwners()).isEmpty();
+    }
+
+    @Test
+    void shouldMapEntityWithNullConfigToModel() {
+        FeatureEntity entity = FeatureEntity.builder()
+                .configuration(null)
+                .build();
+
+        Feature model = mapper.toModel(entity);
+        assertThat(model.getConfiguration()).isNull();
+    }
 }

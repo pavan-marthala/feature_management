@@ -3,6 +3,9 @@ package org.feature.management.environment;
 import org.feature.management.feature.FeatureRepository;
 import org.feature.management.models.Environment;
 import org.feature.management.models.EnvironmentRequest;
+import org.feature.management.workflow.StageRepository;
+import org.feature.management.workflow.WorkflowRepository;
+import org.feature.management.workspace.WorkspaceRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webflux.test.autoconfigure.WebFluxTest;
@@ -34,6 +37,15 @@ class EnvironmentControllerTest {
 
     @MockitoBean
     private FeatureRepository featureRepository;
+
+    @MockitoBean
+    private WorkflowRepository workflowRepository;
+
+    @MockitoBean
+    private StageRepository stageRepository;
+
+    @MockitoBean
+    private WorkspaceRepository workspaceRepository;
 
     @Test
     void shouldCreateEnvironment() {

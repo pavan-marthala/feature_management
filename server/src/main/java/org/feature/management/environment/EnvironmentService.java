@@ -17,6 +17,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -36,7 +37,6 @@ public class EnvironmentService implements EnvironmentServiceInterface {
     public Mono<Page<Feature>> getFeaturesByEnvironmentId(UUID environmentId, Integer page, Integer size) {
         log.debug("Getting features for environment: {}, page: {}, size: {}", environmentId, page, size);
         PageRequest pageRequest = PageRequest.of(page, size);
-
         return featureRepository.findByEnvironmentId(environmentId, pageRequest)
                 .map(featureMapper::toModel)
                 .collectList()

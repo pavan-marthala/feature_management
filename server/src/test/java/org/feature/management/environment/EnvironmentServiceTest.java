@@ -6,6 +6,7 @@ import org.feature.management.shared.exception.ResourceNotFoundException;
 import org.feature.management.feature.FeatureEntity;
 import org.feature.management.feature.FeatureMapper;
 import org.feature.management.feature.FeatureRepository;
+import org.feature.management.models.Environment;
 import org.feature.management.models.EnvironmentRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -57,6 +58,7 @@ class EnvironmentServiceTest {
         UUID generatedId = UUID.randomUUID();
         entity.setId(generatedId);
 
+        when(environmentMapper.toEntity(request)).thenReturn(entity);
         when(environmentRepository.save(any(EnvironmentEntity.class))).thenReturn(Mono.just(entity));
 
         StepVerifier.create(environmentService.createEnvironment(request))
@@ -74,6 +76,10 @@ class EnvironmentServiceTest {
         entity.setName("env-1");
 
         when(environmentRepository.findById(id)).thenReturn(Mono.just(entity));
+        Environment expected = new Environment();
+        expected.setId(id);
+        expected.setName("env-1");
+        when(environmentMapper.toModel(entity)).thenReturn(expected);
 
         StepVerifier.create(environmentService.getById(id))
                 .consumeNextWith(model -> {
@@ -100,6 +106,9 @@ class EnvironmentServiceTest {
 
         when(environmentRepository.findBy(any(Pageable.class))).thenReturn(Flux.just(entity));
         when(environmentRepository.count()).thenReturn(Mono.just(1L));
+        Environment model = new Environment();
+        model.setName("env-1");
+        when(environmentMapper.toModel(entity)).thenReturn(model);
 
         StepVerifier.create(environmentService.getAllEnvironments(0, 10, null))
                 .consumeNextWith(page -> {
@@ -180,6 +189,30 @@ class EnvironmentServiceTest {
     }
 
     @Test
+    void shouldThrowAccessDeniedWhenOwnersIsNullOnRemoveEnv() {
+        UUID id = UUID.randomUUID();
+        EnvironmentEntity entity = EnvironmentEntity.builder()
+                .owners(null)
+                .build();
+
+        when(environmentRepository.findById(id)).thenReturn(Mono.just(entity));
+
+        StepVerifier.create(environmentService.removeOwnerFromEnvironment(id, "owner1"))
+                .expectError(AccessDeniedException.class)
+                .verify();
+    }
+
+    @Test
+    void shouldThrowResourceNotFoundWhenAssigningOwnerToNonExistentEnv() {
+        UUID id = UUID.randomUUID();
+        when(environmentRepository.findById(id)).thenReturn(Mono.empty());
+
+        StepVerifier.create(environmentService.assignOwnerToEnvironment(id, "some-owner"))
+                .expectError(ResourceNotFoundException.class)
+                .verify();
+    }
+
+    @Test
     void shouldUpdateEnvironment() {
         UUID id = UUID.randomUUID();
         EnvironmentEntity entity = new EnvironmentEntity();
@@ -223,6 +256,26 @@ class EnvironmentServiceTest {
     }
 
     @Test
+    void shouldThrowResourceNotFoundOnUpdateWhenEnvMissing() {
+        UUID id = UUID.randomUUID();
+        when(environmentRepository.findById(id)).thenReturn(Mono.empty());
+
+        StepVerifier.create(environmentService.updateEnvironment(id, new EnvironmentRequest()))
+                .expectError(ResourceNotFoundException.class)
+                .verify();
+    }
+
+    @Test
+    void shouldThrowResourceNotFoundOnDeleteWhenEnvMissing() {
+        UUID id = UUID.randomUUID();
+        when(environmentRepository.findById(id)).thenReturn(Mono.empty());
+
+        StepVerifier.create(environmentService.deleteById(id))
+                .expectError(ResourceNotFoundException.class)
+                .verify();
+    }
+
+    @Test
     void shouldDeleteEnvironment() {
         UUID id = UUID.randomUUID();
         EnvironmentEntity entity = new EnvironmentEntity();
@@ -248,6 +301,10 @@ class EnvironmentServiceTest {
         when(featureRepository.findByEnvironmentId(eq(envId), any(Pageable.class)))
                 .thenReturn(Flux.just(featureEntity));
         when(featureRepository.countByEnvironmentId(envId)).thenReturn(Mono.just(1L));
+        org.feature.management.models.Feature model = new org.feature.management.models.Feature();
+        model.setId(featureId);
+        model.setName("feature-1");
+        when(featureMapper.toModel(featureEntity)).thenReturn(model);
 
         StepVerifier.create(environmentService.getFeaturesByEnvironmentId(envId, 0, 10))
                 .consumeNextWith(page -> {

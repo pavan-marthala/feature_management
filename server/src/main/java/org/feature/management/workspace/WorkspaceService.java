@@ -2,21 +2,15 @@ package org.feature.management.workspace;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 import org.feature.management.feature.FeatureEntity;
 import org.feature.management.feature.FeatureMapper;
 import org.feature.management.feature.FeatureRepository;
-import org.feature.management.models.FeatureResponse;
-import org.feature.management.models.GetWorkspaceSummary200Response;
-import org.feature.management.models.Workspace;
-import org.feature.management.models.WorkspaceRequest;
-import org.feature.management.models.WorkspaceResponse;
+import org.feature.management.models.*;
 import org.feature.management.shared.exception.AccessDeniedException;
 import org.feature.management.shared.exception.ResourceNotFoundException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -27,13 +21,14 @@ import java.util.function.Consumer;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class WorkspaceService {
+public class WorkspaceService implements WorkspaceServiceInterface {
 
     private final WorkspaceRepository workspaceRepository;
     private final WorkspaceMapper workspaceMapper;
     private final FeatureRepository featureRepository;
     private final FeatureMapper featureMapper;
 
+    @Override
     public Mono<UUID> createWorkspace(WorkspaceRequest request) {
         log.debug("Creating workspace with name: {}", request.getName());
         return workspaceRepository.existsByName(request.getName())
@@ -49,6 +44,7 @@ public class WorkspaceService {
                 });
     }
 
+    @Override
     public Mono<WorkspaceResponse> getWorkspaces(Integer page, Integer size) {
         log.debug("Getting all workspaces page: {}, size: {}", page, size);
         PageRequest pageRequest = PageRequest.of(page, size);
@@ -65,6 +61,7 @@ public class WorkspaceService {
                         .build());
     }
 
+    @Override
     public Mono<Workspace> getWorkspaceById(UUID id) {
         log.debug("Getting workspace by id: {}", id);
         return getWorkspaceEntity(id)
@@ -75,6 +72,7 @@ public class WorkspaceService {
         Optional.ofNullable(value).ifPresent(setter);
     }
 
+    @Override
     public Mono<Void> updateWorkspace(UUID id, WorkspaceRequest request) {
         log.debug("Updating workspace id: {}", id);
         return getWorkspaceEntity(id)
@@ -87,6 +85,7 @@ public class WorkspaceService {
                 .then();
     }
 
+    @Override
     public Mono<Void> deleteWorkspace(UUID id) {
         log.debug("Deleting workspace id: {}", id);
         return getWorkspaceEntity(id)
@@ -100,20 +99,22 @@ public class WorkspaceService {
                         }));
     }
 
+    @Override
     public Mono<GetWorkspaceSummary200Response> getWorkspaceSummary(UUID id) {
         log.debug("Getting summary for workspace id: {}", id);
         return getWorkspaceEntity(id)
                 .flatMap(workspace -> Mono.zip(
                         featureRepository.countByWorkspaceId(id),
                         Mono.just(0L)).map(tuple -> {
-                            GetWorkspaceSummary200Response summary = new GetWorkspaceSummary200Response();
-                            summary.setFeatureCount(tuple.getT1().intValue());
-                            summary.setWorkflowStages(tuple.getT2().intValue());
-                            summary.setEnvironments(0);
-                            return summary;
-                        }));
+                    GetWorkspaceSummary200Response summary = new GetWorkspaceSummary200Response();
+                    summary.setFeatureCount(tuple.getT1().intValue());
+                    summary.setWorkflowStages(tuple.getT2().intValue());
+                    summary.setEnvironments(0);
+                    return summary;
+                }));
     }
 
+    @Override
     public Mono<FeatureResponse> getWorkspaceFeatures(UUID id, UUID environmentId, Integer page, Integer size) {
         log.debug("Getting features for workspace id: {} and environment id: {}", id, environmentId);
         PageRequest pageRequest = PageRequest.of(page, size, org.springframework.data.domain.Sort

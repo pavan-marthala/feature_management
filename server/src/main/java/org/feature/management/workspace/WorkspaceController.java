@@ -3,11 +3,7 @@ package org.feature.management.workspace;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.feature.management.models.FeatureResponse;
-import org.feature.management.models.GetWorkspaceSummary200Response;
-import org.feature.management.models.Workspace;
-import org.feature.management.models.WorkspaceRequest;
-import org.feature.management.models.WorkspaceResponse;
+import org.feature.management.models.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
@@ -20,7 +16,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class WorkspaceController {
 
-    private final WorkspaceService workspaceService;
+    private final WorkspaceServiceInterface workspaceService;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

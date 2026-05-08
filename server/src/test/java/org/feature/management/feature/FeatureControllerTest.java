@@ -2,6 +2,10 @@ package org.feature.management.feature;
 
 import org.feature.management.environment.EnvironmentRepository;
 import org.feature.management.models.*;
+import org.feature.management.workflow.StageRepository;
+import org.feature.management.workflow.WorkflowRepository;
+import org.feature.management.workspace.WorkspaceRepository;
+import org.feature.management.shared.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webflux.test.autoconfigure.WebFluxTest;
@@ -35,6 +39,15 @@ class FeatureControllerTest {
     @MockitoBean
     private EnvironmentRepository environmentRepository;
 
+    @MockitoBean
+    private WorkflowRepository workflowRepository;
+
+    @MockitoBean
+    private StageRepository stageRepository;
+
+    @MockitoBean
+    private WorkspaceRepository workspaceRepository;
+
     @Test
     void shouldCreateFeature() {
         FeatureCreateRequest request = new FeatureCreateRequest();
@@ -42,6 +55,8 @@ class FeatureControllerTest {
         request.setOwners(Collections.singletonList("owner1"));
         request.setConfiguration(new BooleanFeatureStrategy());
         request.setEnabled(true);
+        request.setWorkspaceId(UUID.randomUUID());
+        request.setWorkflowId(UUID.randomUUID());
         UUID id = UUID.randomUUID();
 
         when(featureService.createFeature(any())).thenReturn(Mono.just(id));
@@ -170,5 +185,63 @@ class FeatureControllerTest {
                 .header("If-Match", "1")
                 .exchange()
                 .expectStatus().isNoContent();
+    }
+
+    @Test
+    void shouldReturn404WhenFeatureNotFound() {
+        UUID id = UUID.randomUUID();
+        when(featureService.getById(id.toString(), IdType.ID, null))
+                .thenReturn(Mono.error(new ResourceNotFoundException("Not found")));
+
+        webTestClient.get()
+                .uri("/features/{id}", id)
+                .exchange()
+                .expectStatus().isNotFound();
+    }
+
+    @Test
+    void shouldUpdateFeatureStatus() {
+        UUID id = UUID.randomUUID();
+        FeatureEntity entity = new FeatureEntity();
+        entity.setEtag(1L);
+        when(featureRepository.findById(id)).thenReturn(Mono.just(entity));
+        when(featureService.updateFeatureStatus(id, true)).thenReturn(Mono.empty());
+
+        webTestClient.patch()
+                .uri("/features/{id}/status?status=true", id)
+                .header("If-Match", "1")
+                .exchange()
+                .expectStatus().isNoContent();
+    }
+
+    @Test
+    void shouldPropagateFeature() {
+        UUID id = UUID.randomUUID();
+        FeaturePromotionResponse resp = FeaturePromotionResponse.builder()
+                .id(id)
+                .status(PromotionStatus.SUCCESS)
+                .build();
+        when(featureService.propagateFeature(id)).thenReturn(Mono.just(resp));
+
+        webTestClient.post()
+                .uri("/features/{id}/propagate", id)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.status").isEqualTo("SUCCESS");
+    }
+
+    @Test
+    void shouldGetPropagationHistory() {
+        UUID id = UUID.randomUUID();
+        PropagationHistory history = PropagationHistory.builder().id(UUID.randomUUID()).build();
+        when(featureService.getPropagationHistory(id)).thenReturn(Flux.just(history));
+
+        webTestClient.get()
+                .uri("/features/{id}/propagations", id)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$[0].id").exists();
     }
 }

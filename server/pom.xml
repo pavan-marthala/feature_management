@@ -127,6 +127,12 @@
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>0.8.14</version>
+                <configuration>
+                    <!-- Exclude OpenAPI-generated models from coverage metrics -->
+                    <excludes>
+                        <exclude>org/feature/management/models/**</exclude>
+                    </excludes>
+                </configuration>
                 <executions>
                     <execution>
                         <goals>
