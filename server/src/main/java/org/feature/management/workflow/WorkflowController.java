@@ -73,9 +73,7 @@ public class WorkflowController {
 
     @PostMapping("/{id}/stages")
     @ResponseStatus(HttpStatus.CREATED)
-    public Mono<UUID> addStageToWorkflow(
-            @PathVariable UUID id,
-            @Valid @RequestBody Stage stage) {
+    public Mono<UUID> addStageToWorkflow(@PathVariable UUID id, @Valid @RequestBody Stage stage) {
         return workflowService.addStageToWorkflow(id, stage);
     }
 
