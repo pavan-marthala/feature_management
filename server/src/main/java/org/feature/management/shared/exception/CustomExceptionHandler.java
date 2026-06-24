@@ -85,6 +85,19 @@ public class CustomExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
     }
 
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Error> handleAccessDeniedException(AccessDeniedException ex, ServerWebExchange exchange) {
+        log.error("AccessDenied exception occurred for request {} {}: {}",
+                exchange.getRequest().getMethod().name(), exchange.getRequest().getURI().getPath(), ex.getMessage());
+
+        Error error = createBaseError(exchange, HttpStatus.UNAUTHORIZED);
+        error.setErrorMessage(ex.getMessage());
+        error.setDetailedErrors(null);
+
+        return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+    }
+
     @ExceptionHandler(IOException.class)
     public ResponseEntity<Error> handleIOException(IOException ex, ServerWebExchange exchange) {
         log.error("IO error occurred for request {} {}: {}",
