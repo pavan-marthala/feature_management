@@ -136,9 +136,21 @@ public class EnvironmentControllerIT extends AbstractIntegrationTest {
                 .then()
                 .statusCode(401);
     }
-
     @Test
     @Order(10)
+    void shouldRemoveOwnerFromEnvironmentByIdWhenEnvironmentIsNotExist() {
+        String owner = "pavan1@gmail.com";
+        given()
+                .contentType(ContentType.JSON)
+                .header("If-Match", "2")
+                .when()
+                .delete("/environments/{envId}/owners/{owner}", UUID.randomUUID().toString(), owner)
+                .then()
+                .statusCode(404);
+    }
+
+    @Test
+    @Order(11)
     void shouldRemoveOwnerFromEnvironmentById() {
         String owner = "pavan@gmail.com";
         given()
@@ -149,9 +161,8 @@ public class EnvironmentControllerIT extends AbstractIntegrationTest {
                 .then()
                 .statusCode(204);
     }
-
     @Test
-    @Order(11)
+    @Order(12)
     void shouldRemoveLastOwnerFromEnvironmentById() {
         String owner = "sam@gmail.com";
         given()
@@ -163,8 +174,47 @@ public class EnvironmentControllerIT extends AbstractIntegrationTest {
                 .statusCode(404);
     }
 
+
     @Test
-    @Order(12)
+    @Order(13)
+    void shouldUpdateEnvironmentByIdWithOutETAG() {
+
+        String requestBody = """
+                {
+                  "name": "dev",
+                  "description": "Environment for development"
+                }
+                """;
+        given()
+                .contentType(ContentType.JSON)
+                .body(requestBody)
+                .when()
+                .delete("/environments/{id}", sharedEnvId.toString())
+                .then()
+                .statusCode(428);
+    }
+
+    @Test
+    @Order(14)
+    void shouldUpdateEnvironmentByIdWithUnmatchedETAG() {
+
+        String requestBody = """
+                {
+                  "name": "dev",
+                  "description": "Environment for development"
+                }
+                """;
+        given()
+                .contentType(ContentType.JSON)
+                .header("If-Match", "0")
+                .body(requestBody)
+                .when()
+                .delete("/environments/{id}", sharedEnvId.toString())
+                .then()
+                .statusCode(412);
+    }
+    @Test
+    @Order(15)
     void shouldUpdateEnvironmentByIdWhenEnvironmentIsNotExist() {
 
         String requestBody = """
@@ -184,7 +234,7 @@ public class EnvironmentControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Order(13)
+    @Order(16)
     void shouldUpdateEnvironmentById() {
 
         String requestBody = """
@@ -199,6 +249,62 @@ public class EnvironmentControllerIT extends AbstractIntegrationTest {
                 .body(requestBody)
                 .when()
                 .patch("/environments/{id}", sharedEnvId.toString())
+                .then()
+                .statusCode(204);
+    }
+
+    @Test
+    @Order(17)
+    void shouldGetEnvironmentByIdWhenEnvironmentIsNotExist() {
+        given()
+                .contentType(ContentType.JSON)
+                .when()
+                .get("/environments/{id}", UUID.randomUUID().toString())
+                .then()
+                .statusCode(404);
+    }
+
+    @Test
+    @Order(18)
+    void shouldDeleteEnvironmentByIdWithOutETAG() {
+        given()
+                .contentType(ContentType.JSON)
+                .when()
+                .delete("/environments/{id}", UUID.randomUUID().toString())
+                .then()
+                .statusCode(428);
+    }
+
+    @Test
+    @Order(19)
+    void shouldDeleteEnvironmentByIdWithUnmatchedETAG() {
+        given()
+                .contentType(ContentType.JSON)
+                .header("If-Match", "0")
+                .when()
+                .delete("/environments/{id}", sharedEnvId.toString())
+                .then()
+                .statusCode(412);
+    }
+    @Test
+    @Order(20)
+    void shouldDeleteEnvironmentByIdWhenEnvironmentIsNotExist() {
+        given()
+                .contentType(ContentType.JSON)
+                .header("If-Match", "4")
+                .when()
+                .delete("/environments/{id}", UUID.randomUUID().toString())
+                .then()
+                .statusCode(404);
+    }
+    @Test
+    @Order(21)
+    void shouldDeleteEnvironmentById() {
+        given()
+                .contentType(ContentType.JSON)
+                .header("If-Match", "4")
+                .when()
+                .delete("/environments/{id}",sharedEnvId.toString())
                 .then()
                 .statusCode(204);
     }
