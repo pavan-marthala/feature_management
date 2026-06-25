@@ -119,7 +119,7 @@ public class FeatureService implements FeatureServiceInterface {
             case ID -> getFeatureEntity(UUID.fromString(id)).map(featureMapper::toModel);
             case NAME -> {
                 if (environmentId == null) {
-                    yield Mono.error(new IllegalArgumentException(
+                    yield Mono.error(new FeatureException(
                             "environmentId is required when fetching by NAME"));
                 }
                 yield featureRepo.getByNameAndEnvironmentId(id, environmentId)
