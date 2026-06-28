@@ -1,4 +1,4 @@
-package org.feature.management.feature;
+package org.feature.management.integrationTest;
 
 import io.restassured.http.ContentType;
 import static io.restassured.module.webtestclient.RestAssuredWebTestClient.given;
@@ -21,12 +21,7 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
     private static UUID sharedFeatureId;
     private static UUID sharedWorkflowId;
     private static UUID sharedWorkspaceId;
-    private static UUID sharedStage1Id;
-    private static UUID sharedStage2Id;
-    private static UUID sharedStage3Id;
     private static UUID sharedEnv1Id;
-    private static UUID sharedEnv2Id;
-    private static UUID sharedEnv3Id;
 
     @Test
     @Order(1)
@@ -48,7 +43,7 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
                 """;
         sharedEnv1Id = given().contentType(ContentType.JSON).body(env1Body).when().post("/environments").then().statusCode(201).body(notNullValue()).extract().as(UUID.class);
         Stage stage1 = Stage.builder().environmentId(sharedEnv1Id).environmentName("dev").orderIndex(0).approvalNeeded(false).type(StageType.MANUAL).build();
-        sharedStage1Id = given().contentType(ContentType.JSON).body(stage1).when().post("/workflows/{id}/stages",sharedWorkflowId.toString()).then().statusCode(201).body(notNullValue()).extract().as(UUID.class);
+        UUID sharedStage1Id = given().contentType(ContentType.JSON).body(stage1).when().post("/workflows/{id}/stages", sharedWorkflowId.toString()).then().statusCode(201).body(notNullValue()).extract().as(UUID.class);
 
         String env2Body = """
                 {
@@ -56,9 +51,9 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
                   "description": "Staging Environment"
                 }
                 """;
-        sharedEnv2Id = given().contentType(ContentType.JSON).body(env2Body).when().post("/environments").then().statusCode(201).body(notNullValue()).extract().as(UUID.class);
+        UUID sharedEnv2Id = given().contentType(ContentType.JSON).body(env2Body).when().post("/environments").then().statusCode(201).body(notNullValue()).extract().as(UUID.class);
         Stage stage2 = Stage.builder().environmentId(sharedEnv2Id).environmentName("staging").orderIndex(1).approvalNeeded(false).type(StageType.MANUAL).build();
-        sharedStage2Id = given().contentType(ContentType.JSON).body(stage2).when().post("/workflows/{id}/stages",sharedWorkflowId.toString()).then().statusCode(201).body(notNullValue()).extract().as(UUID.class);
+        UUID sharedStage2Id = given().contentType(ContentType.JSON).body(stage2).when().post("/workflows/{id}/stages", sharedWorkflowId.toString()).then().statusCode(201).body(notNullValue()).extract().as(UUID.class);
 
 
         String env3Body = """
@@ -67,9 +62,9 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
                   "description": "QA Environment"
                 }
                 """;
-        sharedEnv3Id = given().contentType(ContentType.JSON).body(env3Body).when().post("/environments").then().statusCode(201).body(notNullValue()).extract().as(UUID.class);
+        UUID sharedEnv3Id = given().contentType(ContentType.JSON).body(env3Body).when().post("/environments").then().statusCode(201).body(notNullValue()).extract().as(UUID.class);
         Stage stage3 = Stage.builder().environmentId(sharedEnv3Id).environmentName("qa").orderIndex(2).approvalNeeded(false).type(StageType.MANUAL).build();
-        sharedStage3Id = given().contentType(ContentType.JSON).body(stage3).when().post("/workflows/{id}/stages",sharedWorkflowId.toString()).then().statusCode(201).body(notNullValue()).extract().as(UUID.class);
+        UUID sharedStage3Id = given().contentType(ContentType.JSON).body(stage3).when().post("/workflows/{id}/stages", sharedWorkflowId.toString()).then().statusCode(201).body(notNullValue()).extract().as(UUID.class);
 
 
     }

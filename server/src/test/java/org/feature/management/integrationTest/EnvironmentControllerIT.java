@@ -1,4 +1,4 @@
-package org.feature.management.environment;
+package org.feature.management.integrationTest;
 
 import io.restassured.http.ContentType;
 import org.feature.management.AbstractIntegrationTest;
