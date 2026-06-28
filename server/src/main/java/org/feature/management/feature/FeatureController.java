@@ -10,6 +10,9 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 @Slf4j
@@ -65,6 +68,7 @@ public class FeatureController {
     @PostMapping("/{featureId}/owners/{owner}")
     public Mono<ResponseEntity<Void>> addOwnerToFeature(@PathVariable UUID featureId, @PathVariable String owner) {
         log.debug("Adding owner {} to feature {}", owner, featureId);
+        owner = URLDecoder.decode(owner, StandardCharsets.UTF_8);
         return featureService.assignOwnerToFeature(featureId, owner)
                 .thenReturn(ResponseEntity.status(HttpStatus.NO_CONTENT).build());
     }
@@ -72,6 +76,7 @@ public class FeatureController {
     @DeleteMapping("/{featureId}/owners/{owner}")
     public Mono<ResponseEntity<Void>> removeOwnerFromFeature(@PathVariable UUID featureId, @PathVariable String owner) {
         log.debug("Removing owner {} from feature {}", owner, featureId);
+        owner = URLDecoder.decode(owner, StandardCharsets.UTF_8);
         return featureService.removeOwnerFromFeature(featureId, owner)
                 .thenReturn(ResponseEntity.status(HttpStatus.NO_CONTENT).build());
     }

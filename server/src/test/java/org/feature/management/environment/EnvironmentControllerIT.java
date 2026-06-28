@@ -286,6 +286,7 @@ public class EnvironmentControllerIT extends AbstractIntegrationTest {
                 .then()
                 .statusCode(412);
     }
+
     @Test
     @Order(20)
     void shouldDeleteEnvironmentByIdWhenEnvironmentIsNotExist() {
@@ -297,6 +298,7 @@ public class EnvironmentControllerIT extends AbstractIntegrationTest {
                 .then()
                 .statusCode(404);
     }
+
     @Test
     @Order(21)
     void shouldDeleteEnvironmentById() {
