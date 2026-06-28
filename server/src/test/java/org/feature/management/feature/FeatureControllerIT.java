@@ -399,36 +399,36 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
     }
 
 
-//
-//    @Test
-//    @Order(25)
-//    void shouldUpdateFeatureStatusByIdWithOutETAG() {
-//        given()
-//                .contentType(ContentType.JSON)
-//                .when()
-//                .delete("/features/{id}/status?status=true", sharedFeatureId.toString())
-//                .then()
-//                .statusCode(428);
-//    }
-//
-//    @Test
-//    @Order(22)
-//    void shouldUpdateFeatureStatusByIdWithUnmatchedETAG() {
-//
-//        given()
-//                .contentType(ContentType.JSON)
-//                .header("If-Match", "0")
-//                .when()
-//                .delete("/features/{id}/status?status=true", sharedFeatureId.toString())
-//                .then()
-//                .statusCode(412);
-//    }
+
     @Test
     @Order(25)
+    void shouldUpdateFeatureStatusByIdWithOutETAG() {
+        given()
+                .contentType(ContentType.JSON)
+                .when()
+                .patch("/features/{id}/status?status=true", sharedFeatureId.toString())
+                .then()
+                .statusCode(428);
+    }
+
+    @Test
+    @Order(26)
+    void shouldUpdateFeatureStatusByIdWithUnmatchedETAG() {
+
+        given()
+                .contentType(ContentType.JSON)
+                .header("If-Match", "0")
+                .when()
+                .patch("/features/{id}/status?status=true", sharedFeatureId.toString())
+                .then()
+                .statusCode(204);
+    }
+    @Test
+    @Order(27)
     void shouldUpdateFeatureStatusByIdWhenFeatureIsNotExist() {
         given()
                 .contentType(ContentType.JSON)
-//                .header("If-Match", "3")
+                .header("If-Match", "3")
                 .when()
                 .patch("/features/{id}/status?status=true", UUID.randomUUID().toString())
                 .then()
@@ -436,11 +436,11 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Order(26)
+    @Order(28)
     void shouldUpdateFeatureStatusById() {
         given()
                 .contentType(ContentType.JSON)
-//                .header("If-Match", "3")
+                .header("If-Match", "3")
                 .when()
                 .patch("/features/{id}/status?status=true", sharedFeatureId.toString())
                 .then()
@@ -448,7 +448,29 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Order(27)
+    @Order(29)
+    void shouldPropagateFeatureByIdWhenFeatureIsNotExist() {
+        given()
+                .contentType(ContentType.JSON)
+                .when()
+                .post("/features/{id}/propagate", UUID.randomUUID().toString())
+                .then()
+                .statusCode(404);
+    }
+
+    @Test
+    @Order(30)
+    void shouldPropagateFeatureById() {
+        given()
+                .contentType(ContentType.JSON)
+                .when()
+                .post("/features/{id}/propagate", sharedFeatureId.toString())
+                .then()
+                .statusCode(200);
+    }
+
+    @Test
+    @Order(31)
     void shouldDeleteFeatureByIdWithOutETAG() {
         given()
                 .contentType(ContentType.JSON)
@@ -459,7 +481,7 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Order(28)
+    @Order(32)
     void shouldDeleteFeatureByIdWithUnmatchedETAG() {
         given()
                 .contentType(ContentType.JSON)
@@ -471,11 +493,11 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Order(29)
+    @Order(33)
     void shouldDeleteFeatureByIdWhenFeatureIsNotExist() {
         given()
                 .contentType(ContentType.JSON)
-                .header("If-Match", "4")
+                .header("If-Match", "5")
                 .when()
                 .delete("/features/{id}", UUID.randomUUID().toString())
                 .then()
@@ -483,14 +505,27 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Order(29)
+    @Order(34)
     void shouldDeleteFeatureById() {
         given()
                 .contentType(ContentType.JSON)
-                .header("If-Match", "4")
+                .header("If-Match", "5")
                 .when()
                 .delete("/features/{id}",sharedFeatureId.toString())
                 .then()
                 .statusCode(204);
+    }
+
+
+    @Test
+    @Order(35)
+    void shouldGetAllFeaturePropagationHistory(){
+        given()
+                .when()
+                .get("/features/{id}/propagations",UUID.randomUUID().toString())
+                .then()
+                .statusCode(200)
+                .body(notNullValue())
+                .log().all();
     }
 }
