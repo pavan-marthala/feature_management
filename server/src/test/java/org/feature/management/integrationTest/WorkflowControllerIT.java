@@ -175,7 +175,7 @@ public class WorkflowControllerIT extends AbstractIntegrationTest {
         String env1Body = """
                 {
                   "name": "dev",
-                  "description": "Development Environment"
+                  "description": "Development Workflow"
                 }
                 """;
         envId = given().contentType(ContentType.JSON).body(env1Body).when().post("/environments").then().statusCode(201).body(notNullValue()).extract().as(UUID.class);
@@ -190,7 +190,7 @@ public class WorkflowControllerIT extends AbstractIntegrationTest {
         String env2Body = """
                 {
                   "name": "staging",
-                  "description": "Staging Environment"
+                  "description": "Staging Workflow"
                 }
                 """;
         UUID sharedEnv2Id = given().contentType(ContentType.JSON).body(env2Body).when().post("/environments").then().statusCode(201).body(notNullValue()).extract().as(UUID.class);
@@ -275,7 +275,7 @@ public class WorkflowControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(19)
-    void shouldUpdateEnvironmentByIdWithOutETAG() {
+    void shouldUpdateStageByIdWithOutETAG() {
         Stage stage = Stage.builder().environmentId(envId).orderIndex(0).approvalNeeded(false).type(StageType.MANUAL).build();
 
         given()
@@ -289,7 +289,7 @@ public class WorkflowControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(20)
-    void shouldUpdateEnvironmentByIdWithUnmatchedETAG() {
+    void shouldUpdateStageByIdWithUnmatchedETAG() {
         Stage stage = Stage.builder().environmentId(envId).orderIndex(0).approvalNeeded(false).type(StageType.MANUAL).build();
 
         given()
@@ -300,5 +300,99 @@ public class WorkflowControllerIT extends AbstractIntegrationTest {
                 .patch("/workflows/{id}/stages/{id}",workflowId.toString(),stageId.toString())
                 .then()
                 .statusCode(412);
+    }
+
+    @Test
+    @Order(21)
+    void shouldDeleteStageByIdWithOutETAG() {
+        given()
+                .contentType(ContentType.JSON)
+                .when()
+                .delete("/workflows/{id}/stages/{id}",workflowId.toString(),stageId.toString())
+                .then()
+                .statusCode(428);
+    }
+
+    @Test
+    @Order(22)
+    void shouldDeleteStageByIdWithUnmatchedETAG() {
+        given()
+                .contentType(ContentType.JSON)
+                .header("If-Match", "0")
+                .when()
+                .delete("/workflows/{id}/stages/{id}", workflowId.toString(),stageId.toString())
+                .then()
+                .statusCode(412);
+    }
+
+    @Test
+    @Order(23)
+    void shouldDeleteStageByIdWhenStageIsNotExist() {
+        given()
+                .contentType(ContentType.JSON)
+                .header("If-Match", "2")
+                .when()
+                .delete("/workflows/{id}/stages/{id}", UUID.randomUUID().toString(),UUID.randomUUID().toString())
+                .then()
+                .statusCode(404);
+    }
+
+    @Test
+    @Order(24)
+    void shouldDeleteStageById() {
+        given()
+                .contentType(ContentType.JSON)
+                .header("If-Match", "2")
+                .when()
+                .delete("/workflows/{id}/stages/{id}",workflowId.toString(),stageId.toString())
+                .then()
+                .statusCode(204);
+    }
+
+    @Test
+    @Order(25)
+    void shouldDeleteWorkflowByIdWithOutETAG() {
+        given()
+                .contentType(ContentType.JSON)
+                .when()
+                .delete("/workflows/{id}", UUID.randomUUID().toString())
+                .then()
+                .statusCode(428);
+    }
+
+    @Test
+    @Order(26)
+    void shouldDeleteWorkflowByIdWithUnmatchedETAG() {
+        given()
+                .contentType(ContentType.JSON)
+                .header("If-Match", "0")
+                .when()
+                .delete("/workflows/{id}", workflowId.toString())
+                .then()
+                .statusCode(412);
+    }
+
+    @Test
+    @Order(27)
+    void shouldDeleteWorkflowByIdWhenWorkflowIsNotExist() {
+        given()
+                .contentType(ContentType.JSON)
+                .header("If-Match", "2")
+                .when()
+                .delete("/workflows/{id}", UUID.randomUUID().toString())
+                .then()
+                .statusCode(404);
+    }
+
+    @Test
+    @Order(28)
+    void shouldDeleteWorkflowById() {
+        given()
+                .contentType(ContentType.JSON)
+                .header("If-Match", "2")
+                .when()
+                .delete("/workflows/{id}",workflowId.toString())
+                .then()
+                .statusCode(204);
     }
 }
