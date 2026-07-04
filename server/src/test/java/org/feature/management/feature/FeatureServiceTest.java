@@ -435,7 +435,7 @@ class FeatureServiceTest {
     @Test
     void shouldErrorWhenGettingByNameWithoutEnvironmentId() {
         StepVerifier.create(featureService.getById("feature-name", IdType.NAME, null))
-                .expectError(IllegalArgumentException.class)
+                .expectError(FeatureException.class)
                 .verify();
     }
 

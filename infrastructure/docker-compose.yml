@@ -1,7 +1,7 @@
 
 services:
   postgres:
-    image: postgres:16
+    image: postgres:18
     container_name: feature_management_db
     environment:
       POSTGRES_DB: feature_management
@@ -10,8 +10,8 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
-      - postgres_data:/var/lib/postgresql/data
+#      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - postgres_data:/var/lib/postgresql
     networks:
       - fm-network
   api:

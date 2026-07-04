@@ -147,6 +147,11 @@ class WorkflowControllerTest {
     @Test
     void shouldUpdateWorkflowStatus() {
         UUID id = UUID.randomUUID();
+        WorkflowEntity entity = new WorkflowEntity();
+        entity.setId(id);
+        entity.setVersion(1L);
+
+        when(workflowRepository.findById(id)).thenReturn(Mono.just(entity));
         when(workflowService.updateWorkflowStatus(id, WorkflowStatus.ARCHIVED)).thenReturn(Mono.empty());
 
         webTestClient.patch()
