@@ -209,7 +209,7 @@ public class EnvironmentControllerIT extends AbstractIntegrationTest {
                 .header("If-Match", "0")
                 .body(requestBody)
                 .when()
-                .delete("/environments/{id}", sharedEnvId.toString())
+                .patch("/environments/{id}", sharedEnvId.toString())
                 .then()
                 .statusCode(412);
     }

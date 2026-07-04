@@ -26,6 +26,10 @@ public class WorkflowETagValidationFilter extends AbstractETagValidationFilter {
                 matcher -> UUID.fromString(matcher.group(1)),
                 workflowRepository::findById));
         routes.add(new ETagRoute(
+                Pattern.compile("^/workflows/([0-9a-fA-F\\-]+)/status$"),
+                matcher -> UUID.fromString(matcher.group(1)),
+                workflowRepository::findById));
+        routes.add(new ETagRoute(
                 Pattern.compile("^/workflows/([0-9a-fA-F\\-]+)/stages/([0-9a-fA-F\\-]+)$"),
                 matcher -> UUID.fromString(matcher.group(2)),
                 stageRepository::findById));
