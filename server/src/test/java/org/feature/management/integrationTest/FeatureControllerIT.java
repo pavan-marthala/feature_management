@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.equalTo;
@@ -558,5 +559,61 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
                 .statusCode(200)
                 .body(notNullValue())
                 .log().all();
+    }
+
+
+//    @Test
+//    @Order(5)
+//    @DisplayName("Should create JWT claim feature strategy successfully")
+//    void shouldCreateJWTClaimFeatureStrategy() {
+//
+//        FeatureConfiguration configuration = JWTClaimFeatureStrategy.builder().strategy("JWTClaimFeatureStrategy").build();
+//        FeatureCreateRequest request =  FeatureCreateRequest.builder().workflowId(sharedWorkflowId).workspaceId(sharedWorkspaceId).enabled(true).owners(List.of("pavan@gmail.com")).name("NewFeature").description("Creating new feature")._configuration(configuration).build();
+//
+//        sharedFeatureId = given()
+//                .contentType(ContentType.JSON)
+//                .body(request)
+//                .when()
+//                .post("/features")
+//                .then()
+//                .statusCode(201)
+//                .body(notNullValue())
+//                .extract().as(UUID.class);
+//    }
+    @Test
+    @Order(36)
+    @DisplayName("Should create HTTP request feature strategy successfully")
+    void shouldCreateHTTPRequestFeatureStrategy() {
+
+        FeatureConfiguration configuration = HTTPRequestFeatureStrategy.builder().strategy("HTTPRequestFeatureStrategy").query(Map.of("name","q","value","value")).build();
+        FeatureCreateRequest request =  FeatureCreateRequest.builder().workflowId(sharedWorkflowId).workspaceId(sharedWorkspaceId).enabled(true).owners(List.of("pavan@gmail.com")).name("NewFeature").description("Creating new feature")._configuration(configuration).build();
+
+        sharedFeatureId = given()
+                .contentType(ContentType.JSON)
+                .body(request)
+                .when()
+                .post("/features")
+                .then()
+                .statusCode(201)
+                .body(notNullValue())
+                .extract().as(UUID.class);
+    }
+    @Test
+    @Order(37)
+    @DisplayName("Should create schedule feature strategy successfully")
+    void shouldCreateScheduleFeatureStrategy() {
+
+        FeatureConfiguration configuration = ScheduleFeatureStrategy.builder().strategy("ScheduleFeatureStrategy").cron("* * * * *").build();
+        FeatureCreateRequest request =  FeatureCreateRequest.builder().workflowId(sharedWorkflowId).workspaceId(sharedWorkspaceId).enabled(true).owners(List.of("pavan@gmail.com")).name("NewScheduleFeature").description("Creating new feature")._configuration(configuration).build();
+
+        sharedFeatureId = given()
+                .contentType(ContentType.JSON)
+                .body(request)
+                .when()
+                .post("/features")
+                .then()
+                .statusCode(201)
+                .body(notNullValue())
+                .extract().as(UUID.class);
     }
 }
