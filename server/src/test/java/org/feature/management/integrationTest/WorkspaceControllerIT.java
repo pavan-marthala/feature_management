@@ -2,6 +2,7 @@ package org.feature.management.integrationTest;
 
 import io.restassured.http.ContentType;
 import org.feature.management.AbstractIntegrationTest;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -19,6 +20,7 @@ public class WorkspaceControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(1)
+    @DisplayName("Should create workspace successfully")
     void shouldCreateWorkspace() {
 
         String requestBody = """
@@ -40,6 +42,7 @@ public class WorkspaceControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(2)
+    @DisplayName("Should retrieve workspace by ID")
     void shouldGetWorkspaceById() {
         given()
                 .contentType(ContentType.JSON)
@@ -52,7 +55,8 @@ public class WorkspaceControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(3)
-    void shouldGetAllWorkspaces(){
+    @DisplayName("Should retrieve all workspaces")
+    void shouldGetAllWorkspaces() {
         given()
                 .when()
                 .get("/workspaces")
@@ -64,7 +68,8 @@ public class WorkspaceControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(4)
-    void shouldGetAllWorkspacesFeatures(){
+    @DisplayName("Should retrieve all features within a workspace")
+    void shouldGetAllWorkspaceFeatures() {
         given()
                 .when()
                 .get("/workspaces/{id}/features",workspaceId.toString())
@@ -75,7 +80,8 @@ public class WorkspaceControllerIT extends AbstractIntegrationTest {
     }
     @Test
     @Order(5)
-    void shouldGetAllWorkspacesSummary(){
+    @DisplayName("Should retrieve summary for a workspace")
+    void shouldGetAllWorkspaceSummaries() {
         given()
                 .when()
                 .get("/workspaces/{id}/summary",workspaceId.toString())
@@ -86,7 +92,8 @@ public class WorkspaceControllerIT extends AbstractIntegrationTest {
     }
     @Test
     @Order(6)
-    void shouldUpdateWorkspaceByIdWhenWorkspaceIsNotExist() {
+    @DisplayName("Should return 404 when updating a non-existent workspace")
+    void shouldUpdateWorkspaceByIdWhenWorkspaceDoesNotExist() {
 
         String requestBody = """
                 {
@@ -105,6 +112,7 @@ public class WorkspaceControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(7)
+    @DisplayName("Should update workspace successfully")
     void shouldUpdateWorkspaceById() {
 
         String requestBody = """
@@ -124,7 +132,8 @@ public class WorkspaceControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(8)
-    void shouldDeleteWorkspaceByIdWithOutETAG() {
+    @DisplayName("Should fail to delete workspace if If-Match header is missing")
+    void shouldDeleteWorkspaceByIdWithoutETag() {
         given()
                 .contentType(ContentType.JSON)
                 .when()
@@ -135,7 +144,8 @@ public class WorkspaceControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(9)
-    void shouldDeleteWorkspaceByIdWithUnmatchedETAG() {
+    @DisplayName("Should fail to delete workspace if ETag does not match")
+    void shouldDeleteWorkspaceByIdWithUnmatchedETag() {
         given()
                 .contentType(ContentType.JSON)
                 .header("If-Match", "0")
@@ -147,7 +157,8 @@ public class WorkspaceControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(10)
-    void shouldDeleteWorkspaceByIdWhenWorkspaceIsNotExist() {
+    @DisplayName("Should return 404 when deleting a non-existent workspace")
+    void shouldDeleteWorkspaceByIdWhenWorkspaceDoesNotExist() {
         given()
                 .contentType(ContentType.JSON)
                 .header("If-Match", "4")
@@ -159,6 +170,7 @@ public class WorkspaceControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(11)
+    @DisplayName("Should delete workspace successfully")
     void shouldDeleteWorkspaceById() {
         given()
                 .contentType(ContentType.JSON)

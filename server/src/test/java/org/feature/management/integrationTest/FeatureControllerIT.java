@@ -5,6 +5,7 @@ import static io.restassured.module.webtestclient.RestAssuredWebTestClient.given
 
 import org.feature.management.AbstractIntegrationTest;
 import org.feature.management.models.*;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -25,7 +26,8 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(1)
-    void createWorkflow(){
+    @DisplayName("Should create workflow with stages successfully")
+    void shouldCreateWorkflow() {
 
         String workflowRequestBody = """
                 {
@@ -71,7 +73,8 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(2)
-    void createWorkspace(){
+    @DisplayName("Should create workspace successfully")
+    void shouldCreateWorkspace() {
 
         String workspaceRequestBody = """
                 {
@@ -85,7 +88,8 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(3)
-    void shouldCreateFeatureWhenWorkflowNotFound(){
+    @DisplayName("Should return 404 when creating feature with non-existent workflow ID")
+    void shouldCreateFeatureWhenWorkflowNotFound() {
 
         FeatureConfiguration configuration = BooleanFeatureStrategy.builder().strategy("BooleanFeatureStrategy").value(true).build();
         FeatureCreateRequest request =  FeatureCreateRequest.builder().workflowId(UUID.randomUUID()).workspaceId(sharedWorkspaceId).enabled(true).owners(List.of("pavan@gmail.com")).name("NewFeature").description("Creating new feature")._configuration(configuration).build();
@@ -101,7 +105,8 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(4)
-    void shouldCreateFeatureWhenWorkflowHasNoStages(){
+    @DisplayName("Should return 404 when creating feature with workflow that has no stages")
+    void shouldCreateFeatureWhenWorkflowHasNoStages() {
 
         String workflowRequestBody = """
                 {
@@ -125,7 +130,8 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(5)
-    void shouldCreateBooleanFeatureStrategy(){
+    @DisplayName("Should create boolean feature strategy successfully")
+    void shouldCreateBooleanFeatureStrategy() {
 
         FeatureConfiguration configuration = BooleanFeatureStrategy.builder().strategy("BooleanFeatureStrategy").value(true).build();
         FeatureCreateRequest request =  FeatureCreateRequest.builder().workflowId(sharedWorkflowId).workspaceId(sharedWorkspaceId).enabled(true).owners(List.of("pavan@gmail.com")).name("NewFeature").description("Creating new feature")._configuration(configuration).build();
@@ -143,7 +149,8 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(6)
-    void shouldCreateFeatureWithSameName(){
+    @DisplayName("Should return 404 when creating feature with a name that already exists")
+    void shouldCreateFeatureWithSameName() {
 
         FeatureConfiguration configuration = BooleanFeatureStrategy.builder().strategy("BooleanFeatureStrategy").value(true).build();
         FeatureCreateRequest request =  FeatureCreateRequest.builder().workflowId(sharedWorkflowId).workspaceId(sharedWorkspaceId).enabled(true).owners(List.of("pavan@gmail.com")).name("NewFeature").description("Creating new feature")._configuration(configuration).build();
@@ -159,7 +166,8 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(7)
-    void shouldGetFeatureByIdWhenFeatureIsNotExist() {
+    @DisplayName("Should return 404 when retrieving a non-existent feature by ID")
+    void shouldGetFeatureByIdWhenFeatureDoesNotExist() {
         given()
                 .contentType(ContentType.JSON)
                 .when()
@@ -169,6 +177,7 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
     }
     @Test
     @Order(8)
+    @DisplayName("Should retrieve feature by ID")
     void shouldGetFeatureById() {
         given()
                 .contentType(ContentType.JSON)
@@ -181,7 +190,8 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(9)
-    void shouldGetFeatureByNameWhenFeatureIsNotExist() {
+    @DisplayName("Should return 404 when retrieving a non-existent feature by name")
+    void shouldGetFeatureByNameWhenFeatureDoesNotExist() {
         given()
                 .contentType(ContentType.JSON)
                 .when()
@@ -191,6 +201,7 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
     }
     @Test
     @Order(10)
+    @DisplayName("Should return 404 when retrieving feature by name without envId parameter")
     void shouldGetFeatureByNameWithoutEnvId() {
         given()
                 .contentType(ContentType.JSON)
@@ -202,6 +213,7 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
     }
     @Test
     @Order(11)
+    @DisplayName("Should retrieve feature by name and environment ID")
     void shouldGetFeatureByName() {
         given()
                 .contentType(ContentType.JSON)
@@ -213,7 +225,8 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
     }
     @Test
     @Order(12)
-    void shouldGetAllFeatures(){
+    @DisplayName("Should retrieve all features successfully")
+    void shouldGetAllFeatures() {
         given()
                 .when()
                 .get("/features")
@@ -225,6 +238,7 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(13)
+    @DisplayName("Should assign a second owner to feature by ID")
     void shouldAssignSecondOwnerToFeatureById() {
         String owner = "sam@gmail.com";
         given()
@@ -238,7 +252,8 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(14)
-    void shouldRemoveOwnerFromFeatureByIdWithOutETAG() {
+    @DisplayName("Should fail to remove owner from feature if If-Match header is missing")
+    void shouldRemoveOwnerFromFeatureByIdWithoutETag() {
         String owner = "pavan@gmail.com";
         given()
                 .contentType(ContentType.JSON)
@@ -250,7 +265,8 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(15)
-    void shouldRemoveOwnerFromFeatureByIdWithUnmatchedETAG() {
+    @DisplayName("Should fail to remove owner from feature if ETag does not match")
+    void shouldRemoveOwnerFromFeatureByIdWithUnmatchedETag() {
         String owner = "pavan@gmail.com";
         given()
                 .contentType(ContentType.JSON)
@@ -263,6 +279,7 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(16)
+    @DisplayName("Should fail to remove owner from feature if access is denied")
     void shouldRemoveOwnerFromFeatureByIdIfAccessIsDenied() {
         String owner = "pavan1@gmail.com";
         given()
@@ -275,7 +292,8 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
     }
     @Test
     @Order(17)
-    void shouldRemoveOwnerFromFeatureByIdWhenFeatureIsNotExist() {
+    @DisplayName("Should return 404 when feature does not exist during owner removal")
+    void shouldRemoveOwnerFromFeatureByIdWhenFeatureDoesNotExist() {
         String owner = "pavan1@gmail.com";
         given()
                 .contentType(ContentType.JSON)
@@ -288,6 +306,7 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(18)
+    @DisplayName("Should remove owner from feature successfully")
     void shouldRemoveOwnerFromFeatureById() {
         String owner = "pavan@gmail.com";
         given()
@@ -301,6 +320,7 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(19)
+    @DisplayName("Should fail to remove the last owner from a feature")
     void shouldRemoveLastOwnerFromFeatureById() {
         String owner = "sam@gmail.com";
         given()
@@ -314,7 +334,8 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(20)
-    void shouldGetAllFeatureStrategies(){
+    @DisplayName("Should retrieve all feature strategies")
+    void shouldGetAllFeatureStrategies() {
         given()
                 .when()
                 .get("/features/strategies")
@@ -328,7 +349,8 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(21)
-    void shouldUpdateFeatureByIdWithOutETAG() {
+    @DisplayName("Should fail to update feature if If-Match header is missing")
+    void shouldUpdateFeatureByIdWithoutETag() {
 
         String requestBody = """
                 {
@@ -347,7 +369,8 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(22)
-    void shouldUpdateFeatureByIdWithUnmatchedETAG() {
+    @DisplayName("Should fail to update feature if ETag does not match")
+    void shouldUpdateFeatureByIdWithUnmatchedETag() {
 
         String requestBody = """
                 {
@@ -366,7 +389,8 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
     }
     @Test
     @Order(23)
-    void shouldUpdateFeatureByIdWhenFeatureIsNotExist() {
+    @DisplayName("Should return 404 when feature does not exist during update")
+    void shouldUpdateFeatureByIdWhenFeatureDoesNotExist() {
         FeatureConfiguration configuration = BooleanFeatureStrategy.builder().strategy("BooleanFeatureStrategy").value(false).build();
 
         given()
@@ -381,6 +405,7 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(24)
+    @DisplayName("Should update feature successfully with a valid request and matching ETag")
     void shouldUpdateFeatureById() {
         FeatureConfiguration configuration = BooleanFeatureStrategy.builder().strategy("BooleanFeatureStrategy").value(false).build();
         given()
@@ -397,7 +422,8 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(25)
-    void shouldUpdateFeatureStatusByIdWithOutETAG() {
+    @DisplayName("Should fail to update feature status if If-Match header is missing")
+    void shouldUpdateFeatureStatusByIdWithoutETag() {
         given()
                 .contentType(ContentType.JSON)
                 .when()
@@ -408,7 +434,8 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(26)
-    void shouldUpdateFeatureStatusByIdWithUnmatchedETAG() {
+    @DisplayName("Should update feature status successfully if ETag matches")
+    void shouldUpdateFeatureStatusByIdWithUnmatchedETag() {
 
         given()
                 .contentType(ContentType.JSON)
@@ -420,7 +447,8 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
     }
     @Test
     @Order(27)
-    void shouldUpdateFeatureStatusByIdWhenFeatureIsNotExist() {
+    @DisplayName("Should return 404 when feature does not exist during status update")
+    void shouldUpdateFeatureStatusByIdWhenFeatureDoesNotExist() {
         given()
                 .contentType(ContentType.JSON)
                 .header("If-Match", "3")
@@ -432,6 +460,7 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(28)
+    @DisplayName("Should update feature status successfully")
     void shouldUpdateFeatureStatusById() {
         given()
                 .contentType(ContentType.JSON)
@@ -444,7 +473,8 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(29)
-    void shouldPropagateFeatureByIdWhenFeatureIsNotExist() {
+    @DisplayName("Should return 404 when propagating a non-existent feature")
+    void shouldPropagateFeatureByIdWhenFeatureDoesNotExist() {
         given()
                 .contentType(ContentType.JSON)
                 .when()
@@ -455,6 +485,7 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(30)
+    @DisplayName("Should propagate feature by ID successfully")
     void shouldPropagateFeatureById() {
         given()
                 .contentType(ContentType.JSON)
@@ -466,7 +497,8 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(31)
-    void shouldDeleteFeatureByIdWithOutETAG() {
+    @DisplayName("Should fail to delete feature if If-Match header is missing")
+    void shouldDeleteFeatureByIdWithoutETag() {
         given()
                 .contentType(ContentType.JSON)
                 .when()
@@ -477,7 +509,8 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(32)
-    void shouldDeleteFeatureByIdWithUnmatchedETAG() {
+    @DisplayName("Should fail to delete feature if ETag does not match")
+    void shouldDeleteFeatureByIdWithUnmatchedETag() {
         given()
                 .contentType(ContentType.JSON)
                 .header("If-Match", "0")
@@ -489,7 +522,8 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(33)
-    void shouldDeleteFeatureByIdWhenFeatureIsNotExist() {
+    @DisplayName("Should return 404 when deleting a non-existent feature")
+    void shouldDeleteFeatureByIdWhenFeatureDoesNotExist() {
         given()
                 .contentType(ContentType.JSON)
                 .header("If-Match", "5")
@@ -501,6 +535,7 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(34)
+    @DisplayName("Should delete feature successfully with matching ETag")
     void shouldDeleteFeatureById() {
         given()
                 .contentType(ContentType.JSON)
@@ -514,7 +549,8 @@ public class FeatureControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(35)
-    void shouldGetAllFeaturePropagationHistory(){
+    @DisplayName("Should retrieve all feature propagation history")
+    void shouldGetAllFeaturePropagationHistory() {
         given()
                 .when()
                 .get("/features/{id}/propagations",UUID.randomUUID().toString())

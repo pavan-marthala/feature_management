@@ -4,6 +4,7 @@ import io.restassured.http.ContentType;
 import org.feature.management.AbstractIntegrationTest;
 import org.feature.management.models.Stage;
 import org.feature.management.models.StageType;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -24,6 +25,7 @@ public class WorkflowControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(1)
+    @DisplayName("Should create workflow successfully")
     void shouldCreateWorkflow() {
  
         String requestBody = """
@@ -45,6 +47,7 @@ public class WorkflowControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(2)
+    @DisplayName("Should retrieve workflow by ID")
     void shouldGetWorkflowById() {
         given()
                 .contentType(ContentType.JSON)
@@ -57,7 +60,8 @@ public class WorkflowControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(3)
-    void shouldGetAllWorkflows(){
+    @DisplayName("Should retrieve all workflows")
+    void shouldGetAllWorkflows() {
         given()
                 .when()
                 .get("/workflows")
@@ -70,7 +74,8 @@ public class WorkflowControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(4)
-    void shouldGetWorkflowByIdWhenWorkflowIsNotExist() {
+    @DisplayName("Should return 404 when retrieving a non-existent workflow by ID")
+    void shouldGetWorkflowByIdWhenWorkflowDoesNotExist() {
         given()
                 .contentType(ContentType.JSON)
                 .when()
@@ -80,7 +85,8 @@ public class WorkflowControllerIT extends AbstractIntegrationTest {
     }
     @Test
     @Order(5)
-    void shouldUpdateWorkflowByIdWhenWorkflowIsNotExist() {
+    @DisplayName("Should return 404 when updating a non-existent workflow")
+    void shouldUpdateWorkflowByIdWhenWorkflowDoesNotExist() {
 
         String requestBody = """
                 {
@@ -99,6 +105,7 @@ public class WorkflowControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(6)
+    @DisplayName("Should update workflow successfully")
     void shouldUpdateWorkflowById() {
 
         String requestBody = """
@@ -118,7 +125,8 @@ public class WorkflowControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(7)
-    void shouldUpdateWorkflowStatusByIdWithOutETAG() {
+    @DisplayName("Should fail to update workflow status if If-Match header is missing")
+    void shouldUpdateWorkflowStatusByIdWithoutETag() {
 
         given()
                 .contentType(ContentType.JSON)
@@ -130,7 +138,8 @@ public class WorkflowControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(8)
-    void shouldUpdateWorkflowStatusByIdWithUnmatchedETAG() {
+    @DisplayName("Should fail to update workflow status if ETag does not match")
+    void shouldUpdateWorkflowStatusByIdWithUnmatchedETag() {
 
         given()
                 .contentType(ContentType.JSON)
@@ -144,7 +153,8 @@ public class WorkflowControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(9)
-    void shouldUpdateWorkflowStatusByIdWhenWorkflowIsNotExist() {
+    @DisplayName("Should return 404 when workflow does not exist during status update")
+    void shouldUpdateWorkflowStatusByIdWhenWorkflowDoesNotExist() {
 
         given()
                 .contentType(ContentType.JSON)
@@ -157,6 +167,7 @@ public class WorkflowControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(10)
+    @DisplayName("Should update workflow status successfully")
     void shouldUpdateWorkflowStatusById() {
 
         given()
@@ -170,7 +181,8 @@ public class WorkflowControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(11)
-    void shouldCreateStage(){
+    @DisplayName("Should create a stage for a workflow successfully")
+    void shouldCreateStage() {
 
         String env1Body = """
                 {
@@ -185,7 +197,8 @@ public class WorkflowControllerIT extends AbstractIntegrationTest {
     }
     @Test
     @Order(12)
-    void shouldCreate2ndStage(){
+    @DisplayName("Should create a second stage for a workflow successfully")
+    void shouldCreateSecondStage() {
 
         String env2Body = """
                 {
@@ -201,7 +214,8 @@ public class WorkflowControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(13)
-    void shouldGetStageByIdWhenStageIsNotExist() {
+    @DisplayName("Should return 404 when retrieving a non-existent stage by ID")
+    void shouldGetStageByIdWhenStageDoesNotExist() {
         given()
                 .contentType(ContentType.JSON)
                 .when()
@@ -212,7 +226,8 @@ public class WorkflowControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(14)
-    void shouldGetStageByIdWhenWorkFlowIsNotExist() {
+    @DisplayName("Should return 200 when retrieving a stage even with a non-existent workflow ID")
+    void shouldGetStageByIdWhenWorkflowDoesNotExist() {
         // TODO:workflowId id not using
         given()
                 .contentType(ContentType.JSON)
@@ -223,6 +238,7 @@ public class WorkflowControllerIT extends AbstractIntegrationTest {
     }
     @Test
     @Order(15)
+    @DisplayName("Should retrieve stage by ID")
     void shouldGetStageById() {
         given()
                 .contentType(ContentType.JSON)
@@ -233,6 +249,7 @@ public class WorkflowControllerIT extends AbstractIntegrationTest {
     }
     @Test
     @Order(16)
+    @DisplayName("Should retrieve all stages for a workflow")
     void shouldGetAllStages() {
         given()
                 .contentType(ContentType.JSON)
@@ -245,7 +262,8 @@ public class WorkflowControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(17)
-    void shouldUpdateStageByIdWhenStageIsNotExist() {
+    @DisplayName("Should return 404 when updating a non-existent stage")
+    void shouldUpdateStageByIdWhenStageDoesNotExist() {
         Stage stage = Stage.builder().environmentId(envId).orderIndex(0).approvalNeeded(false).type(StageType.MANUAL).build();
 
         given()
@@ -260,6 +278,7 @@ public class WorkflowControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(18)
+    @DisplayName("Should update stage successfully")
     void shouldUpdateStageById() {
         Stage stage = Stage.builder().environmentId(envId).orderIndex(0).approvalNeeded(false).type(StageType.MANUAL).build();
 
@@ -275,7 +294,8 @@ public class WorkflowControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(19)
-    void shouldUpdateStageByIdWithOutETAG() {
+    @DisplayName("Should fail to update stage if If-Match header is missing")
+    void shouldUpdateStageByIdWithoutETag() {
         Stage stage = Stage.builder().environmentId(envId).orderIndex(0).approvalNeeded(false).type(StageType.MANUAL).build();
 
         given()
@@ -289,7 +309,8 @@ public class WorkflowControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(20)
-    void shouldUpdateStageByIdWithUnmatchedETAG() {
+    @DisplayName("Should fail to update stage if ETag does not match")
+    void shouldUpdateStageByIdWithUnmatchedTag() {
         Stage stage = Stage.builder().environmentId(envId).orderIndex(0).approvalNeeded(false).type(StageType.MANUAL).build();
 
         given()
@@ -304,7 +325,8 @@ public class WorkflowControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(21)
-    void shouldDeleteStageByIdWithOutETAG() {
+    @DisplayName("Should fail to delete stage if If-Match header is missing")
+    void shouldDeleteStageByIdWithoutETag() {
         given()
                 .contentType(ContentType.JSON)
                 .when()
@@ -315,7 +337,8 @@ public class WorkflowControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(22)
-    void shouldDeleteStageByIdWithUnmatchedETAG() {
+    @DisplayName("Should fail to delete stage if ETag does not match")
+    void shouldDeleteStageByIdWithUnmatchedTag() {
         given()
                 .contentType(ContentType.JSON)
                 .header("If-Match", "0")
@@ -327,7 +350,8 @@ public class WorkflowControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(23)
-    void shouldDeleteStageByIdWhenStageIsNotExist() {
+    @DisplayName("Should return 404 when deleting a non-existent stage")
+    void shouldDeleteStageByIdWhenStageDoesNotExist() {
         given()
                 .contentType(ContentType.JSON)
                 .header("If-Match", "2")
@@ -339,6 +363,7 @@ public class WorkflowControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(24)
+    @DisplayName("Should delete stage successfully")
     void shouldDeleteStageById() {
         given()
                 .contentType(ContentType.JSON)
@@ -351,7 +376,8 @@ public class WorkflowControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(25)
-    void shouldDeleteWorkflowByIdWithOutETAG() {
+    @DisplayName("Should fail to delete workflow if If-Match header is missing")
+    void shouldDeleteWorkflowByIdWithoutETag() {
         given()
                 .contentType(ContentType.JSON)
                 .when()
@@ -362,7 +388,8 @@ public class WorkflowControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(26)
-    void shouldDeleteWorkflowByIdWithUnmatchedETAG() {
+    @DisplayName("Should fail to delete workflow if ETag does not match")
+    void shouldDeleteWorkflowByIdWithUnmatchedETag() {
         given()
                 .contentType(ContentType.JSON)
                 .header("If-Match", "0")
@@ -374,7 +401,8 @@ public class WorkflowControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(27)
-    void shouldDeleteWorkflowByIdWhenWorkflowIsNotExist() {
+    @DisplayName("Should return 404 when deleting a non-existent workflow")
+    void shouldDeleteWorkflowByIdWhenWorkflowDoesNotExist() {
         given()
                 .contentType(ContentType.JSON)
                 .header("If-Match", "2")
@@ -386,6 +414,7 @@ public class WorkflowControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(28)
+    @DisplayName("Should delete workflow successfully")
     void shouldDeleteWorkflowById() {
         given()
                 .contentType(ContentType.JSON)

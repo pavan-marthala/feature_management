@@ -4,6 +4,7 @@ import io.restassured.http.ContentType;
 import org.feature.management.AbstractIntegrationTest;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
@@ -20,7 +21,8 @@ public class EnvironmentControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(1)
-    void shouldCreateEnvironment() {
+    @DisplayName("Should create environment successfully with a valid request")
+    void shouldCreateEnvironmentSuccessfully() {
 
         String requestBody = """
                 {
@@ -41,7 +43,8 @@ public class EnvironmentControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(2)
-    void shouldGetEnvironmentById() {
+    @DisplayName("Should retrieve environment by its ID")
+    void shouldGetEnvironmentByIdSuccessfully() {
         given()
                 .contentType(ContentType.JSON)
                 .when()
@@ -53,7 +56,8 @@ public class EnvironmentControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(3)
-    void shouldGetAllEnvironments(){
+    @DisplayName("Should retrieve all environments")
+    void shouldGetAllEnvironmentsSuccessfully() {
         given()
                 .when()
                 .get("/environments")
@@ -65,6 +69,7 @@ public class EnvironmentControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(4)
+    @DisplayName("Should assign owner to environment by ID")
     void shouldAssignOwnerToEnvironmentById() {
         String owner = "pavan@gmail.com";
         given()
@@ -77,6 +82,7 @@ public class EnvironmentControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(5)
+    @DisplayName("Should assign a second owner to environment by ID")
     void shouldAssignSecondOwnerToEnvironmentById() {
         String owner = "sam@gmail.com";
         given()
@@ -89,7 +95,8 @@ public class EnvironmentControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(6)
-    void shouldGetAllEnvironmentsAfterAssigningOwner(){
+    @DisplayName("Should retrieve all environments after assigning an owner")
+    void shouldGetAllEnvironmentsAfterAssigningOwner() {
         given()
                 .when()
                 .get("/environments")
@@ -101,7 +108,8 @@ public class EnvironmentControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(7)
-    void shouldRemoveOwnerFromEnvironmentByIdWithOutETAG() {
+    @DisplayName("Should fail to remove owner from environment if If-Match header is missing")
+    void shouldRemoveOwnerFromEnvironmentByIdWithoutETag() {
         String owner = "pavan@gmail.com";
         given()
                 .contentType(ContentType.JSON)
@@ -113,7 +121,8 @@ public class EnvironmentControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(8)
-    void shouldRemoveOwnerFromEnvironmentByIdWithUnmatchedETAG() {
+    @DisplayName("Should fail to remove owner from environment if ETag does not match")
+    void shouldRemoveOwnerFromEnvironmentByIdWithUnmatchedETag() {
         String owner = "pavan@gmail.com";
         given()
                 .contentType(ContentType.JSON)
@@ -126,6 +135,7 @@ public class EnvironmentControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(9)
+    @DisplayName("Should fail to remove owner from environment if access is denied")
     void shouldRemoveOwnerFromEnvironmentByIdIfAccessIsDenied() {
         String owner = "pavan1@gmail.com";
         given()
@@ -138,7 +148,8 @@ public class EnvironmentControllerIT extends AbstractIntegrationTest {
     }
     @Test
     @Order(10)
-    void shouldRemoveOwnerFromEnvironmentByIdWhenEnvironmentIsNotExist() {
+    @DisplayName("Should return 404 when environment does not exist during owner removal")
+    void shouldRemoveOwnerFromEnvironmentByIdWhenEnvironmentDoesNotExist() {
         String owner = "pavan1@gmail.com";
         given()
                 .contentType(ContentType.JSON)
@@ -151,6 +162,7 @@ public class EnvironmentControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(11)
+    @DisplayName("Should remove owner from environment successfully")
     void shouldRemoveOwnerFromEnvironmentById() {
         String owner = "pavan@gmail.com";
         given()
@@ -163,6 +175,7 @@ public class EnvironmentControllerIT extends AbstractIntegrationTest {
     }
     @Test
     @Order(12)
+    @DisplayName("Should fail to remove the last owner from an environment")
     void shouldRemoveLastOwnerFromEnvironmentById() {
         String owner = "sam@gmail.com";
         given()
@@ -177,7 +190,8 @@ public class EnvironmentControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(13)
-    void shouldUpdateEnvironmentByIdWithOutETAG() {
+    @DisplayName("Should fail to update environment if If-Match header is missing")
+    void shouldUpdateEnvironmentByIdWithoutETag() {
 
         String requestBody = """
                 {
@@ -196,7 +210,8 @@ public class EnvironmentControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(14)
-    void shouldUpdateEnvironmentByIdWithUnmatchedETAG() {
+    @DisplayName("Should fail to update environment if ETag does not match")
+    void shouldUpdateEnvironmentByIdWithUnmatchedETag() {
 
         String requestBody = """
                 {
@@ -215,7 +230,8 @@ public class EnvironmentControllerIT extends AbstractIntegrationTest {
     }
     @Test
     @Order(15)
-    void shouldUpdateEnvironmentByIdWhenEnvironmentIsNotExist() {
+    @DisplayName("Should return 404 when environment does not exist during update")
+    void shouldUpdateEnvironmentByIdWhenEnvironmentDoesNotExist() {
 
         String requestBody = """
                 {
@@ -235,6 +251,7 @@ public class EnvironmentControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(16)
+    @DisplayName("Should update environment successfully with a valid request and matching ETag")
     void shouldUpdateEnvironmentById() {
 
         String requestBody = """
@@ -255,7 +272,8 @@ public class EnvironmentControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(17)
-    void shouldGetEnvironmentByIdWhenEnvironmentIsNotExist() {
+    @DisplayName("Should return 404 when environment does not exist")
+    void shouldGetEnvironmentByIdWhenEnvironmentDoesNotExist() {
         given()
                 .contentType(ContentType.JSON)
                 .when()
@@ -266,7 +284,8 @@ public class EnvironmentControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(18)
-    void shouldDeleteEnvironmentByIdWithOutETAG() {
+    @DisplayName("Should fail to delete environment if If-Match header is missing")
+    void shouldDeleteEnvironmentByIdWithoutETag() {
         given()
                 .contentType(ContentType.JSON)
                 .when()
@@ -277,7 +296,8 @@ public class EnvironmentControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(19)
-    void shouldDeleteEnvironmentByIdWithUnmatchedETAG() {
+    @DisplayName("Should fail to delete environment if ETag does not match")
+    void shouldDeleteEnvironmentByIdWithUnmatchedETag() {
         given()
                 .contentType(ContentType.JSON)
                 .header("If-Match", "0")
@@ -289,7 +309,8 @@ public class EnvironmentControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(20)
-    void shouldDeleteEnvironmentByIdWhenEnvironmentIsNotExist() {
+    @DisplayName("Should return 404 when deleting a non-existent environment")
+    void shouldDeleteEnvironmentByIdWhenEnvironmentDoesNotExist() {
         given()
                 .contentType(ContentType.JSON)
                 .header("If-Match", "4")
@@ -301,6 +322,7 @@ public class EnvironmentControllerIT extends AbstractIntegrationTest {
 
     @Test
     @Order(21)
+    @DisplayName("Should delete environment successfully with matching ETag")
     void shouldDeleteEnvironmentById() {
         given()
                 .contentType(ContentType.JSON)
